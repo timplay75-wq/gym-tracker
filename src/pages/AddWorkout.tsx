@@ -27,11 +27,11 @@ export const AddWorkout = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">Новая тренировка</h2>
+      <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Новая тренировка</h2>
       
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="mb-4">
-          <label htmlFor="workoutName" className="block text-gray-700 font-medium mb-2">
+          <label htmlFor="workoutName" className="block text-gray-700 dark:text-gray-200 font-medium mb-2">
             Название тренировки
           </label>
           <input
@@ -39,7 +39,7 @@ export const AddWorkout = () => {
             id="workoutName"
             value={workoutName}
             onChange={(e) => setWorkoutName(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             placeholder="Например: Грудь и трицепс"
             required
           />
@@ -47,7 +47,7 @@ export const AddWorkout = () => {
 
         <button
           type="submit"
-          className="w-full bg-primary-600 text-white py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium"
+          className="w-full bg-primary-600 dark:bg-primary-700 text-white py-3 rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors font-medium"
         >
           Создать тренировку
         </button>
