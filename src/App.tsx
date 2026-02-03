@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Workouts } from './pages/Workouts';
 import { AddWorkout } from './pages/AddWorkout';
+import { WorkoutBuilder } from './pages/WorkoutBuilder';
 import { Profile } from './pages/Profile';
 import DesignDemo from './pages/DesignDemo';
 
@@ -14,6 +15,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="workouts" element={<Workouts />} />
           <Route path="add" element={<AddWorkout />} />
+          <Route path="builder" element={<WorkoutBuilder />} />
           <Route path="profile" element={<Profile />} />
         </Route>
         <Route path="/design" element={<DesignDemo />} />
