@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, Modal } from '@/components';
+import { useTheme } from '@/hooks/useTheme';
 import { storageService } from '@/services/storage';
 import type { Workout } from '@/types';
 
