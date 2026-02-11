@@ -138,6 +138,21 @@ export const ActiveWorkout = () => {
     setIsCompleted(true);
   };
 
+  // Закрытие тренировки (сохранение прогресса)
+  const handleCloseWorkout = () => {
+    if (!workout) return;
+    
+    if (window.confirm('Завершить тренировку и сохранить прогресс?')) {
+      const savedWorkout: Workout = {
+        ...workout,
+        status: 'completed',
+        duration: Math.floor(workoutTime / 60),
+      };
+      storageService.saveWorkout(savedWorkout);
+      navigate('/workouts');
+    }
+  };
+
   // Пропустить отдых
   const handleSkipRest = () => {
     setIsResting(false);
@@ -282,12 +297,9 @@ export const ActiveWorkout = () => {
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between py-4">
             <button
-              onClick={() => {
-                if (window.confirm('Вы уверены? Прогресс будет потерян.')) {
-                  navigate(-1);
-                }
-              }}
+              onClick={handleCloseWorkout}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              aria-label="Закрыть"
             >
               <svg className="w-6 h-6 text-light-secondary dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -399,9 +411,21 @@ export const ActiveWorkout = () => {
           <button
             onClick={handleCompleteSet}
             disabled={tempWeight === 0 || tempReps === 0}
-            className="w-full py-5 bg-success-600 hover:bg-success-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-lg font-semibold rounded-2xl transition-all shadow-sm active:scale-[0.99] disabled:cursor-not-allowed"
+            className="w-full py-5 bg-success-600 hover:bg-success-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-lg font-semibold rounded-2xl transition-all shadow-sm active:scale-[0.99] disabled:cursor-not-allowed mb-3"
           >
             ✓ Завершить подход
+          </button>
+
+          {/* Кнопка завершить тренировку */}
+          <button
+            onClick={() => {
+              if (window.confirm('Завершить тренировку сейчас?')) {
+                completeWorkout();
+              }
+            }}
+            className="w-full py-3 border-2 border-gray-300 dark:border-gray-600 hover:border-primary-500 dark:hover:border-primary-400 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium rounded-xl transition-all"
+          >
+            ✓ Завершить тренировку
           </button>
         </Card>
 

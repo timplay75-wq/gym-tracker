@@ -5,6 +5,18 @@ import type { Workout } from '@/types';
 import { formatDate } from '@/utils/helpers';
 import { Card, Modal, Button, Input } from '@/components';
 
+// Категории мышечных групп с эмодзи
+const MUSCLE_CATEGORY_EMOJI: Record<string, string> = {
+  chest: '💪',
+  back: '🦾', 
+  legs: '🦵',
+  shoulders: '🏋️',
+  arms: '💪',
+  core: '🔥',
+  cardio: '🏃',
+  other: '⚡',
+};
+
 type FilterPeriod = 'week' | 'month' | 'year' | 'all';
 
 export const Workouts = () => {
@@ -269,46 +281,69 @@ export const Workouts = () => {
                     </div>
 
                     {/* Тренировки месяца */}
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {monthWorkouts.map(workout => {
                         const volume = calculateVolume(workout);
-                        const sets = countSets(workout);
+                        
+                        // Получаем уникальные группы мышц
+                        const muscleGroups = [...new Set(
+                          workout.exercises.map(ex => ex.category)
+                        )].slice(0, 3); // Показываем максимум 3
 
                         return (
                           <Card 
                             key={workout.id} 
-                            padding="md" 
+                            padding="sm" 
                             variant="interactive"
                             onClick={() => handleWorkoutClick(workout)}
+                            className="hover:shadow-md transition-shadow"
                           >
-                            <div className="flex justify-between items-start">
+                            <div className="flex items-center justify-between gap-3">
+                              {/* Левая часть - название и дата */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="text-lg font-semibold text-light-primary dark:text-white truncate">
+                                  {/* Группы мышц эмодзи */}
+                                  <div className="flex gap-1 text-lg">
+                                    {muscleGroups.map((cat, idx) => (
+                                      <span key={idx}>{MUSCLE_CATEGORY_EMOJI[cat] || '⚡'}</span>
+                                    ))}
+                                  </div>
+                                  
+                                  <h3 className="text-base font-semibold text-light-primary dark:text-white truncate">
                                     {workout.name}
                                   </h3>
+                                  
                                   {workout.status === 'completed' && (
-                                    <span className="text-success-600 dark:text-success-400 flex-shrink-0">✓</span>
+                                    <span className="text-success-600 dark:text-success-400 text-sm">✓</span>
                                   )}
                                 </div>
-                                <p className="text-sm text-light-secondary dark:text-gray-400">
-                                  {formatDate(new Date(workout.date))}
-                                </p>
                                 
-                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-light-secondary dark:text-gray-400">
-                                  <span>Упражнений: {workout.exercises.length}</span>
-                                  <span>Подходов: {sets}</span>
-                                  {volume > 0 && <span>Тоннаж: {volume.toFixed(0)} кг</span>}
-                                  {workout.duration && <span>⏱ {workout.duration} мин</span>}
+                                <div className="flex items-center gap-3 text-xs text-light-secondary dark:text-gray-400">
+                                  <span>{formatDate(new Date(workout.date))}</span>
+                                  <span>•</span>
+                                  <span>{workout.exercises.length} упр.</span>
+                                  {volume > 0 && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{volume.toFixed(0)} кг</span>
+                                    </>
+                                  )}
+                                  {workout.duration && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{workout.duration} мин</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                               
+                              {/* Кнопка удалить */}
                               <button
                                 onClick={(e) => handleDelete(workout.id, e)}
-                                className="ml-3 p-2 text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors flex-shrink-0"
+                                className="p-1.5 text-gray-400 hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors flex-shrink-0"
                                 aria-label="Удалить"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                               </button>
@@ -348,7 +383,7 @@ export const Workouts = () => {
             </div>
 
             {/* Упражнения */}
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-96 overflow-y-auto">
               {selectedWorkout.exercises.map((exercise, idx) => {
                 const exerciseVolume = exercise.sets.reduce(
                   (sum, set) => sum + (set.completed ? set.weight * set.reps : 0),
@@ -357,8 +392,11 @@ export const Workouts = () => {
 
                 return (
                   <Card key={idx} padding="sm">
-                    <div className="font-semibold text-light-primary dark:text-white mb-2">
-                      {exercise.name}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{MUSCLE_CATEGORY_EMOJI[exercise.category] || '⚡'}</span>
+                      <div className="font-semibold text-light-primary dark:text-white">
+                        {exercise.name}
+                      </div>
                     </div>
                     
                     <div className="space-y-1 text-sm">
