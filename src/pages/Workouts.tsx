@@ -26,6 +26,28 @@ export const Workouts = () => {
     setAllWorkouts(sorted);
   }, []);
 
+  // Вспомогательные функции (определяем ДО useMemo!)
+  // Расчет тоннажа тренировки
+  const calculateVolume = (workout: Workout): number => {
+    return workout.exercises.reduce((total, exercise) => {
+      return total + exercise.sets.reduce((exTotal, set) => {
+        return set.completed ? exTotal + (set.weight || 0) * (set.reps || 0) : exTotal;
+      }, 0);
+    }, 0);
+  };
+
+  // Подсчет подходов
+  const countSets = (workout: Workout): number => {
+    return workout.exercises.reduce((total, ex) => total + ex.sets.length, 0);
+  };
+
+  // Форматирование названия месяца
+  const formatMonthYear = (monthKey: string): string => {
+    const [year, month] = monthKey.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+  };
+
   // Фильтрация тренировок
   const filteredWorkouts = useMemo(() => {
     let filtered = [...allWorkouts];
@@ -124,27 +146,6 @@ export const Workouts = () => {
     navigate('/active-workout', { state: { workout: newWorkout } });
   };
 
-  // Расчет тоннажа тренировки
-  const calculateVolume = (workout: Workout): number => {
-    return workout.exercises.reduce((total, exercise) => {
-      return total + exercise.sets.reduce((exTotal, set) => {
-        return set.completed ? exTotal + (set.weight || 0) * (set.reps || 0) : exTotal;
-      }, 0);
-    }, 0);
-  };
-
-  // Подсчет подходов
-  const countSets = (workout: Workout): number => {
-    return workout.exercises.reduce((total, ex) => total + ex.sets.length, 0);
-  };
-
-  // Форматирование названия месяца
-  const formatMonthYear = (monthKey: string): string => {
-    const [year, month] = monthKey.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
-  };
-
   // Периоды для фильтра
   const filterPeriods: { value: FilterPeriod; label: string }[] = [
     { value: 'week', label: 'Неделя' },
@@ -158,7 +159,7 @@ export const Workouts = () => {
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="pt-6 pb-4">
-          <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white">
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">
             Тренировки
           </h1>
         </header>
