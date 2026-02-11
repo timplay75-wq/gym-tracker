@@ -19,6 +19,31 @@ export const Home = () => {
     setRecentWorkouts(sorted);
   }, []);
 
+  // Быстрый старт тренировки
+  const handleQuickStartWorkout = () => {
+    if (recentWorkouts.length === 0) {
+      // Если нет тренировок - переходим в конструктор
+      navigate('/builder');
+    } else {
+      // Берем последнюю тренировку
+      const lastWorkout = recentWorkouts[0];
+      // Создаем новую тренировку на основе последней
+      const newWorkout: Workout = {
+        ...lastWorkout,
+        id: Math.random().toString(36).substr(2, 9),
+        date: new Date(),
+        status: 'in-progress',
+        duration: undefined,
+        // Сбрасываем completed флаги на подходах
+        exercises: lastWorkout.exercises.map(ex => ({
+          ...ex,
+          sets: ex.sets.map(set => ({ ...set, completed: false, timestamp: undefined }))
+        }))
+      };
+      navigate('/active-workout', { state: { workout: newWorkout } });
+    }
+  };
+
   // Mock data - в будущем будет из API/localStorage
   const todayWorkout = {
     name: 'Грудь и трицепс',
@@ -103,10 +128,10 @@ const formatDate = (dateString: string) => {
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
                 <p className="text-xs font-medium text-light-secondary dark:text-gray-400 uppercase tracking-wider mb-1">
-                  Тренировка на сегодня
+                  {recentWorkouts.length === 0 ? 'Начните свою первую тренировку' : 'Повторить последнюю'}
                 </p>
                 <h2 className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
-                  {todayWorkout.name}
+                  {recentWorkouts.length > 0 ? recentWorkouts[0].name : todayWorkout.name}
                 </h2>
               </div>
             </div>
@@ -121,7 +146,7 @@ const formatDate = (dateString: string) => {
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                   />
                 </svg>
-                <span>{todayWorkout.exercises} упражнений</span>
+                <span>{recentWorkouts.length > 0 ? recentWorkouts[0].exercises.length : todayWorkout.exercises} упражнений</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,12 +157,12 @@ const formatDate = (dateString: string) => {
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span>~{todayWorkout.estimatedTime} мин</span>
+                <span>~{recentWorkouts.length > 0 && recentWorkouts[0].duration ? recentWorkouts[0].duration : todayWorkout.estimatedTime} мин</span>
               </div>
             </div>
 
-            <Button variant="primary" size="lg" className="w-full">
-              Начать тренировку
+            <Button variant="primary" size="lg" className="w-full" onClick={handleQuickStartWorkout}>
+              {recentWorkouts.length === 0 ? 'Создать первую тренировку' : '🚀 Начать тренировку'}
             </Button>
           </Card>
 
