@@ -89,8 +89,12 @@ export const ActiveWorkout = () => {
     set.weight = tempWeight;
     set.reps = tempReps;
     set.completed = true;
+    set.timestamp = new Date();
 
     setWorkout(updatedWorkout);
+    
+    // Сохраняем прогресс
+    storageService.saveWorkout(updatedWorkout);
 
     // Вибрация
     if ('vibrate' in navigator) {
@@ -285,7 +289,7 @@ export const ActiveWorkout = () => {
               }}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
-              <svg className="w-6 h-6 text-light-secondary dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-light-secondary dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -304,11 +308,11 @@ export const ActiveWorkout = () => {
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
               {isWorkoutPaused ? (
-                <svg className="w-6 h-6 text-primary-500" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-primary-500 dark:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               ) : (
-                <svg className="w-6 h-6 text-light-secondary dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-light-secondary dark:text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                 </svg>
               )}
@@ -401,33 +405,70 @@ export const ActiveWorkout = () => {
           </button>
         </Card>
 
-        {/* Navigation */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => {
-              if (currentExerciseIndex > 0) {
-                setCurrentExerciseIndex(currentExerciseIndex - 1);
-                setCurrentSetIndex(0);
-              }
-            }}
-            disabled={currentExerciseIndex === 0}
-            className="flex-1 py-3.5 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-          >
-            ← Предыдущее
-          </button>
+        {/* Навигация по подходам */}
+        <div className="mb-4">
+          <div className="text-xs text-center text-light-secondary dark:text-gray-400 mb-2">
+            Навигация по подходам
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                if (currentSetIndex > 0) {
+                  setCurrentSetIndex(currentSetIndex - 1);
+                }
+              }}
+              disabled={currentSetIndex === 0}
+              className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              ← Предыдущий подход
+            </button>
 
-          <button
-            onClick={() => {
-              if (currentExerciseIndex < workout.exercises.length - 1) {
-                setCurrentExerciseIndex(currentExerciseIndex + 1);
-                setCurrentSetIndex(0);
-              }
-            }}
-            disabled={currentExerciseIndex === workout.exercises.length - 1}
-            className="flex-1 py-3.5 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-          >
-            Следующее →
-          </button>
+            <button
+              onClick={() => {
+                if (currentExercise && currentSetIndex < currentExercise.sets.length - 1) {
+                  setCurrentSetIndex(currentSetIndex + 1);
+                }
+              }}
+              disabled={!currentExercise || currentSetIndex === currentExercise.sets.length - 1}
+              className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              Следующий подход →
+            </button>
+          </div>
+        </div>
+
+        {/* Навигация по упражнениям */}
+        <div>
+          <div className="text-xs text-center text-light-secondary dark:text-gray-400 mb-2">
+            Навигация по упражнениям
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                if (currentExerciseIndex > 0) {
+                  setCurrentExerciseIndex(currentExerciseIndex - 1);
+                  setCurrentSetIndex(0);
+                }
+              }}
+              disabled={currentExerciseIndex === 0}
+              className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              ← Предыдущее упражнение
+            </button>
+
+            <button
+              onClick={() => {
+                if (currentExerciseIndex < workout.exercises.length - 1) {
+                  setCurrentExerciseIndex(currentExerciseIndex + 1);
+                  setCurrentSetIndex(0);
+                }
+              }}
+              disabled={currentExerciseIndex === workout.exercises.length - 1}
+              className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              Следующее упражнение →
+            </button>
+          </div>
         </div>
       </div>
 
