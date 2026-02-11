@@ -1,0 +1,221 @@
+{
+  "categories": [
+    {
+      "id": "stretching",
+      "name": "Растяжка",
+      "icon": "🧘",
+      "exercises": [
+        {
+          "id": "hamstring-stretch",
+          "name": "Растяжка задней поверхности бедра",
+          "equipment": "собственный вес"
+        },
+        {
+          "id": "quad-stretch",
+          "name": "Растяжка квадрицепсов",
+          "equipment": "собственный вес"
+        },
+        {
+          "id": "shoulder-stretch",
+          "name": "Растяжка плеч",
+          "equipment": "собственный вес"
+        }
+      ]
+    },
+    {
+      "id": "cardio",
+      "name": "Кардио",
+      "icon": "🏃",
+      "exercises": [
+        {
+          "id": "treadmill",
+          "name": "Беговая дорожка",
+          "equipment": "тренажер"
+        },
+        {
+          "id": "bike",
+          "name": "Велотренажер",
+          "equipment": "тренажер"
+        },
+        {
+          "id": "elliptical",
+          "name": "Эллипсоид",
+          "equipment": "тренажер"
+        },
+        {
+          "id": "jump-rope",
+          "name": "Скакалка",
+          "equipment": "собственный вес"
+        }
+      ]
+    },
+    {
+      "id": "chest",
+      "name": "Грудь",
+      "icon": "💪",
+      "exercises": [
+        {
+          "id": "bench-press",
+          "name": "Жим штанги лежа",
+          "equipment": "штанга",
+          "targetMuscles": ["грудные", "трицепс", "передние дельты"]
+        },
+        {
+          "id": "incline-dumbbell-press",
+          "name": "Жим гантелей на наклонной скамье",
+          "equipment": "гантели",
+          "targetMuscles": ["верх груди", "передние дельты"]
+        },
+        {
+          "id": "cable-crossover",
+          "name": "Сведение рук в тренажере",
+          "equipment": "тренажер",
+          "targetMuscles": ["грудные"]
+        },
+        {
+          "id": "push-ups",
+          "name": "Отжимания",
+          "equipment": "собственный вес",
+          "targetMuscles": ["грудные", "трицепс", "передние дельты"]
+        }
+      ]
+    },
+    {
+      "id": "back",
+      "name": "Спина",
+      "icon": "💪",
+      "exercises": [
+        {
+          "id": "deadlift",
+          "name": "Становая тяга",
+          "equipment": "штанга",
+          "targetMuscles": ["спина", "ноги", "трапеции"]
+        },
+        {
+          "id": "pull-ups",
+          "name": "Подтягивания",
+          "equipment": "собственный вес",
+          "targetMuscles": ["широчайшие", "бицепс"]
+        },
+        {
+          "id": "bent-over-row",
+          "name": "Тяга штанги в наклоне",
+          "equipment": "штанга",
+          "targetMuscles": ["широчайшие", "ромбовидные"]
+        }
+      ]
+    },
+    {
+      "id": "arms",
+      "name": "Руки",
+      "icon": "💪",
+      "exercises": [
+        {
+          "id": "barbell-curl",
+          "name": "Подъем штанги на бицепс",
+          "equipment": "штанга",
+          "targetMuscles": ["бицепс"]
+        },
+        {
+          "id": "triceps-dips",
+          "name": "Отжимания на брусьях",
+          "equipment": "собственный вес",
+          "targetMuscles": ["трицепс", "грудь"]
+        },
+        {
+          "id": "hammer-curl",
+          "name": "Молотки с гантелями",
+          "equipment": "гантели",
+          "targetMuscles": ["бицепс", "предплечья"]
+        },
+        {
+          "id": "overhead-extension",
+          "name": "Французский жим",
+          "equipment": "гантели",
+          "targetMuscles": ["трицепс"]
+        }
+      ]
+    },
+    {
+      "id": "legs",
+      "name": "Ноги",
+      "icon": "🦵",
+      "exercises": [
+        {
+          "id": "squats",
+          "name": "Приседания со штангой",
+          "equipment": "штанга",
+          "targetMuscles": ["квадрицепс", "ягодицы", "бицепс бедра"]
+        },
+        {
+          "id": "leg-press",
+          "name": "Жим ногами",
+          "equipment": "тренажер",
+          "targetMuscles": ["квадрицепс", "ягодицы"]
+        },
+        {
+          "id": "leg-curl",
+          "name": "Сгибание ног",
+          "equipment": "тренажер",
+          "targetMuscles": ["бицепс бедра"]
+        },
+        {
+          "id": "calf-raise",
+          "name": "Подъем на носки",
+          "equipment": "тренажер",
+          "targetMuscles": ["икры"]
+        }
+      ]
+    },
+    {
+      "id": "shoulders",
+      "name": "Плечи",
+      "icon": "💪",
+      "exercises": [
+        {
+          "id": "overhead-press",
+          "name": "Жим штанги стоя",
+          "equipment": "штанга",
+          "targetMuscles": ["средние дельты", "трицепс"]
+        },
+        {
+          "id": "lateral-raise",
+          "name": "Махи гантелями в стороны",
+          "equipment": "гантели",
+          "targetMuscles": ["средние дельты"]
+        },
+        {
+          "id": "rear-delt-fly",
+          "name": "Разведение гантелей в наклоне",
+          "equipment": "гантели",
+          "targetMuscles": ["задние дельты"]
+        }
+      ]
+    },
+    {
+      "id": "core",
+      "name": "Пресс",
+      "icon": "🔥",
+      "exercises": [
+        {
+          "id": "crunches",
+          "name": "Скручивания",
+          "equipment": "собственный вес",
+          "targetMuscles": ["прямая мышца живота"]
+        },
+        {
+          "id": "plank",
+          "name": "Планка",
+          "equipment": "собственный вес",
+          "targetMuscles": ["кор"]
+        },
+        {
+          "id": "russian-twist",
+          "name": "Русские скручивания",
+          "equipment": "собственный вес",
+          "targetMuscles": ["косые мышцы живота"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Card, Modal } from '@/components';
-import { useTheme } from '@/hooks/useTheme';
 import { storageService } from '@/services/storage';
 import type { Workout } from '@/types';
 
@@ -15,7 +14,6 @@ const formatTime = (seconds: number): string => {
 export const ActiveWorkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isDark } = useTheme();
 
   // Состояние тренировки
   const [workout, setWorkout] = useState<Workout | null>(location.state?.workout || null);

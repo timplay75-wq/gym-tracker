@@ -6,6 +6,7 @@ import { AddWorkout } from './pages/AddWorkout';
 import { WorkoutBuilder } from './pages/WorkoutBuilder';
 import { ActiveWorkout } from './pages/ActiveWorkout';
 import { Profile } from './pages/Profile';
+import { ExerciseLibrary } from './pages/ExerciseLibrary';
 import DesignDemo from './pages/DesignDemo';
 
 function App() {
@@ -17,9 +18,10 @@ function App() {
           <Route path="workouts" element={<Workouts />} />
           <Route path="add" element={<AddWorkout />} />
           <Route path="builder" element={<WorkoutBuilder />} />
+          <Route path="exercises" element={<ExerciseLibrary />} />
           <Route path="profile" element={<Profile />} />
         </Route>
-        <Route path="/active" element={<ActiveWorkout />} />
+        <Route path="/active-workout" element={<ActiveWorkout />} />
         <Route path="/design" element={<DesignDemo />} />
       </Routes>
     </BrowserRouter>

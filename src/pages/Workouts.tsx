@@ -99,9 +99,6 @@ export const Workouts = () => {
               {workouts.map(workout => {
                 const volume = calculateVolume(workout);
                 const sets = countSets(workout);
-                const statusColor = workout.status === 'completed' 
-                  ? 'text-success-600 dark:text-success-400' 
-                  : 'text-warning-600 dark:text-warning-400';
 
                 return (
                   <Card 
