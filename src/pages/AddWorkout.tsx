@@ -22,8 +22,9 @@ export const AddWorkout = () => {
       status: 'planned',
     };
 
+    // Сохраняем тренировку и переходим в конструктор для добавления упражнений
     storageService.saveWorkout(newWorkout);
-    navigate('/workouts');
+    navigate('/builder', { state: { workout: newWorkout } });
   };
 
   return (

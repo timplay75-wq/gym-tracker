@@ -34,7 +34,7 @@ export const Navigation = () => {
   const navItems = [
     { path: '/', label: 'Главная', Icon: HomeIcon },
     { path: '/workouts', label: 'Тренировки', Icon: WorkoutsIcon },
-    { path: '/add', label: 'Добавить', Icon: AddIcon },
+    { path: '/builder', label: 'Добавить', Icon: AddIcon },
     { path: '/profile', label: 'Профиль', Icon: ProfileIcon },
   ];
 

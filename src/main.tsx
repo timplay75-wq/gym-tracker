@@ -4,6 +4,9 @@ import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './contexts/ThemeContext'
 
+// Импортируем тестовые данные (для разработки)
+import './utils/testData'
+
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
