@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card, Input, Modal } from '@/components';
 import { generateId } from '@/utils/helpers';
 import { storageService } from '@/services/storage';
-import type { Workout, Exercise, Set } from '@/types';
+import type { Workout, Exercise, Set, DayOfWeek } from '@/types';
 
 // Популярные упражнения по категориям
 const EXERCISE_CATEGORIES = {
@@ -37,6 +37,7 @@ export const WorkoutBuilder = () => {
   const [workoutName, setWorkoutName] = useState('');
   const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
   const [workoutNotes, setWorkoutNotes] = useState('');
+  const [dayOfWeek, setDayOfWeek] = useState<DayOfWeek | ''>('');
   
   // Упражнения
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -130,6 +131,7 @@ export const WorkoutBuilder = () => {
       exercises,
       status: 'planned',
       notes: workoutNotes,
+      dayOfWeek: dayOfWeek || undefined,
     };
 
     storageService.saveWorkout(workout);
@@ -142,8 +144,18 @@ export const WorkoutBuilder = () => {
       alert('Введите название тренировки');
       return;
     }
-    // TODO: Переход на экран активной тренировки (Промт 3.4)
-    alert('Экран активной тренировки будет реализован в следующем промте');
+
+    const workout: Workout = {
+      id: generateId(),
+      name: workoutName,
+      date: new Date(workoutDate),
+      exercises,
+      status: 'in-progress',
+      notes: workoutNotes,
+      dayOfWeek: dayOfWeek || undefined,
+    };
+
+    navigate('/active-workout', { state: { workout } });
   };
 
   return (
@@ -188,6 +200,26 @@ export const WorkoutBuilder = () => {
             value={workoutDate}
             onChange={(e) => setWorkoutDate(e.target.value)}
           />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              День недели (опционально)
+            </label>
+            <select
+              value={dayOfWeek}
+              onChange={(e) => setDayOfWeek(e.target.value as DayOfWeek | '')}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="">Не выбрано</option>
+              <option value="monday">Понедельник</option>
+              <option value="tuesday">Вторник</option>
+              <option value="wednesday">Среда</option>
+              <option value="thursday">Четверг</option>
+              <option value="friday">Пятница</option>
+              <option value="saturday">Суббота</option>
+              <option value="sunday">Воскресенье</option>
+            </select>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

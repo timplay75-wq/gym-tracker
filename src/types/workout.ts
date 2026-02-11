@@ -65,6 +65,7 @@ export interface Workout {
   notes?: string;
   totalVolume?: number; // общий тоннаж
   programId?: string; // ID программы, если входит в программу
+  dayOfWeek?: DayOfWeek; // день недели для расписания
 }
 
 // WorkoutProgram - программа тренировок (сплит)
