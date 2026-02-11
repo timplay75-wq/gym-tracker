@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { storageService } from '@/services/storage';
 import type { Workout } from '@/types';
 import { formatDate } from '@/utils/helpers';
+import { Card } from '@/components';
 
 export const Workouts = () => {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -12,44 +13,69 @@ export const Workouts = () => {
   }, []);
 
   const handleDelete = (id: string) => {
-    storageService.deleteWorkout(id);
-    setWorkouts(workouts.filter(w => w.id !== id));
+    if (window.confirm('Удалить эту тренировку?')) {
+      storageService.deleteWorkout(id);
+      setWorkouts(workouts.filter(w => w.id !== id));
+    }
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Мои тренировки</h2>
-      
-      {workouts.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-gray-500 text-lg">Тренировок пока нет</p>
-          <p className="text-gray-400 mt-2">Добавьте первую тренировку!</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {workouts.map(workout => (
-            <div key={workout.id} className="bg-white rounded-lg shadow p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-semibold">{workout.name}</h3>
-                  <p className="text-gray-500 text-sm">
-                    {formatDate(new Date(workout.date))}
-                  </p>
-                  <p className="text-gray-600 mt-2">
-                    Упражнений: {workout.exercises.length}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleDelete(workout.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  Удалить
-                </button>
+    <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-24">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <header className="pt-6 pb-4">
+          <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white">
+            Тренировки
+          </h1>
+        </header>
+
+        <div className="mt-6">
+          {workouts.length === 0 ? (
+            <Card padding="lg" className="text-center">
+              <div className="py-8">
+                <p className="text-lg text-text-light-secondary dark:text-gray-400 mb-2">
+                  Тренировок пока нет
+                </p>
+                <p className="text-sm text-text-light-tertiary dark:text-gray-500">
+                  Добавьте первую тренировку!
+                </p>
               </div>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {workouts.map(workout => (
+                <Card key={workout.id} padding="md" variant="interactive">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-text-light-primary dark:text-white">
+                        {workout.name}
+                      </h3>
+                      <p className="text-sm text-text-light-secondary dark:text-gray-400 mt-1">
+                        {formatDate(new Date(workout.date))}
+                      </p>
+                      <p className="text-sm text-text-light-secondary dark:text-gray-400 mt-2">
+                        Упражнений: {workout.exercises.length}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(workout.id);
+                      }}
+                      className="p-2 text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors"
+                      aria-label="Удалить"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </Card>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

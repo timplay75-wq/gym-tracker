@@ -8,40 +8,41 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary Colors - iOS/Material Design inspired
+        // Primary Colors - Minimalist Design
         primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',  // Main accent color
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+          50: '#f5f6f7',
+          100: '#e9eaeb',
+          200: '#d3d5d8',
+          300: '#bdc0c4',
+          400: '#a7abb0',
+          500: '#202328',  // Main dark accent color
+          600: '#1a1d21',
+          700: '#14161a',
+          800: '#0e1013',
+          900: '#080a0c',
+          950: '#020304',
         },
         
         // Background Colors
         background: {
-          light: '#f8fafc',
+          light: '#ffffff',  // Pure white
+          'light-secondary': '#f1f3f2',  // Very light gray
           dark: '#0f172a',
         },
         
         // Surface Colors (Cards, Modals)
         surface: {
           light: '#ffffff',
-          'light-secondary': '#f1f5f9',
+          'light-secondary': '#f8f9fa',
           dark: '#1e293b',
           'dark-secondary': '#334155',
         },
         
         // Text Colors
         text: {
-          'light-primary': '#0f172a',
-          'light-secondary': '#64748b',
-          'light-tertiary': '#94a3b8',
+          'light-primary': '#202328',  // Dark text
+          'light-secondary': '#6b7280',
+          'light-tertiary': '#9ca3af',
           'dark-primary': '#f8fafc',
           'dark-secondary': '#cbd5e1',
           'dark-tertiary': '#94a3b8',

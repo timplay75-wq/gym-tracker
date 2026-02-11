@@ -45,13 +45,13 @@ export function Button({
     onClick?.(e);
   };
 
-  // Variant styles
+  // Variant styles (Minimalist iOS-style)
   const variantClasses = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-md hover:shadow-lg dark:bg-primary-500 dark:hover:bg-primary-600',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
-    outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 active:bg-primary-100 dark:border-primary-400 dark:text-primary-400 dark:hover:bg-primary-950',
+    primary: 'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 shadow-sm dark:bg-primary-500 dark:hover:bg-primary-600',
+    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
+    outline: 'border border-gray-300 text-gray-900 hover:bg-gray-50 active:bg-gray-100 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800',
     ghost: 'text-gray-700 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 dark:active:bg-gray-700',
-    danger: 'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 shadow-md hover:shadow-lg dark:bg-error-500 dark:hover:bg-error-600',
+    danger: 'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 shadow-sm dark:bg-error-500 dark:hover:bg-error-600',
   };
 
   // Size styles
@@ -73,11 +73,11 @@ export function Button({
       disabled={disabled || loading}
       className={`
         relative overflow-hidden
-        font-semibold rounded-xl
-        transition-all duration-200
+        font-medium rounded-lg
+        transition-all duration-150
         disabled:opacity-50 disabled:cursor-not-allowed
-        focus:outline-none focus:ring-4 focus:ring-primary-500/20
-        hover:scale-105 active:scale-95
+        focus:outline-none focus:ring-2 focus:ring-primary-500/30
+        active:scale-98
         ${variantClasses[variant]}
         ${sizeClasses[size]}
         ${className}
@@ -88,7 +88,7 @@ export function Button({
       {ripples.map((ripple) => (
         <span
           key={ripple.id}
-          className="absolute rounded-full bg-white/30 pointer-events-none animate-ping"
+          className="absolute rounded-full bg-white/20 pointer-events-none animate-ping"
           style={{
             left: ripple.x,
             top: ripple.y,

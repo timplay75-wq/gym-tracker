@@ -18,12 +18,12 @@ export function Card({
   children,
   onClick,
 }: CardProps) {
-  // Variant styles
+  // Variant styles (iOS Minimalist)
   const variantClasses = {
-    default: 'bg-white dark:bg-gray-800 shadow-md',
-    elevated: 'bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300',
+    default: 'bg-white dark:bg-gray-800 shadow-sm',
+    elevated: 'bg-white dark:bg-gray-800 shadow-md transition-shadow duration-200',
     glass: 'bg-white/10 dark:bg-white/5 backdrop-blur-lg border border-white/20 dark:border-white/10',
-    interactive: 'bg-white dark:bg-gray-800 shadow-md hover:shadow-lg hover:-translate-y-1 cursor-pointer transition-all duration-200 active:scale-98',
+    interactive: 'bg-white dark:bg-gray-800 shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 active:scale-[0.99]',
   };
 
   // Padding styles
@@ -38,7 +38,7 @@ export function Card({
     <div
       onClick={onClick}
       className={`
-        rounded-xl
+        rounded-2xl
         ${variantClasses[variant]}
         ${paddingClasses[padding]}
         ${className}
