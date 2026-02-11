@@ -4,31 +4,20 @@ import { Button, Card, Input, Modal } from '@/components';
 import { generateId } from '@/utils/helpers';
 import { storageService } from '@/services/storage';
 import type { Workout, Exercise, Set, DayOfWeek } from '@/types';
+import { MUSCLE_GROUPS, DETAILED_EXERCISES, type MuscleGroupKey } from '@/utils/muscleGroups';
 
-// Популярные упражнения по категориям
-const EXERCISE_CATEGORIES = {
-  chest: { name: 'Грудь', emoji: '💪', color: 'primary' },
-  back: { name: 'Спина', emoji: '🦾', color: 'success' },
-  shoulders: { name: 'Плечи', emoji: '🏋️', color: 'warning' },
-  legs: { name: 'Ноги', emoji: '🦵', color: 'error' },
-  arms: { name: 'Руки', emoji: '💪', color: 'primary' },
-  core: { name: 'Пресс', emoji: '🔥', color: 'warning' },
+// Категории для фильтрации
+const FILTER_CATEGORIES = {
+  all: { name: 'Все', emoji: '💪' },
+  chest: { name: 'Грудь', emoji: '💪' },
+  back: { name: 'Спина', emoji: '🦾' },
+  arms: { name: 'Руки', emoji: '💪' },
+  shoulders: { name: 'Плечи', emoji: '🏋️' },
+  legs: { name: 'Ноги', emoji: '🦵' },
+  core: { name: 'Пресс', emoji: '🔥' },
 } as const;
 
-const POPULAR_EXERCISES = [
-  { id: '1', name: 'Жим штанги лежа', category: 'chest', equipment: 'Штанга' },
-  { id: '2', name: 'Приседания со штангой', category: 'legs', equipment: 'Штанга' },
-  { id: '3', name: 'Становая тяга', category: 'back', equipment: 'Штанга' },
-  { id: '4', name: 'Жим гантелей лежа', category: 'chest', equipment: 'Гантели' },
-  { id: '5', name: 'Подтягивания', category: 'back', equipment: 'Свой вес' },
-  { id: '6', name: 'Жим штанги стоя', category: 'shoulders', equipment: 'Штанга' },
-  { id: '7', name: 'Тяга штанги в наклоне', category: 'back', equipment: 'Штанга' },
-  { id: '8', name: 'Сгибание рук со штангой', category: 'arms', equipment: 'Штанга' },
-  { id: '9', name: 'Французский жим', category: 'arms', equipment: 'Штанга' },
-  { id: '10', name: 'Скручивания', category: 'core', equipment: 'Свой вес' },
-];
-
-type ExerciseCategory = keyof typeof EXERCISE_CATEGORIES;
+type FilterCategory = keyof typeof FILTER_CATEGORIES;
 
 export const WorkoutBuilder = () => {
   const navigate = useNavigate();
@@ -44,25 +33,29 @@ export const WorkoutBuilder = () => {
   
   // Модальное окно добавления упражнения
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<ExerciseCategory>('chest');
+  const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Фильтрация упражнений
-  const filteredExercises = POPULAR_EXERCISES.filter(ex => {
-    const matchesCategory = ex.category === selectedCategory;
+  const filteredExercises = DETAILED_EXERCISES.filter(ex => {
+    const muscleGroup = MUSCLE_GROUPS[ex.muscleGroup as MuscleGroupKey];
+    const matchesCategory = selectedCategory === 'all' || muscleGroup.category === selectedCategory;
     const matchesSearch = searchQuery === '' || 
-      ex.name.toLowerCase().includes(searchQuery.toLowerCase());
+      ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      muscleGroup.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
   // Добавление упражнения
-  const handleAddExercise = (exerciseName: string, category: ExerciseCategory) => {
+  const handleAddExercise = (exerciseName: string, muscleGroupKey: MuscleGroupKey) => {
+    const muscleGroup = MUSCLE_GROUPS[muscleGroupKey];
     const newExercise: Exercise = {
       id: generateId(),
       name: exerciseName,
-      category,
+      category: muscleGroup.category,
       type: 'strength',
       sets: [],
+      targetMuscles: [muscleGroup.name],
     };
     setExercises([...exercises, newExercise]);
     setIsAddExerciseOpen(false);
@@ -268,9 +261,11 @@ export const WorkoutBuilder = () => {
                       <h3 className="font-semibold text-gray-900 dark:text-white">
                         {exercise.name}
                       </h3>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">
-                        {EXERCISE_CATEGORIES[exercise.category as ExerciseCategory]?.name || exercise.category}
-                      </span>
+                      {exercise.targetMuscles && exercise.targetMuscles.length > 0 && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {exercise.targetMuscles[0]}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
@@ -425,10 +420,10 @@ export const WorkoutBuilder = () => {
 
         {/* Категории (табы) */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-          {Object.entries(EXERCISE_CATEGORIES).map(([key, cat]) => (
+          {Object.entries(FILTER_CATEGORIES).map(([key, cat]) => (
             <button
               key={key}
-              onClick={() => setSelectedCategory(key as ExerciseCategory)}
+              onClick={() => setSelectedCategory(key as FilterCategory)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 selectedCategory === key
                   ? 'bg-primary-600 text-white'
@@ -447,27 +442,33 @@ export const WorkoutBuilder = () => {
               Упражнения не найдены
             </div>
           ) : (
-            filteredExercises.map((exercise) => (
-              <button
-                key={exercise.id}
-                onClick={() => handleAddExercise(exercise.name, exercise.category as ExerciseCategory)}
-                className="w-full p-3 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-primary-300">
-                      {exercise.name}
+            filteredExercises.map((exercise) => {
+              const muscleGroup = MUSCLE_GROUPS[exercise.muscleGroup as MuscleGroupKey];
+              return (
+                <button
+                  key={exercise.id}
+                  onClick={() => handleAddExercise(exercise.name, exercise.muscleGroup as MuscleGroupKey)}
+                  className="w-full p-3 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{muscleGroup.emoji}</span>
+                        <div className="font-medium text-gray-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-primary-300">
+                          {exercise.name}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 ml-7">
+                        {muscleGroup.name} • {exercise.equipment}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {exercise.equipment}
-                    </div>
+                    <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
                   </div>
-                  <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </div>
-              </button>
-            ))
+                </button>
+              );
+            })
           )}
           </div>
         </Modal>

@@ -1,9 +1,23 @@
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 import { Button, Card } from '../components';
+import { storageService } from '../services/storage';
+import type { Workout } from '../types';
 
 export const Home = () => {
   const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const [recentWorkouts, setRecentWorkouts] = useState<Workout[]>([]);
+
+  useEffect(() => {
+    const workouts = storageService.getWorkouts();
+    // Сортируем по дате и берем 5 последних
+    const sorted = workouts
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+    setRecentWorkouts(sorted);
+  }, []);
 
   // Mock data - в будущем будет из API/localStorage
   const todayWorkout = {
@@ -13,21 +27,22 @@ export const Home = () => {
   };
 
   const stats = {
-    weekWorkouts: 4,
-    monthTonnage: 12500,
+    weekWorkouts: recentWorkouts.filter(w => {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return new Date(w.date) >= weekAgo;
+    }).length,
+    monthTonnage: recentWorkouts.reduce((sum, w) => {
+      return sum + (w.exercises?.reduce((total, ex) => {
+        return total + (ex.sets?.reduce((s, set) => 
+          s + (set.completed ? (set.weight || 0) * (set.reps || 0) : 0), 0) || 0);
+      }, 0) || 0);
+    }, 0),
     currentProgram: 'Push/Pull/Legs',
     streak: 7,
   };
 
-  const recentWorkouts = [
-    { id: 1, name: 'Спина и бицепс', date: '2026-02-02', duration: 55 },
-    { id: 2, name: 'Ноги', date: '2026-02-01', duration: 70 },
-    { id: 3, name: 'Грудь и трицепс', date: '2026-01-31', duration: 60 },
-    { id: 4, name: 'Плечи и пресс', date: '2026-01-30', duration: 45 },
-    { id: 5, name: 'Спина', date: '2026-01-29', duration: 50 },
-  ];
-
-  const formatDate = (dateString: string) => {
+const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
     const yesterday = new Date(today);
@@ -182,40 +197,75 @@ export const Home = () => {
             </div>
 
             <div className="space-y-2">
-              {recentWorkouts.map((workout) => (
-                <Card
-                  key={workout.id}
-                  variant="interactive"
-                  padding="md"
-                  className="cursor-pointer"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-light-primary dark:text-white">
-                        {workout.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-0.5 text-sm text-light-secondary dark:text-gray-400">
-                        <span>{formatDate(workout.date)}</span>
-                        <span>•</span>
-                        <span>{workout.duration} мин</span>
-                      </div>
-                    </div>
-                    <svg
-                      className="w-5 h-5 text-gray-300 dark:text-gray-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </div>
+              {recentWorkouts.length === 0 ? (
+                <Card padding="md" className="text-center">
+                  <p className="text-light-secondary dark:text-gray-400">
+                    Нет тренировок
+                  </p>
+                  <Button 
+                    variant="primary" 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={() => navigate('/builder')}
+                  >
+                    Создать первую
+                  </Button>
                 </Card>
-              ))}
+              ) : (
+                recentWorkouts.map((workout) => {
+                  // Получаем уникальные группы мышц
+                  const muscleGroups = [...new Set(
+                    workout.exercises.map(ex => ex.category)
+                  )].slice(0, 3);
+
+                  const muscleEmojis: Record<string, string> = {
+                    chest: '💪',
+                    back: '🦿',
+                    legs: '🦵',
+                    shoulders: '🏋️',
+                    arms: '💪',
+                    core: '🔥',
+                    cardio: '🏃',
+                  };
+
+                  return (
+                    <Card
+                      key={workout.id}
+                      variant="interactive"
+                      padding="sm"
+                      onClick={() => navigate('/workouts')}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="flex gap-1 text-base">
+                              {muscleGroups.map((cat, idx) => (
+                                <span key={idx}>{muscleEmojis[cat] || '⚡'}</span>
+                              ))}
+                            </div>
+                            <h3 className="font-semibold text-light-primary dark:text-white truncate text-sm">
+                              {workout.name}
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-light-secondary dark:text-gray-400">
+                            <span>{formatDate(workout.date as unknown as string)}</span>
+                            {workout.duration && (
+                              <>
+                                <span>•</span>
+                                <span>{workout.duration} мин</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -223,7 +273,7 @@ export const Home = () => {
 
       {/* Floating Action Button */}
       <Link
-        to="/add"
+        to="/builder"
         className="fixed bottom-20 right-4 sm:right-6 p-4 rounded-full bg-primary-500 text-white shadow-lg hover:shadow-xl hover:bg-primary-600 active:scale-95 transition-all duration-200 z-40"
         aria-label="Добавить тренировку"
       >
