@@ -28,11 +28,11 @@ export const AddWorkout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="pt-6 pb-4 flex items-center justify-between">
-          <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white">
+          <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white">
             Новая тренировка
           </h1>
           <button
@@ -40,7 +40,7 @@ export const AddWorkout = () => {
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Назад"
           >
-            <svg className="w-6 h-6 text-text-light-secondary dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-light-secondary dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -52,7 +52,7 @@ export const AddWorkout = () => {
               <div className="mb-6">
                 <label 
                   htmlFor="workoutName" 
-                  className="block text-sm font-medium text-text-light-primary dark:text-gray-200 mb-2"
+                  className="block text-sm font-medium text-light-primary dark:text-gray-200 mb-2"
                 >
                   Название тренировки
                 </label>
@@ -61,7 +61,7 @@ export const AddWorkout = () => {
                   id="workoutName"
                   value={workoutName}
                   onChange={(e) => setWorkoutName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-text-light-primary dark:text-white placeholder-text-light-tertiary dark:placeholder-gray-500 outline-none transition-all"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-light-primary dark:text-white placeholder-text-light-tertiary dark:placeholder-gray-500 outline-none transition-all"
                   placeholder="Например: Грудь и трицепс"
                   required
                   autoFocus
@@ -81,7 +81,7 @@ export const AddWorkout = () => {
 
           {/* Quick Templates */}
           <div className="mt-6">
-            <h2 className="text-lg font-semibold text-text-light-primary dark:text-white mb-3">
+            <h2 className="text-lg font-semibold text-light-primary dark:text-white mb-3">
               Быстрые шаблоны
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -92,7 +92,7 @@ export const AddWorkout = () => {
                   padding="md"
                   onClick={() => setWorkoutName(template)}
                 >
-                  <p className="font-medium text-text-light-primary dark:text-white">
+                  <p className="font-medium text-light-primary dark:text-white">
                     {template}
                   </p>
                 </Card>

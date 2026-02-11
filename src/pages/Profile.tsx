@@ -18,11 +18,11 @@ export const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="pt-6 pb-4">
-          <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white">
+          <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white">
             Профиль
           </h1>
         </header>
@@ -35,10 +35,10 @@ export const Profile = () => {
                 У
               </div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-text-light-primary dark:text-white">
+                <h2 className="text-xl sm:text-2xl font-bold text-light-primary dark:text-white">
                   Пользователь
                 </h2>
-                <p className="text-sm text-text-light-secondary dark:text-gray-400 mt-1">
+                <p className="text-sm text-light-secondary dark:text-gray-400 mt-1">
                   user@example.com
                 </p>
               </div>
@@ -47,39 +47,39 @@ export const Profile = () => {
 
           {/* Статистика */}
           <div>
-            <h3 className="text-xl font-bold text-text-light-primary dark:text-white mb-3">
+            <h3 className="text-xl font-bold text-light-primary dark:text-white mb-3">
               Статистика
             </h3>
             <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <Card padding="md" className="text-center">
-                <p className="text-xs sm:text-sm text-text-light-secondary dark:text-gray-400 mb-1">
+                <p className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mb-1">
                   Всего тренировок
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-text-light-primary dark:text-white">
+                <p className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
                   0
                 </p>
               </Card>
               <Card padding="md" className="text-center">
-                <p className="text-xs sm:text-sm text-text-light-secondary dark:text-gray-400 mb-1">
+                <p className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mb-1">
                   Упражнений
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-text-light-primary dark:text-white">
+                <p className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
                   0
                 </p>
               </Card>
               <Card padding="md" className="text-center">
-                <p className="text-xs sm:text-sm text-text-light-secondary dark:text-gray-400 mb-1">
+                <p className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mb-1">
                   Общий тоннаж
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-text-light-primary dark:text-white">
+                <p className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
                   0т
                 </p>
               </Card>
               <Card padding="md" className="text-center">
-                <p className="text-xs sm:text-sm text-text-light-secondary dark:text-gray-400 mb-1">
+                <p className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mb-1">
                   Streak
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-text-light-primary dark:text-white">
+                <p className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
                   0 🔥
                 </p>
               </Card>
@@ -88,7 +88,7 @@ export const Profile = () => {
 
           {/* Настройки */}
           <div>
-            <h3 className="text-xl font-bold text-text-light-primary dark:text-white mb-3">
+            <h3 className="text-xl font-bold text-light-primary dark:text-white mb-3">
               Настройки
             </h3>
             <Card padding="none">
@@ -98,7 +98,7 @@ export const Profile = () => {
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🌙</span>
-                  <span className="font-medium text-text-light-primary dark:text-white">
+                  <span className="font-medium text-light-primary dark:text-white">
                     Темная тема
                   </span>
                 </div>
@@ -117,7 +117,7 @@ export const Profile = () => {
                 className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <span className="text-2xl">⚖️</span>
-                <span className="font-medium text-text-light-primary dark:text-white">
+                <span className="font-medium text-light-primary dark:text-white">
                   Единицы измерения
                 </span>
               </button>
@@ -128,7 +128,7 @@ export const Profile = () => {
                 className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <span className="text-2xl">⏱</span>
-                <span className="font-medium text-text-light-primary dark:text-white">
+                <span className="font-medium text-light-primary dark:text-white">
                   Таймер отдыха
                 </span>
               </button>

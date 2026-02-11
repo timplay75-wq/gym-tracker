@@ -43,7 +43,7 @@ export const ExerciseLibrary = () => {
   // Если выбрана категория - показываем её упражнения
   if (selectedCategory) {
     return (
-      <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-24">
+      <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <header className="pt-6 pb-4">
@@ -59,11 +59,11 @@ export const ExerciseLibrary = () => {
 
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white flex items-center gap-3">
+                <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white flex items-center gap-3">
                   <span>{selectedCategory.icon}</span>
                   {selectedCategory.name}
                 </h1>
-                <p className="text-sm text-text-light-secondary dark:text-gray-400 mt-2">
+                <p className="text-sm text-light-secondary dark:text-gray-400 mt-2">
                   {selectedCategory.exercises.length} упражнений
                 </p>
               </div>
@@ -83,11 +83,11 @@ export const ExerciseLibrary = () => {
             {selectedCategory.exercises.map((exercise) => (
               <Card key={exercise.id} padding="md" variant="interactive">
                 <div>
-                  <h3 className="text-lg font-semibold text-text-light-primary dark:text-white">
+                  <h3 className="text-lg font-semibold text-light-primary dark:text-white">
                     {exercise.name}
                   </h3>
                   {exercise.equipment && (
-                    <p className="text-sm text-text-light-secondary dark:text-gray-400 mt-1">
+                    <p className="text-sm text-light-secondary dark:text-gray-400 mt-1">
                       {exercise.equipment}
                     </p>
                   )}
@@ -120,7 +120,7 @@ export const ExerciseLibrary = () => {
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-text-light-primary dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-light-primary dark:text-gray-300 mb-2">
                 Название упражнения
               </label>
               <Input
@@ -132,8 +132,8 @@ export const ExerciseLibrary = () => {
             </div>
 
             <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3">
-              <p className="text-sm text-text-light-secondary dark:text-gray-400">
-                Категория: <span className="font-semibold text-text-light-primary dark:text-gray-200">{selectedCategory.name}</span>
+              <p className="text-sm text-light-secondary dark:text-gray-400">
+                Категория: <span className="font-semibold text-light-primary dark:text-gray-200">{selectedCategory.name}</span>
               </p>
             </div>
 
@@ -165,14 +165,14 @@ export const ExerciseLibrary = () => {
 
   // Показываем список категорий
   return (
-    <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="pt-6 pb-4">
-          <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white">
+          <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white">
             Библиотека упражнений
           </h1>
-          <p className="text-sm text-text-light-secondary dark:text-gray-400 mt-2">
+          <p className="text-sm text-light-secondary dark:text-gray-400 mt-2">
             Выберите категорию
           </p>
         </header>
@@ -190,16 +190,16 @@ export const ExerciseLibrary = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{category.icon}</span>
                   <div>
-                    <h3 className="text-lg font-semibold text-text-light-primary dark:text-white">
+                    <h3 className="text-lg font-semibold text-light-primary dark:text-white">
                       {category.name}
                     </h3>
-                    <p className="text-sm text-text-light-secondary dark:text-gray-400">
+                    <p className="text-sm text-light-secondary dark:text-gray-400">
                       {category.exercises.length} упражнений
                     </p>
                   </div>
                 </div>
                 <svg
-                  className="w-5 h-5 text-text-light-secondary dark:text-gray-400"
+                  className="w-5 h-5 text-light-secondary dark:text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

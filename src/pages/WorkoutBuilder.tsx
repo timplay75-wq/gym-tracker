@@ -147,15 +147,15 @@ export const WorkoutBuilder = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-32">
+    <div className="min-h-screen bg-white dark:bg-gray-900 pb-32">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="pt-6 pb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white mb-2">
+            <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white mb-2">
               Новая тренировка
             </h1>
-            <p className="text-text-light-secondary dark:text-gray-400">
+            <p className="text-light-secondary dark:text-gray-400">
               Добавьте упражнения и настройте подходы
             </p>
           </div>
@@ -164,7 +164,7 @@ export const WorkoutBuilder = () => {
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Назад"
           >
-            <svg className="w-6 h-6 text-text-light-secondary dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-light-secondary dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -207,7 +207,7 @@ export const WorkoutBuilder = () => {
         {/* Список упражнений */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-text-light-primary dark:text-white">
+            <h2 className="text-lg font-semibold text-light-primary dark:text-white">
               Упражнения ({exercises.length})
           </h2>
         </div>

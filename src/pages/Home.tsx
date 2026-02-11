@@ -49,15 +49,15 @@ export const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="pt-6 pb-4 flex items-start justify-between">
           <div className="flex-1">
-            <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white mb-1">
+            <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white mb-1">
               Главная
             </h1>
-            <p className="text-sm text-text-light-secondary dark:text-gray-400 capitalize">
+            <p className="text-sm text-light-secondary dark:text-gray-400 capitalize">
               {getCurrentDate()}
             </p>
           </div>
@@ -87,16 +87,16 @@ export const Home = () => {
           <Card variant="default" padding="lg" className="animate-fade-in">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1">
-                <p className="text-xs font-medium text-text-light-secondary dark:text-gray-400 uppercase tracking-wider mb-1">
+                <p className="text-xs font-medium text-light-secondary dark:text-gray-400 uppercase tracking-wider mb-1">
                   Тренировка на сегодня
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-bold text-text-light-primary dark:text-white">
+                <h2 className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
                   {todayWorkout.name}
                 </h2>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 mb-4 text-sm text-text-light-secondary dark:text-gray-400">
+            <div className="flex items-center gap-4 mb-4 text-sm text-light-secondary dark:text-gray-400">
               <div className="flex items-center gap-1.5">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -129,39 +129,39 @@ export const Home = () => {
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <Card variant="default" padding="md" className="animate-fade-in">
-              <p className="text-xs text-text-light-secondary dark:text-gray-400 mb-1">
+              <p className="text-xs text-light-secondary dark:text-gray-400 mb-1">
                 За неделю
               </p>
-              <p className="text-3xl font-bold text-text-light-primary dark:text-white">
+              <p className="text-3xl font-bold text-light-primary dark:text-white">
                 {stats.weekWorkouts}
               </p>
               <p className="text-xs text-success-600 dark:text-success-400 mt-1">+2 от прошлой</p>
             </Card>
 
             <Card variant="default" padding="md" className="animate-fade-in">
-              <p className="text-xs text-text-light-secondary dark:text-gray-400 mb-1">
+              <p className="text-xs text-light-secondary dark:text-gray-400 mb-1">
                 Тоннаж/месяц
               </p>
-              <p className="text-3xl font-bold text-text-light-primary dark:text-white">
+              <p className="text-3xl font-bold text-light-primary dark:text-white">
                 {(stats.monthTonnage / 1000).toFixed(1)}т
               </p>
               <p className="text-xs text-success-600 dark:text-success-400 mt-1">+15%</p>
             </Card>
 
             <Card variant="default" padding="md" className="animate-fade-in">
-              <p className="text-xs text-text-light-secondary dark:text-gray-400 mb-1">
+              <p className="text-xs text-light-secondary dark:text-gray-400 mb-1">
                 Программа
               </p>
-              <p className="text-lg font-semibold text-text-light-primary dark:text-white">
+              <p className="text-lg font-semibold text-light-primary dark:text-white">
                 {stats.currentProgram}
               </p>
             </Card>
 
             <Card variant="default" padding="md" className="animate-fade-in">
-              <p className="text-xs text-text-light-secondary dark:text-gray-400 mb-1">
+              <p className="text-xs text-light-secondary dark:text-gray-400 mb-1">
                 Streak
               </p>
-              <p className="text-3xl font-bold text-text-light-primary dark:text-white">
+              <p className="text-3xl font-bold text-light-primary dark:text-white">
                 {stats.streak} 🔥
               </p>
             </Card>
@@ -170,7 +170,7 @@ export const Home = () => {
           {/* Recent Workouts */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-2xl font-bold text-text-light-primary dark:text-white">
+              <h2 className="text-2xl font-bold text-light-primary dark:text-white">
                 Последние тренировки
               </h2>
               <Link
@@ -191,10 +191,10 @@ export const Home = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-text-light-primary dark:text-white">
+                      <h3 className="font-semibold text-light-primary dark:text-white">
                         {workout.name}
                       </h3>
-                      <div className="flex items-center gap-2 mt-0.5 text-sm text-text-light-secondary dark:text-gray-400">
+                      <div className="flex items-center gap-2 mt-0.5 text-sm text-light-secondary dark:text-gray-400">
                         <span>{formatDate(workout.date)}</span>
                         <span>•</span>
                         <span>{workout.duration} мин</span>

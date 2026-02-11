@@ -95,19 +95,19 @@ export default function DesignDemo() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card dark:card-dark">
               <h3 className="font-semibold mb-2">Обычная карточка</h3>
-              <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">
+              <p className="text-sm text-light-secondary dark:text-text-dark-secondary">
                 Базовая карточка с elevation-1
               </p>
             </div>
             <div className="card-elevated dark:card-elevated-dark">
               <h3 className="font-semibold mb-2">Elevated карточка</h3>
-              <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">
+              <p className="text-sm text-light-secondary dark:text-text-dark-secondary">
                 С более высокой тенью
               </p>
             </div>
             <div className="card-interactive dark:card-interactive-dark">
               <h3 className="font-semibold mb-2">Интерактивная</h3>
-              <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary">
+              <p className="text-sm text-light-secondary dark:text-text-dark-secondary">
                 С hover эффектами
               </p>
             </div>
@@ -171,7 +171,7 @@ export default function DesignDemo() {
                 <div className="text-6xl animate-fade-in">👋</div>
               </div>
               <h3 className="font-semibold text-center">Fade In</h3>
-              <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary text-center">
+              <p className="text-sm text-light-secondary dark:text-text-dark-secondary text-center">
                 Плавное появление
               </p>
             </div>
@@ -180,7 +180,7 @@ export default function DesignDemo() {
                 <div className="text-6xl animate-scale-in">💪</div>
               </div>
               <h3 className="font-semibold text-center">Scale In</h3>
-              <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary text-center">
+              <p className="text-sm text-light-secondary dark:text-text-dark-secondary text-center">
                 Масштабирование
               </p>
             </div>
@@ -189,7 +189,7 @@ export default function DesignDemo() {
                 <div className="text-6xl animate-slide-in-bottom">🎯</div>
               </div>
               <h3 className="font-semibold text-center">Slide In Bottom</h3>
-              <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary text-center">
+              <p className="text-sm text-light-secondary dark:text-text-dark-secondary text-center">
                 Выезд снизу
               </p>
             </div>
@@ -202,7 +202,7 @@ export default function DesignDemo() {
                 <div className="text-6xl animate-shimmer">✨</div>
               </div>
               <h3 className="font-semibold text-center">Shimmer</h3>
-              <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary text-center">
+              <p className="text-sm text-light-secondary dark:text-text-dark-secondary text-center">
                 Бесконечный shimmer эффект
               </p>
             </Card>
@@ -211,7 +211,7 @@ export default function DesignDemo() {
                 <div className="text-6xl animate-pulse-glow">🔥</div>
               </div>
               <h3 className="font-semibold text-center">Pulse Glow</h3>
-              <p className="text-sm text-text-light-secondary dark:text-text-dark-secondary text-center">
+              <p className="text-sm text-light-secondary dark:text-text-dark-secondary text-center">
                 Пульсирующее свечение
               </p>
             </Card>
@@ -240,7 +240,7 @@ export default function DesignDemo() {
           <h2 className="text-5xl font-bold text-gradient mb-2">
             Градиентный текст
           </h2>
-          <p className="text-text-light-secondary dark:text-text-dark-secondary">
+          <p className="text-light-secondary dark:text-text-dark-secondary">
             Красивые заголовки с градиентом
           </p>
         </section>

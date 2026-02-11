@@ -154,11 +154,11 @@ export const Workouts = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-24">
+    <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="pt-6 pb-4">
-          <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white">
+          <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white">
             Тренировки
           </h1>
         </header>
@@ -183,7 +183,7 @@ export const Workouts = () => {
                 className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-all ${
                   filterPeriod === period.value
                     ? 'bg-primary-500 text-white shadow-sm'
-                    : 'bg-white dark:bg-gray-800 text-text-light-primary dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
+                    : 'bg-white dark:bg-gray-800 text-light-primary dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
                 }`}
               >
                 {period.label}
@@ -199,7 +199,7 @@ export const Workouts = () => {
               <div className="text-2xl font-bold text-primary-500 dark:text-primary-400">
                 {periodStats.totalWorkouts}
               </div>
-              <div className="text-xs text-text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
                 Тренировок
               </div>
             </Card>
@@ -208,7 +208,7 @@ export const Workouts = () => {
               <div className="text-2xl font-bold text-success-600 dark:text-success-400">
                 {periodStats.totalVolume.toFixed(0)}
               </div>
-              <div className="text-xs text-text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
                 Тоннаж (кг)
               </div>
             </Card>
@@ -217,7 +217,7 @@ export const Workouts = () => {
               <div className="text-2xl font-bold text-warning-600 dark:text-warning-400">
                 {periodStats.totalSets}
               </div>
-              <div className="text-xs text-text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
                 Подходов
               </div>
             </Card>
@@ -226,7 +226,7 @@ export const Workouts = () => {
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {periodStats.totalExercises}
               </div>
-              <div className="text-xs text-text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
                 Упражнений
               </div>
             </Card>
@@ -238,10 +238,10 @@ export const Workouts = () => {
           {filteredWorkouts.length === 0 ? (
             <Card padding="lg" className="text-center">
               <div className="py-8">
-                <p className="text-lg text-text-light-secondary dark:text-gray-400 mb-2">
+                <p className="text-lg text-light-secondary dark:text-gray-400 mb-2">
                   {searchQuery ? 'Ничего не найдено' : 'Нет завершенных тренировок'}
                 </p>
-                <p className="text-sm text-text-light-tertiary dark:text-gray-500 mb-4">
+                <p className="text-sm text-light-tertiary dark:text-gray-500 mb-4">
                   {searchQuery ? 'Попробуйте изменить запрос' : 'Добавьте первую тренировку!'}
                 </p>
                 {!searchQuery && (
@@ -259,10 +259,10 @@ export const Workouts = () => {
                   <div key={monthKey}>
                     {/* Заголовок месяца */}
                     <div className="flex items-center gap-3 mb-3">
-                      <h2 className="text-lg font-semibold text-text-light-primary dark:text-white capitalize">
+                      <h2 className="text-lg font-semibold text-light-primary dark:text-white capitalize">
                         {formatMonthYear(monthKey)}
                       </h2>
-                      <div className="text-sm text-text-light-secondary dark:text-gray-400">
+                      <div className="text-sm text-light-secondary dark:text-gray-400">
                         {monthWorkouts.length} {monthWorkouts.length === 1 ? 'тренировка' : 'тренировок'}
                       </div>
                     </div>
@@ -283,18 +283,18 @@ export const Workouts = () => {
                             <div className="flex justify-between items-start">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="text-lg font-semibold text-text-light-primary dark:text-white truncate">
+                                  <h3 className="text-lg font-semibold text-light-primary dark:text-white truncate">
                                     {workout.name}
                                   </h3>
                                   {workout.status === 'completed' && (
                                     <span className="text-success-600 dark:text-success-400 flex-shrink-0">✓</span>
                                   )}
                                 </div>
-                                <p className="text-sm text-text-light-secondary dark:text-gray-400">
+                                <p className="text-sm text-light-secondary dark:text-gray-400">
                                   {formatDate(new Date(workout.date))}
                                 </p>
                                 
-                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-text-light-secondary dark:text-gray-400">
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-light-secondary dark:text-gray-400">
                                   <span>Упражнений: {workout.exercises.length}</span>
                                   <span>Подходов: {sets}</span>
                                   {volume > 0 && <span>Тоннаж: {volume.toFixed(0)} кг</span>}
@@ -336,11 +336,11 @@ export const Workouts = () => {
           <div className="space-y-4">
             {/* Информация о тренировке */}
             <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4">
-              <div className="text-sm text-text-light-secondary dark:text-gray-400 mb-1">
+              <div className="text-sm text-light-secondary dark:text-gray-400 mb-1">
                 {formatDate(new Date(selectedWorkout.date))}
               </div>
               {selectedWorkout.duration && (
-                <div className="text-sm text-text-light-secondary dark:text-gray-400">
+                <div className="text-sm text-light-secondary dark:text-gray-400">
                   Длительность: {selectedWorkout.duration} мин
                 </div>
               )}
@@ -356,7 +356,7 @@ export const Workouts = () => {
 
                 return (
                   <Card key={idx} padding="sm">
-                    <div className="font-semibold text-text-light-primary dark:text-white mb-2">
+                    <div className="font-semibold text-light-primary dark:text-white mb-2">
                       {exercise.name}
                     </div>
                     
@@ -364,10 +364,10 @@ export const Workouts = () => {
                       {exercise.sets.map((set, setIdx) => (
                         <div 
                           key={setIdx}
-                          className="flex justify-between items-center text-text-light-secondary dark:text-gray-400"
+                          className="flex justify-between items-center text-light-secondary dark:text-gray-400"
                         >
                           <span>Подход {setIdx + 1}:</span>
-                          <span className={set.completed ? 'text-text-light-primary dark:text-gray-200' : ''}>
+                          <span className={set.completed ? 'text-light-primary dark:text-gray-200' : ''}>
                             {set.weight} кг × {set.reps} {set.completed ? '✓' : ''}
                           </span>
                         </div>
@@ -375,7 +375,7 @@ export const Workouts = () => {
                     </div>
 
                     {exerciseVolume > 0 && (
-                      <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-xs text-text-light-secondary dark:text-gray-400">
+                      <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-xs text-light-secondary dark:text-gray-400">
                         Тоннаж: {exerciseVolume} кг
                       </div>
                     )}
@@ -390,7 +390,7 @@ export const Workouts = () => {
                 <div className="text-2xl font-bold text-primary-500 dark:text-primary-400">
                   {calculateVolume(selectedWorkout)}
                 </div>
-                <div className="text-xs text-text-light-secondary dark:text-gray-400 mt-1">
+                <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
                   Общий тоннаж (кг)
                 </div>
               </div>
@@ -398,7 +398,7 @@ export const Workouts = () => {
                 <div className="text-2xl font-bold text-success-600 dark:text-success-400">
                   {countSets(selectedWorkout)}
                 </div>
-                <div className="text-xs text-text-light-secondary dark:text-gray-400 mt-1">
+                <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
                   Всего подходов
                 </div>
               </div>
