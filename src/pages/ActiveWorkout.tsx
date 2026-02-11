@@ -77,7 +77,7 @@ export const ActiveWorkout = () => {
     }
   }, [currentExerciseIndex, currentSetIndex, currentSet]);
 
-  // Завершение подхода
+  // Завершение подхода (только сохраняет, НЕ переключает)
   const handleCompleteSet = () => {
     if (!workout || !currentExercise) return;
 
@@ -101,26 +101,40 @@ export const ActiveWorkout = () => {
       navigator.vibrate(50);
     }
 
-    // Проверяем, есть ли еще подходы в этом упражнении
+    // Останавливаем таймер тренировки
+    setIsWorkoutPaused(true);
+  };
+
+  // Переключение на следующий подход
+  const handleNextSet = () => {
+    if (!workout || !currentExercise) return;
+    
+    const exercise = currentExercise;
+    
+    // Если есть еще подходы
     if (currentSetIndex < exercise.sets.length - 1) {
-      // Переход к следующему подходу
       setCurrentSetIndex(currentSetIndex + 1);
       
       // Запускаем таймер отдыха
-      const restTimeSeconds = set.restTime || 90;
+      const currentSet = exercise.sets[currentSetIndex];
+      const restTimeSeconds = currentSet?.restTime || 90;
       setRestTime(restTimeSeconds);
       setIsResting(true);
       setShowRestTimer(true);
-    } else {
-      // Это был последний подход в упражнении
-      if (currentExerciseIndex < workout.exercises.length - 1) {
-        // Переход к следующему упражнению
-        setCurrentExerciseIndex(currentExerciseIndex + 1);
-        setCurrentSetIndex(0);
-      } else {
-        // Это была последняя тренировка!
-        completeWorkout();
-      }
+      
+      // Возобновляем таймер
+      setIsWorkoutPaused(false);
+    }
+  };
+
+  // Переключение на следующее упражнение
+  const handleNextExercise = () => {
+    if (!workout) return;
+    
+    if (currentExerciseIndex < workout.exercises.length - 1) {
+      setCurrentExerciseIndex(currentExerciseIndex + 1);
+      setCurrentSetIndex(0);
+      setIsWorkoutPaused(false);
     }
   };
 
@@ -138,19 +152,17 @@ export const ActiveWorkout = () => {
     setIsCompleted(true);
   };
 
-  // Закрытие тренировки (сохранение прогресса)
+  // Закрытие тренировки (сохранение прогресса и выход)
   const handleCloseWorkout = () => {
     if (!workout) return;
     
-    if (window.confirm('Завершить тренировку и сохранить прогресс?')) {
-      const savedWorkout: Workout = {
-        ...workout,
-        status: 'completed',
-        duration: Math.floor(workoutTime / 60),
-      };
-      storageService.saveWorkout(savedWorkout);
-      navigate('/workouts');
-    }
+    const savedWorkout: Workout = {
+      ...workout,
+      status: 'in-progress', // Не завершаем, просто сохраняем
+      duration: Math.floor(workoutTime / 60),
+    };
+    storageService.saveWorkout(savedWorkout);
+    navigate('/workouts');
   };
 
   // Пропустить отдых
@@ -418,12 +430,8 @@ export const ActiveWorkout = () => {
 
           {/* Кнопка завершить тренировку */}
           <button
-            onClick={() => {
-              if (window.confirm('Завершить тренировку сейчас?')) {
-                completeWorkout();
-              }
-            }}
-            className="w-full py-3 border-2 border-gray-300 dark:border-gray-600 hover:border-primary-500 dark:hover:border-primary-400 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 text-sm font-medium rounded-xl transition-all"
+            onClick={handleCloseWorkout}
+            className="w-full py-3 border-2 border-gray-300 dark:border-gray-600 hover:border-error-500 dark:hover:border-error-400 text-gray-700 dark:text-gray-300 hover:text-error-600 dark:hover:text-error-400 text-sm font-medium rounded-xl transition-all"
           >
             ✓ Завершить тренировку
           </button>
@@ -444,19 +452,15 @@ export const ActiveWorkout = () => {
               disabled={currentSetIndex === 0}
               className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              ← Предыдущий подход
+              ← Предыдущий
             </button>
 
             <button
-              onClick={() => {
-                if (currentExercise && currentSetIndex < currentExercise.sets.length - 1) {
-                  setCurrentSetIndex(currentSetIndex + 1);
-                }
-              }}
+              onClick={handleNextSet}
               disabled={!currentExercise || currentSetIndex === currentExercise.sets.length - 1}
-              className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex-1 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              Следующий подход →
+              Следующий →
             </button>
           </div>
         </div>
@@ -477,20 +481,19 @@ export const ActiveWorkout = () => {
               disabled={currentExerciseIndex === 0}
               className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              ← Предыдущее упражнение
+              ← Предыдущее
             </button>
 
             <button
-              onClick={() => {
-                if (currentExerciseIndex < workout.exercises.length - 1) {
-                  setCurrentExerciseIndex(currentExerciseIndex + 1);
-                  setCurrentSetIndex(0);
-                }
-              }}
+              onClick={handleNextExercise}
               disabled={currentExerciseIndex === workout.exercises.length - 1}
-              className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
+                currentExerciseIndex < workout.exercises.length - 1
+                  ? 'bg-success-600 hover:bg-success-700 text-white shadow-md'
+                  : 'border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+              }`}
             >
-              Следующее упражнение →
+              Следующее →
             </button>
           </div>
         </div>
