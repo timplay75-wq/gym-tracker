@@ -1,5 +1,6 @@
 import { Card, Button } from '@/components';
 import { useTheme } from '@/hooks/useTheme';
+import { loadTestWorkouts } from '@/utils/testData';
 
 export const Profile = () => {
   const { isDark, toggleTheme } = useTheme();
@@ -9,6 +10,11 @@ export const Profile = () => {
       localStorage.clear();
       window.location.reload();
     }
+  };
+
+  const handleLoadTestData = () => {
+    loadTestWorkouts();
+    alert('✅ Загружено ~30 тестовых тренировок!\n\n🔄 Обновите страницу или перейдите в раздел "Тренировки"');
   };
 
   return (
@@ -124,6 +130,18 @@ export const Profile = () => {
                 <span className="text-2xl">⏱</span>
                 <span className="font-medium text-text-light-primary dark:text-white">
                   Таймер отдыха
+                </span>
+              </button>
+
+              <div className="border-t border-gray-100 dark:border-gray-800" />
+              
+              <button
+                onClick={handleLoadTestData}
+                className="w-full flex items-center gap-3 p-4 hover:bg-success-50 dark:hover:bg-success-900/20 transition-colors"
+              >
+                <span className="text-2xl">📊</span>
+                <span className="font-medium text-success-600 dark:text-success-400">
+                  Загрузить тестовые данные
                 </span>
               </button>
 

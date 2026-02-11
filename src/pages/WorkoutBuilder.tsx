@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '@/hooks/useTheme';
 import { Button, Card, Input, Modal } from '@/components';
 import { generateId } from '@/utils/helpers';
 import { storageService } from '@/services/storage';
@@ -33,7 +32,6 @@ type ExerciseCategory = keyof typeof EXERCISE_CATEGORIES;
 
 export const WorkoutBuilder = () => {
   const navigate = useNavigate();
-  const { isDark } = useTheme();
   
   // Форма тренировки
   const [workoutName, setWorkoutName] = useState('');
@@ -149,27 +147,40 @@ export const WorkoutBuilder = () => {
   };
 
   return (
-    <div className="pb-24 animate-fade-in">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Создание тренировки
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Добавьте упражнения и настройте подходы
-        </p>
-      </div>
+    <div className="min-h-screen bg-background-light dark:bg-gray-900 pb-32">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <header className="pt-6 pb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-text-light-primary dark:text-white mb-2">
+              Новая тренировка
+            </h1>
+            <p className="text-text-light-secondary dark:text-gray-400">
+              Добавьте упражнения и настройте подходы
+            </p>
+          </div>
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Назад"
+          >
+            <svg className="w-6 h-6 text-text-light-secondary dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </header>
 
-      {/* Форма тренировки */}
-      <Card className="mb-4">
-        <div className="space-y-4">
-          <Input
-            label="Название тренировки"
-            value={workoutName}
-            onChange={(e) => setWorkoutName(e.target.value)}
-            placeholder="Например: Грудь и трицепс"
-            required
-          />
+        {/* Форма тренировки */}
+        <Card className="mb-4" padding="lg">
+          <div className="space-y-4">
+            <Input
+              label="Название тренировки"
+              value={workoutName}
+              onChange={(e) => setWorkoutName(e.target.value)}
+              placeholder="Например: Грудь и трицепс"
+              required
+              autoFocus
+            />
 
           <Input
             label="Дата"
@@ -189,15 +200,15 @@ export const WorkoutBuilder = () => {
               rows={3}
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none"
             />
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* Список упражнений */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Упражнения ({exercises.length})
+        {/* Список упражнений */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-text-light-primary dark:text-white">
+              Упражнения ({exercises.length})
           </h2>
         </div>
 
@@ -326,9 +337,9 @@ export const WorkoutBuilder = () => {
         </button>
       </div>
 
-      {/* Bottom Action Bar */}
-      <div className="fixed bottom-16 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-lg">
-        <div className="container mx-auto max-w-3xl">
+        {/* Bottom Action Bar */}
+        <div className="fixed bottom-16 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-lg z-40">
+          <div className="max-w-screen-xl mx-auto">
           <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
@@ -339,10 +350,10 @@ export const WorkoutBuilder = () => {
             </Button>
             <Button
               onClick={handleSaveWorkout}
-              disabled={!workoutName.trim() || exercises.length === 0}
+              disabled={!workoutName.trim()}
               className="w-full"
             >
-              Сохранить
+              💾 Сохранить
             </Button>
           </div>
           {exercises.length > 0 && (
@@ -426,8 +437,9 @@ export const WorkoutBuilder = () => {
               </button>
             ))
           )}
-        </div>
-      </Modal>
+          </div>
+        </Modal>
+      </div>
     </div>
   );
 };
