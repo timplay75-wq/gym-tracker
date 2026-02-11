@@ -253,4 +253,3 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   .hover-glow-lg:hover {
     @apply shadow-[0_0_30px_rgba(99,102,241,0.6)];
   }
-}
