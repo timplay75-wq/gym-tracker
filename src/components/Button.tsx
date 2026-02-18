@@ -10,6 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   icon?: ReactNode;
   iconPosition?: 'left' | 'right';
+  fullWidth?: boolean;
   children: ReactNode;
 }
 
@@ -19,6 +20,7 @@ export function Button({
   loading = false,
   icon,
   iconPosition = 'left',
+  fullWidth = false,
   children,
   className = '',
   disabled,
@@ -47,11 +49,11 @@ export function Button({
 
   // Variant styles (Minimalist iOS-style)
   const variantClasses = {
-    primary: 'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 shadow-sm dark:bg-primary-500 dark:hover:bg-primary-600',
-    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
-    outline: 'border border-gray-300 text-gray-900 hover:bg-gray-50 active:bg-gray-100 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800',
-    ghost: 'text-gray-700 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-800 dark:active:bg-gray-700',
-    danger: 'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 shadow-sm dark:bg-error-500 dark:hover:bg-error-600',
+    primary: 'bg-[#9333ea] text-white hover:bg-[#7c3aed] active:bg-[#6d28d9] shadow-lg shadow-[#9333ea]/30',
+    secondary: 'bg-white text-[#7c3aed] hover:bg-[#f3e8ff] active:bg-[#e9d5ff] border-2 border-[#9333ea]',
+    outline: 'border-2 border-[#9333ea] text-[#7c3aed] hover:bg-[#9333ea] hover:text-white active:bg-[#7c3aed]',
+    ghost: 'text-[#7c3aed] hover:bg-[#9333ea] hover:text-white active:bg-[#7c3aed]',
+    danger: 'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 shadow-sm',
   };
 
   // Size styles
@@ -78,6 +80,7 @@ export function Button({
         disabled:opacity-50 disabled:cursor-not-allowed
         focus:outline-none focus:ring-2 focus:ring-primary-500/30
         active:scale-98
+        ${fullWidth ? 'w-full' : ''}
         ${variantClasses[variant]}
         ${sizeClasses[size]}
         ${className}

@@ -28,7 +28,7 @@ export function ProgressRing({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-gray-200 dark:text-gray-700"
+          className="text-primary-100"
         />
         {/* Progress circle */}
         <circle
@@ -41,19 +41,19 @@ export function ProgressRing({
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="text-primary-600 dark:text-primary-400 transition-all duration-500 ease-out"
+          className="text-primary-600 transition-all duration-500 ease-out"
         />
       </svg>
 
       {/* Center content */}
       <div className="absolute flex flex-col items-center justify-center">
         {showPercentage && (
-          <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <span className="text-2xl font-bold text-gray-900">
             {Math.round(progress)}%
           </span>
         )}
         {label && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <span className="text-xs text-primary-500 mt-1">
             {label}
           </span>
         )}

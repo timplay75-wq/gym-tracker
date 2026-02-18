@@ -1,11 +1,25 @@
 import { useState } from 'react';
-import { Button } from '../components/Button';
-import { Card } from '../components/Card';
-import { Input } from '../components/Input';
-import { Modal } from '../components/Modal';
-import { BottomSheet } from '../components/BottomSheet';
-import { ProgressRing } from '../components/ProgressRing';
-import { StatCard } from '../components/StatCard';
+import { 
+  Button, 
+  Card, 
+  Input, 
+  Modal, 
+  BottomSheet, 
+  ProgressRing, 
+  StatCard,
+  Badge,
+  Switch,
+  Checkbox,
+  Textarea,
+  Spinner,
+  Skeleton,
+  SkeletonCard,
+  SkeletonAvatar,
+  Alert,
+  Tabs,
+  Select,
+  type SelectOption
+} from '../components';
 import { useTheme } from '../hooks/useTheme';
 
 export default function DesignDemo() {
@@ -15,6 +29,20 @@ export default function DesignDemo() {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
+  
+  // Новые состояния для новых компонентов
+  const [switchChecked, setSwitchChecked] = useState(false);
+  const [checkboxChecked, setCheckboxChecked] = useState(false);
+  const [textareaValue, setTextareaValue] = useState('');
+  const [selectedValue, setSelectedValue] = useState('');
+  const [showAlert, setShowAlert] = useState(true);
+  
+  const selectOptions: SelectOption[] = [
+    { value: 'chest', label: 'Грудь', icon: <span>💪</span> },
+    { value: 'back', label: 'Спина', icon: <span>🏋️</span> },
+    { value: 'legs', label: 'Ноги', icon: <span>🦵</span> },
+    { value: 'arms', label: 'Руки', icon: <span>💪</span> },
+  ];
 
   const handleButtonClick = () => {
     setLoading(true);
@@ -403,6 +431,281 @@ export default function DesignDemo() {
               <ProgressRing progress={33} size={80} label="Упражнений" />
               <ProgressRing progress={100} showPercentage={false} label="Готово!" />
             </div>
+          </Card>
+        </section>
+
+        {/* Badge Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">🏷️ Badge Component</h2>
+          <Card padding="lg">
+            <h3 className="text-lg font-semibold mb-4">Варианты</h3>
+            <div className="flex flex-wrap gap-3 mb-6">
+              <Badge variant="default">Default</Badge>
+              <Badge variant="primary">Primary</Badge>
+              <Badge variant="success">Success</Badge>
+              <Badge variant="warning">Warning</Badge>
+              <Badge variant="error">Error</Badge>
+              <Badge variant="info">Info</Badge>
+            </div>
+
+            <h3 className="text-lg font-semibold mb-4">Размеры</h3>
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <Badge size="sm" variant="primary">Small</Badge>
+              <Badge size="md" variant="primary">Medium</Badge>
+              <Badge size="lg" variant="primary">Large</Badge>
+            </div>
+
+            <h3 className="text-lg font-semibold mb-4">С точкой (dot)</h3>
+            <div className="flex flex-wrap gap-3">
+              <Badge variant="success" dot>Активно</Badge>
+              <Badge variant="error" dot>Неактивно</Badge>
+              <Badge variant="warning" dot>Ожидание</Badge>
+            </div>
+          </Card>
+        </section>
+
+        {/* Switch Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">🔘 Switch Component</h2>
+          <Card padding="lg">
+            <div className="space-y-4">
+              <Switch 
+                checked={switchChecked} 
+                onChange={setSwitchChecked} 
+                label="Включить уведомления" 
+              />
+              <Switch 
+                checked={true} 
+                label="Темная тема" 
+              />
+              <Switch 
+                checked={false} 
+                disabled 
+                label="Disabled (off)" 
+              />
+              <Switch 
+                checked={true} 
+                disabled 
+                label="Disabled (on)" 
+              />
+            </div>
+          </Card>
+        </section>
+
+        {/* Checkbox Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">☑️ Checkbox Component</h2>
+          <Card padding="lg">
+            <div className="space-y-4">
+              <Checkbox 
+                checked={checkboxChecked} 
+                onChange={(e) => setCheckboxChecked(e.target.checked)}
+                label="Согласен с условиями"
+              />
+              <Checkbox label="Получать рассылку" />
+              <Checkbox disabled label="Disabled Checkbox" />
+              <Checkbox error="Обязательное поле" label="С ошибкой" />
+            </div>
+          </Card>
+        </section>
+
+        {/* Textarea Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">📝 Textarea Component</h2>
+          <Card padding="lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Textarea
+                label="Заметки к тренировке"
+                placeholder="Введите заметки..."
+                value={textareaValue}
+                onChange={(e) => setTextareaValue(e.target.value)}
+                rows={4}
+              />
+              <Textarea
+                label="Комментарий"
+                placeholder="Как прошла тренировка?"
+                helperText="Максимум 500 символов"
+                rows={4}
+              />
+              <Textarea
+                label="С ошибкой"
+                error="Поле не может быть пустым"
+                rows={3}
+              />
+              <Textarea
+                label="Успешно"
+                success="Сохранено!"
+                defaultValue="Отличная тренировка!"
+                rows={3}
+              />
+            </div>
+          </Card>
+        </section>
+
+        {/* Select Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">📋 Select Component</h2>
+          <Card padding="lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Select
+                label="Группа мышц"
+                options={selectOptions}
+                value={selectedValue}
+                onChange={setSelectedValue}
+                placeholder="Выберите группу"
+              />
+              <Select
+                label="Disabled Select"
+                options={selectOptions}
+                disabled
+                placeholder="Недоступен"
+              />
+              <Select
+                label="С ошибкой"
+                options={selectOptions}
+                error="Обязательное поле"
+                placeholder="Выберите опцию"
+              />
+            </div>
+          </Card>
+        </section>
+
+        {/* Spinner Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">⏳ Spinner Component</h2>
+          <Card padding="lg">
+            <h3 className="text-lg font-semibold mb-4">Размеры</h3>
+            <div className="flex flex-wrap items-center gap-8 mb-6">
+              <Spinner size="sm" />
+              <Spinner size="md" />
+              <Spinner size="lg" />
+              <Spinner size="xl" />
+            </div>
+
+            <h3 className="text-lg font-semibold mb-4">Варианты</h3>
+            <div className="flex flex-wrap items-center gap-8">
+              <Spinner variant="primary" />
+              <Spinner variant="gray" />
+              <div className="bg-primary-600 p-4 rounded-lg">
+                <Spinner variant="white" />
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Skeleton Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">💀 Skeleton Component</h2>
+          <Card padding="lg">
+            <h3 className="text-lg font-semibold mb-4">Базовые варианты</h3>
+            <div className="space-y-4 mb-6">
+              <Skeleton variant="text" />
+              <Skeleton variant="text" width="75%" />
+              <Skeleton variant="text" width="50%" />
+              <div className="flex gap-4 items-center">
+                <Skeleton variant="circular" width={50} height={50} />
+                <div className="flex-1 space-y-2">
+                  <Skeleton variant="rectangular" height={20} />
+                  <Skeleton variant="rectangular" height={20} width="80%" />
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-semibold mb-4">Готовые композиции</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SkeletonCard />
+              <div className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-xl p-4">
+                <SkeletonAvatar size={60} />
+                <div className="flex-1 space-y-2">
+                  <Skeleton variant="text" />
+                  <Skeleton variant="text" width="80%" />
+                </div>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Alert Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">🔔 Alert Component</h2>
+          <Card padding="lg">
+            <div className="space-y-4">
+              {showAlert && (
+                <Alert variant="info" title="Информация" onClose={() => setShowAlert(false)}>
+                  Это информационное сообщение. Нажмите на крестик чтобы закрыть.
+                </Alert>
+              )}
+              <Alert variant="success" title="Успешно!">
+                Тренировка успешно сохранена
+              </Alert>
+              <Alert variant="warning" title="Внимание">
+                Вы не тренировались уже 3 дня
+              </Alert>
+              <Alert variant="error" title="Ошибка">
+                Не удалось загрузить данные. Проверьте подключение к интернету.
+              </Alert>
+              <Alert variant="info">
+                Простое сообщение без заголовка
+              </Alert>
+            </div>
+            {!showAlert && (
+              <Button onClick={() => setShowAlert(true)} variant="secondary" className="mt-4">
+                Показать Alert снова
+              </Button>
+            )}
+          </Card>
+        </section>
+
+        {/* Tabs Component */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">📑 Tabs Component</h2>
+          <Card padding="lg">
+            <Tabs
+              defaultTab="overview"
+              tabs={[
+                {
+                  id: 'overview',
+                  label: 'Обзор',
+                  icon: <span>📊</span>,
+                  content: (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <h3 className="font-semibold mb-2">Обзор тренировок</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Здесь отображается общая статистика ваших тренировок
+                      </p>
+                    </div>
+                  ),
+                },
+                {
+                  id: 'exercises',
+                  label: 'Упражнения',
+                  icon: <span>🏋️</span>,
+                  content: (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <h3 className="font-semibold mb-2">Список упражнений</h3>
+                      <div className="space-y-2">
+                        <p className="text-sm">• Жим лежа</p>
+                        <p className="text-sm">• Приседания</p>
+                        <p className="text-sm">• Становая тяга</p>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  id: 'history',
+                  label: 'История',
+                  icon: <span>📅</span>,
+                  content: (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <h3 className="font-semibold mb-2">История тренировок</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Все ваши тренировки за последние месяцы
+                      </p>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           </Card>
         </section>
 

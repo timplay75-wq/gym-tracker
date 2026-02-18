@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
@@ -101,4 +101,15 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   };
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
+
+// Custom hook to use theme context
+export function useTheme(): ThemeContextType {
+  const context = useContext(ThemeContext);
+  
+  if (context === undefined) {
+    throw new Error('useTheme must be used within ThemeProvider');
+  }
+  
+  return context;
 }

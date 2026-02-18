@@ -1,16 +1,38 @@
 import { Card, Button } from '@/components';
-import { useTheme } from '@/hooks/useTheme';
 import { loadTestWorkouts } from '@/utils/testData';
+import { storageService } from '@/services/storage';
+import { useState, useEffect } from 'react';
 
 export const Profile = () => {
-  const { isDark, toggleTheme } = useTheme();
+  const [stats, setStats] = useState({
+    totalWorkouts: 0,
+    totalExercises: 0,
+    totalVolume: 0,
+    streak: 0
+  });
 
-  const handleClearData = () => {
-    if (window.confirm('Вы уверены? Все данные будут удалены.')) {
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
+  useEffect(() => {
+    const workouts = storageService.getWorkouts();
+    const totalWorkouts = workouts.length;
+    const totalExercises = workouts.reduce((sum, w) => sum + w.exercises.length, 0);
+    const totalVolume = workouts.reduce((sum, w) => {
+      return sum + w.exercises.reduce((exSum, ex) => {
+        return exSum + ex.sets.reduce((setSum, set) => {
+          return set.completed ? setSum + (set.weight || 0) * (set.reps || 0) : setSum;
+        }, 0);
+      }, 0);
+    }, 0) / 1000; // в тоннах
+
+    // Простой подсчет streak (подряд идущие дни)
+    const streak = 0; // TODO: реализовать логику подсчета
+
+    setStats({
+      totalWorkouts,
+      totalExercises,
+      totalVolume: Math.round(totalVolume * 10) / 10,
+      streak
+    });
+  }, []);
 
   const handleLoadTestData = () => {
     loadTestWorkouts();
@@ -18,143 +40,60 @@ export const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="max-w-[480px] mx-auto px-5">
         {/* Header */}
         <header className="pt-6 pb-4">
-          <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900">
             Профиль
           </h1>
         </header>
 
-        <div className="mt-6 space-y-6">
+        <div className="space-y-5">
           {/* User Info */}
-          <Card padding="lg">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary-500 flex items-center justify-center text-white text-2xl sm:text-3xl font-bold">
-                У
+          <Card padding="lg" className="text-center border-2 border-[#9333ea]">
+            <div className="flex flex-col items-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#7c3aed] to-[#9333ea] flex items-center justify-center text-white text-3xl font-bold mb-3 shadow-lg shadow-[#9333ea]/20">
+                👤
               </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-light-primary dark:text-white">
-                  Пользователь
-                </h2>
-                <p className="text-sm text-light-secondary dark:text-gray-400 mt-1">
-                  user@example.com
-                </p>
-              </div>
+              <h2 className="text-lg font-bold text-gray-900">
+                user@example.com
+              </h2>
             </div>
           </Card>
 
-          {/* Статистика */}
-          <div>
-            <h3 className="text-xl font-bold text-light-primary dark:text-white mb-3">
-              Статистика
-            </h3>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <Card padding="md" className="text-center">
-                <p className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mb-1">
-                  Всего тренировок
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
-                  0
-                </p>
-              </Card>
-              <Card padding="md" className="text-center">
-                <p className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mb-1">
-                  Упражнений
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
-                  0
-                </p>
-              </Card>
-              <Card padding="md" className="text-center">
-                <p className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mb-1">
-                  Общий тоннаж
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
-                  0т
-                </p>
-              </Card>
-              <Card padding="md" className="text-center">
-                <p className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mb-1">
-                  Streak
-                </p>
-                <p className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white">
-                  0 🔥
-                </p>
-              </Card>
+          {/* Статистика - 3 основные метрики */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl p-3 shadow-md text-center border-2 border-[#9333ea]">
+              <p className="text-2xl font-bold text-[#7c3aed]">{stats.totalWorkouts}</p>
+              <p className="text-xs text-[#7c3aed]/70 mt-1 font-medium">тренировок</p>
+            </div>
+            <div className="bg-white rounded-xl p-3 shadow-md text-center border-2 border-[#9333ea]">
+              <p className="text-2xl font-bold text-[#7c3aed]">{stats.totalVolume}т</p>
+              <p className="text-xs text-[#7c3aed]/70 mt-1 font-medium">тоннаж</p>
+            </div>
+            <div className="bg-white rounded-xl p-3 shadow-md text-center border-2 border-[#9333ea]">
+              <p className="text-2xl font-bold text-[#7c3aed]">{stats.streak === 0 ? '😔' : '🔥'}</p>
+              <p className="text-xs text-[#7c3aed]/70 mt-1 font-medium">streak</p>
             </div>
           </div>
 
           {/* Настройки */}
           <div>
-            <h3 className="text-xl font-bold text-light-primary dark:text-white mb-3">
+            <h3 className="text-lg font-bold text-gray-900 mb-3">
               Настройки
             </h3>
-            <Card padding="none">
-              <button
-                onClick={toggleTheme}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors first:rounded-t-2xl"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🌙</span>
-                  <span className="font-medium text-light-primary dark:text-white">
-                    Темная тема
-                  </span>
-                </div>
-                <div className={`w-11 h-6 rounded-full transition-colors ${
-                  isDark ? 'bg-primary-500' : 'bg-gray-300'
-                } relative`}>
-                  <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                    isDark ? 'translate-x-5' : ''
-                  }`} />
-                </div>
-              </button>
-              
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              
-              <button
-                className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <span className="text-2xl">⚖️</span>
-                <span className="font-medium text-light-primary dark:text-white">
-                  Единицы измерения
-                </span>
-              </button>
-              
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              
-              <button
-                className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                <span className="text-2xl">⏱</span>
-                <span className="font-medium text-light-primary dark:text-white">
-                  Таймер отдыха
-                </span>
-              </button>
-
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              
+            <Card padding="none" className="shadow-sm">
               <button
                 onClick={handleLoadTestData}
-                className="w-full flex items-center gap-3 p-4 hover:bg-success-50 dark:hover:bg-success-900/20 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-[#e9d5ff] transition-colors rounded-xl border-2 border-[#9333ea]"
               >
-                <span className="text-2xl">📊</span>
-                <span className="font-medium text-success-600 dark:text-success-400">
-                  Загрузить тестовые данные
-                </span>
-              </button>
-
-              <div className="border-t border-gray-100 dark:border-gray-800" />
-              
-              <button
-                onClick={handleClearData}
-                className="w-full flex items-center gap-3 p-4 hover:bg-error-50 dark:hover:bg-error-900/20 transition-colors rounded-b-2xl"
-              >
-                <span className="text-2xl">🗑️</span>
-                <span className="font-medium text-error-600 dark:text-error-400">
-                  Очистить все данные
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">📊</span>
+                  <span className="font-medium text-gray-900">
+                    Загрузить тестовые данные
+                  </span>
+                </div>
               </button>
             </Card>
           </div>

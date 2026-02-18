@@ -34,28 +34,28 @@ export const Navigation = () => {
   const navItems = [
     { path: '/', label: 'Главная', Icon: HomeIcon },
     { path: '/workouts', label: 'Тренировки', Icon: WorkoutsIcon },
-    { path: '/builder', label: 'Добавить', Icon: AddIcon },
+    { path: '/add', label: 'Добавить', Icon: AddIcon },
     { path: '/profile', label: 'Профиль', Icon: ProfileIcon },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-sm z-50 safe-area-bottom">
-      <div className="max-w-screen-xl mx-auto">
-        <div className="flex justify-around items-center h-16">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#9333ea] shadow-lg z-50 safe-area-bottom">
+      <div className="max-w-[480px] mx-auto">
+        <div className="flex justify-around items-center h-20 px-2">
           {navItems.map(({ path, label, Icon }) => {
             const isActive = location.pathname === path;
             return (
               <Link
                 key={path}
                 to={path}
-                className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 ${
+                className={`flex flex-col items-center justify-center flex-1 h-full py-2 rounded-lg transition-all duration-200 ${
                   isActive
-                    ? 'text-primary-500'
-                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                    ? 'text-white bg-[#9333ea]'
+                    : 'text-[#9333ea] active:bg-[#e9d5ff]'
                 }`}
               >
                 <Icon active={isActive} />
-                <span className={`text-xs mt-1 font-medium ${isActive ? 'font-semibold' : ''}`}>
+                <span className={`text-xs mt-1.5 font-medium ${isActive ? 'font-semibold' : ''}`}>
                   {label}
                 </span>
               </Link>

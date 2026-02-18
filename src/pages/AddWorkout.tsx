@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { storageService } from '@/services/storage';
 import { generateId } from '@/utils/helpers';
 import type { Workout } from '@/types';
-import { Card, Button } from '@/components';
+import { Button } from '@/components';
 
 export const AddWorkout = () => {
   const navigate = useNavigate();
   const [workoutName, setWorkoutName] = useState('');
+  const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dayOfWeek, setDayOfWeek] = useState('');
+  const [notes, setNotes] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,9 +20,10 @@ export const AddWorkout = () => {
     const newWorkout: Workout = {
       id: generateId(),
       name: workoutName,
-      date: new Date(),
+      date: new Date(workoutDate),
       exercises: [],
       status: 'planned',
+      notes: notes || undefined,
     };
 
     // Сохраняем тренировку и переходим в конструктор для добавления упражнений
@@ -27,79 +31,128 @@ export const AddWorkout = () => {
     navigate('/builder', { state: { workout: newWorkout } });
   };
 
+  const handleCancel = () => {
+    navigate(-1);
+  };
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white pb-24">
+      <div className="max-w-[480px] mx-auto px-5">
         {/* Header */}
-        <header className="pt-6 pb-4 flex items-center justify-between">
-          <h1 className="text-4xl sm:text-5xl font-bold text-light-primary dark:text-white">
-            Новая тренировка
-          </h1>
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Назад"
-          >
-            <svg className="w-6 h-6 text-light-secondary dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+        <header className="pt-6 pb-6">
+          <div className="bg-gradient-to-r from-[#7c3aed] to-[#9333ea] text-white rounded-2xl p-6 shadow-lg shadow-[#9333ea]/30">
+            <h1 className="text-2xl font-bold">
+              Новая тренировка
+            </h1>
+          </div>
         </header>
 
-        <div className="mt-6">
-          <form onSubmit={handleSubmit}>
-            <Card padding="lg">
-              <div className="mb-6">
-                <label 
-                  htmlFor="workoutName" 
-                  className="block text-sm font-medium text-light-primary dark:text-gray-200 mb-2"
-                >
-                  Название тренировки
-                </label>
-                <input
-                  type="text"
-                  id="workoutName"
-                  value={workoutName}
-                  onChange={(e) => setWorkoutName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-light-primary dark:text-white placeholder-text-light-tertiary dark:placeholder-gray-500 outline-none transition-all"
-                  placeholder="Например: Грудь и трицепс"
-                  required
-                  autoFocus
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Название тренировки */}
+          <div>
+            <label
+              htmlFor="workoutName"
+              className="block text-sm font-medium text-[#6d28d9] mb-2"
+            >
+              Название тренировки
+            </label>
+            <input
+              type="text"
+              id="workoutName"
+              value={workoutName}
+              onChange={(e) => setWorkoutName(e.target.value)}
+              className="w-full h-12 px-4 border-2 border-[#9333ea] rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] bg-white text-gray-900 placeholder-[#9333ea] outline-none transition-all"
+              placeholder="Грудь и трицепс"
+              required
+              autoFocus
+            />
+          </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full"
-              >
-                Создать тренировку
-              </Button>
-            </Card>
-          </form>
+          {/* Дата */}
+          <div>
+            <label
+              htmlFor="workoutDate"
+              className="block text-sm font-medium text-[#6d28d9] mb-2"
+            >
+              Дата
+            </label>
+            <input
+              type="date"
+              id="workoutDate"
+              value={workoutDate}
+              onChange={(e) => setWorkoutDate(e.target.value)}
+              className="w-full h-12 px-4 border-2 border-[#9333ea] rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] bg-white text-gray-900 outline-none transition-all"
+              required
+            />
+          </div>
 
-          {/* Quick Templates */}
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold text-light-primary dark:text-white mb-3">
-              Быстрые шаблоны
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {['Грудь и трицепс', 'Спина и бицепс', 'Ноги', 'Плечи'].map((template) => (
-                <Card 
-                  key={template}
-                  variant="interactive"
-                  padding="md"
-                  onClick={() => setWorkoutName(template)}
-                >
-                  <p className="font-medium text-light-primary dark:text-white">
-                    {template}
-                  </p>
-                </Card>
-              ))}
+          {/* День недели (опционально) */}
+          <div>
+            <label
+              htmlFor="dayOfWeek"
+              className="block text-sm font-medium text-[#6d28d9] mb-2"
+            >
+              День недели <span className="text-[#9333ea]">(опционально)</span>
+            </label>
+            <input
+              type="text"
+              id="dayOfWeek"
+              value={dayOfWeek}
+              onChange={(e) => setDayOfWeek(e.target.value)}
+              className="w-full h-12 px-4 border-2 border-[#9333ea] rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] bg-white text-gray-900 placeholder-[#9333ea] outline-none transition-all"
+              placeholder="Понедельник"
+            />
+          </div>
+
+          {/* Заметки (опционально) */}
+          <div>
+            <label
+              htmlFor="notes"
+              className="block text-sm font-medium text-[#6d28d9] mb-2"
+            >
+              Заметки <span className="text-[#9333ea]">(опционально)</span>
+            </label>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="w-full px-4 py-3 border-2 border-[#9333ea] rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] bg-white text-gray-900 placeholder-[#9333ea] outline-none transition-all resize-none"
+              placeholder="Добавьте заметки к тренировке..."
+            />
+          </div>
+
+          {/* Блок упражнений */}
+          <div className="pt-4">
+            <h3 className="text-sm font-medium text-[#6d28d9] mb-2">
+              Упражнения (0)
+            </h3>
+            <div className="min-h-[100px] border-2 border-dashed border-[#9333ea] bg-[#e9d5ff] rounded-lg flex items-center justify-center text-[#7c3aed] font-medium">
+              Упражнения будут добавлены на следующем шаге
             </div>
           </div>
-        </div>
+
+          {/* Кнопки */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              className="flex-1 h-14"
+              onClick={handleCancel}
+            >
+              Отмена
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="flex-1 h-14"
+            >
+              Следующий шаг
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

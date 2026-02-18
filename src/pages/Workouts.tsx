@@ -38,8 +38,7 @@ export const Workouts = () => {
     setAllWorkouts(sorted);
   }, []);
 
-  // Вспомогательные функции (определяем ДО useMemo!)
-  // Расчет тоннажа тренировки
+  // Вспомогательные функции
   const calculateVolume = (workout: Workout): number => {
     return workout.exercises.reduce((total, exercise) => {
       return total + exercise.sets.reduce((exTotal, set) => {
@@ -167,24 +166,24 @@ export const Workouts = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 pb-24">
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="max-w-[480px] mx-auto px-5">
         {/* Header */}
         <header className="pt-6 pb-4">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900">
             Тренировки
           </h1>
         </header>
 
         {/* Фильтры */}
-        <div className="space-y-3 mb-6">
+        <div className="space-y-3 mb-5">
           {/* Поиск */}
           <Input
             type="text"
-            placeholder="🔍 Поиск тренировок..."
+            placeholder="Поиск тренировок..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full"
+            className="w-full h-12 text-base"
           />
 
           {/* Кнопки периодов */}
@@ -193,10 +192,10 @@ export const Workouts = () => {
               <button
                 key={period.value}
                 onClick={() => setFilterPeriod(period.value)}
-                className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-all ${
+                className={`px-5 py-2.5 rounded-lg font-medium whitespace-nowrap transition-all text-sm ${
                   filterPeriod === period.value
-                    ? 'bg-primary-500 text-white shadow-sm'
-                    : 'bg-white dark:bg-gray-800 text-light-primary dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
+                    ? 'bg-[#7c3aed] text-white shadow-lg shadow-[#9333ea]/50'
+                    : 'bg-white text-[#7c3aed] hover:bg-[#f3e8ff] border-2 border-[#9333ea]'
                 }`}
               >
                 {period.label}
@@ -208,38 +207,38 @@ export const Workouts = () => {
         {/* Статистика за период */}
         {filteredWorkouts.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <Card padding="sm" className="text-center">
-              <div className="text-2xl font-bold text-primary-500 dark:text-primary-400">
+            <Card padding="sm" className="text-center bg-white border-2 border-[#9333ea]">
+              <div className="text-2xl font-bold text-[#7c3aed]">
                 {periodStats.totalWorkouts}
               </div>
-              <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
                 Тренировок
               </div>
             </Card>
             
-            <Card padding="sm" className="text-center">
-              <div className="text-2xl font-bold text-success-600 dark:text-success-400">
+            <Card padding="sm" className="text-center bg-white border-2 border-[#9333ea]">
+              <div className="text-2xl font-bold text-[#7c3aed]">
                 {periodStats.totalVolume.toFixed(0)}
               </div>
-              <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
                 Тоннаж (кг)
               </div>
             </Card>
 
-            <Card padding="sm" className="text-center">
-              <div className="text-2xl font-bold text-warning-600 dark:text-warning-400">
+            <Card padding="sm" className="text-center bg-white border-2 border-[#9333ea]">
+              <div className="text-2xl font-bold text-[#7c3aed]">
                 {periodStats.totalSets}
               </div>
-              <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
                 Подходов
               </div>
             </Card>
 
-            <Card padding="sm" className="text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+            <Card padding="sm" className="text-center bg-white border-2 border-[#9333ea]">
+              <div className="text-2xl font-bold text-[#7c3aed]">
                 {periodStats.totalExercises}
               </div>
-              <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
                 Упражнений
               </div>
             </Card>
@@ -247,18 +246,19 @@ export const Workouts = () => {
         )}
 
         {/* Список тренировок */}
-        <div className="mt-6">
+        <div className="mt-5">
           {filteredWorkouts.length === 0 ? (
-            <Card padding="lg" className="text-center">
-              <div className="py-8">
-                <p className="text-lg text-light-secondary dark:text-gray-400 mb-2">
+            <Card padding="lg" className="text-center shadow-sm">
+              <div className="py-12">
+                <div className="text-5xl mb-4">📊</div>
+                <p className="text-lg text-primary-700 mb-2 font-medium">
                   {searchQuery ? 'Ничего не найдено' : 'Нет завершенных тренировок'}
                 </p>
-                <p className="text-sm text-light-tertiary dark:text-gray-500 mb-4">
+                <p className="text-sm text-primary-500 mb-6">
                   {searchQuery ? 'Попробуйте изменить запрос' : 'Добавьте первую тренировку!'}
                 </p>
                 {!searchQuery && (
-                  <Button variant="primary" onClick={() => navigate('/add-workout')}>
+                  <Button variant="primary" size="lg" className="h-14" onClick={() => navigate('/add-workout')}>
                     Создать тренировку
                   </Button>
                 )}
@@ -272,10 +272,10 @@ export const Workouts = () => {
                   <div key={monthKey}>
                     {/* Заголовок месяца */}
                     <div className="flex items-center gap-3 mb-3">
-                      <h2 className="text-lg font-semibold text-light-primary dark:text-white capitalize">
+                      <h2 className="text-lg font-semibold text-gray-900 capitalize">
                         {formatMonthYear(monthKey)}
                       </h2>
-                      <div className="text-sm text-light-secondary dark:text-gray-400">
+                      <div className="text-sm text-primary-500">
                         {monthWorkouts.length} {monthWorkouts.length === 1 ? 'тренировка' : 'тренировок'}
                       </div>
                     </div>
@@ -309,16 +309,16 @@ export const Workouts = () => {
                                     ))}
                                   </div>
                                   
-                                  <h3 className="text-base font-semibold text-light-primary dark:text-white truncate">
+                                  <h3 className="text-base font-semibold text-gray-900 truncate">
                                     {workout.name}
                                   </h3>
                                   
                                   {workout.status === 'completed' && (
-                                    <span className="text-success-600 dark:text-success-400 text-sm">✓</span>
+                                    <span className="text-success-600 text-sm">✓</span>
                                   )}
                                 </div>
                                 
-                                <div className="flex items-center gap-3 text-xs text-light-secondary dark:text-gray-400">
+                                <div className="flex items-center gap-3 text-xs text-primary-500">
                                   <span>{formatDate(new Date(workout.date))}</span>
                                   <span>•</span>
                                   <span>{workout.exercises.length} упр.</span>
@@ -340,7 +340,7 @@ export const Workouts = () => {
                               {/* Кнопка удалить */}
                               <button
                                 onClick={(e) => handleDelete(workout.id, e)}
-                                className="p-1.5 text-gray-400 hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors flex-shrink-0"
+                                className="p-1.5 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors flex-shrink-0"
                                 aria-label="Удалить"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -371,12 +371,12 @@ export const Workouts = () => {
         {selectedWorkout && (
           <div className="space-y-4">
             {/* Информация о тренировке */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4">
-              <div className="text-sm text-light-secondary dark:text-gray-400 mb-1">
+            <div className="bg-white rounded-2xl p-4 border-2 border-primary-500">
+              <div className="text-sm text-primary-600 mb-1">
                 {formatDate(new Date(selectedWorkout.date))}
               </div>
               {selectedWorkout.duration && (
-                <div className="text-sm text-light-secondary dark:text-gray-400">
+                <div className="text-sm text-primary-600">
                   Длительность: {selectedWorkout.duration} мин
                 </div>
               )}
@@ -394,7 +394,7 @@ export const Workouts = () => {
                   <Card key={idx} padding="sm">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{MUSCLE_CATEGORY_EMOJI[exercise.category] || '⚡'}</span>
-                      <div className="font-semibold text-light-primary dark:text-white">
+                      <div className="font-semibold text-gray-900">
                         {exercise.name}
                       </div>
                     </div>
@@ -403,10 +403,10 @@ export const Workouts = () => {
                       {exercise.sets.map((set, setIdx) => (
                         <div 
                           key={setIdx}
-                          className="flex justify-between items-center text-light-secondary dark:text-gray-400"
+                          className="flex justify-between items-center text-primary-500"
                         >
                           <span>Подход {setIdx + 1}:</span>
-                          <span className={set.completed ? 'text-light-primary dark:text-gray-200' : ''}>
+                          <span className={set.completed ? 'text-gray-900' : ''}>
                             {set.weight} кг × {set.reps} {set.completed ? '✓' : ''}
                           </span>
                         </div>
@@ -414,7 +414,7 @@ export const Workouts = () => {
                     </div>
 
                     {exerciseVolume > 0 && (
-                      <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 text-xs text-light-secondary dark:text-gray-400">
+                      <div className="mt-2 pt-2 border-t border-primary-500 text-xs text-primary-600">
                         Тоннаж: {exerciseVolume} кг
                       </div>
                     )}
@@ -424,20 +424,20 @@ export const Workouts = () => {
             </div>
 
             {/* Общая статистика */}
-            <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+            <div className="grid grid-cols-2 gap-3 p-4 bg-white rounded-2xl border-2 border-primary-500">
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary-500 dark:text-primary-400">
+                <div className="text-2xl font-bold text-[#7c3aed]">
                   {calculateVolume(selectedWorkout)}
                 </div>
-                <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
+                <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
                   Общий тоннаж (кг)
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-success-600 dark:text-success-400">
+                <div className="text-2xl font-bold text-[#7c3aed]">
                   {countSets(selectedWorkout)}
                 </div>
-                <div className="text-xs text-light-secondary dark:text-gray-400 mt-1">
+                <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
                   Всего подходов
                 </div>
               </div>

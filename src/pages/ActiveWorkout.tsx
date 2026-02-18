@@ -105,28 +105,6 @@ export const ActiveWorkout = () => {
     setIsWorkoutPaused(true);
   };
 
-  // Переключение на следующий подход
-  const handleNextSet = () => {
-    if (!workout || !currentExercise) return;
-    
-    const exercise = currentExercise;
-    
-    // Если есть еще подходы
-    if (currentSetIndex < exercise.sets.length - 1) {
-      setCurrentSetIndex(currentSetIndex + 1);
-      
-      // Запускаем таймер отдыха
-      const currentSet = exercise.sets[currentSetIndex];
-      const restTimeSeconds = currentSet?.restTime || 90;
-      setRestTime(restTimeSeconds);
-      setIsResting(true);
-      setShowRestTimer(true);
-      
-      // Возобновляем таймер
-      setIsWorkoutPaused(false);
-    }
-  };
-
   // Переключение на следующее упражнение
   const handleNextExercise = () => {
     if (!workout) return;
@@ -138,31 +116,18 @@ export const ActiveWorkout = () => {
     }
   };
 
-  // Завершение тренировки
-  const completeWorkout = () => {
+  // Закрытие тренировки (сохранение прогресса и выход)
+  // Закрытие тренировки (сохранение прогресса и выход)
+  const handleCloseWorkout = () => {
     if (!workout) return;
     
     const completedWorkout: Workout = {
       ...workout,
       status: 'completed',
-      duration: Math.floor(workoutTime / 60), // в минутах
-    };
-
-    storageService.saveWorkout(completedWorkout);
-    setIsCompleted(true);
-  };
-
-  // Закрытие тренировки (сохранение прогресса и выход)
-  const handleCloseWorkout = () => {
-    if (!workout) return;
-    
-    const savedWorkout: Workout = {
-      ...workout,
-      status: 'in-progress', // Не завершаем, просто сохраняем
       duration: Math.floor(workoutTime / 60),
     };
-    storageService.saveWorkout(savedWorkout);
-    navigate('/workouts');
+    storageService.saveWorkout(completedWorkout);
+    setIsCompleted(true);
   };
 
   // Пропустить отдых
@@ -224,7 +189,7 @@ export const ActiveWorkout = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">Тренировка не найдена</p>
+          <p className="text-[#7c3aed] mb-4">Тренировка не найдена</p>
           <Button onClick={() => navigate('/')}>На главную</Button>
         </div>
       </div>
@@ -238,50 +203,50 @@ export const ActiveWorkout = () => {
     const estimatedCalories = Math.round(totalVolume * 0.5); // Примерная формула
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 bg-white dark:bg-gray-900">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 bg-white">
         <div className="text-center max-w-md w-full animate-scale-in">
           <div className="text-6xl mb-6">🎉</div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-light-primary dark:text-white mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
             Отличная работа!
           </h1>
-          <p className="text-lg text-light-secondary dark:text-gray-400 mb-8">
+          <p className="text-lg text-[#7c3aed] mb-8">
             Тренировка завершена
           </p>
 
           {/* Статистика */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
-            <Card padding="md" className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-primary-500 dark:text-primary-400">
+            <Card padding="md" className="text-center border-2 border-[#9333ea]">
+              <div className="text-2xl sm:text-3xl font-bold text-[#7c3aed]">
                 {formatTime(workoutTime)}
               </div>
-              <div className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs sm:text-sm text-[#7c3aed]/70 mt-1">
                 Длительность
               </div>
             </Card>
 
-            <Card padding="md" className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-success-600 dark:text-success-400">
+            <Card padding="md" className="text-center border-2 border-[#9333ea]">
+              <div className="text-2xl sm:text-3xl font-bold text-[#7c3aed]">
                 {totalVolume}
               </div>
-              <div className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs sm:text-sm text-[#7c3aed]/70 mt-1">
                 Тоннаж (кг)
               </div>
             </Card>
 
-            <Card padding="md" className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-warning-600 dark:text-warning-400">
+            <Card padding="md" className="text-center border-2 border-[#9333ea]">
+              <div className="text-2xl sm:text-3xl font-bold text-[#7c3aed]">
                 {totalSets}
               </div>
-              <div className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs sm:text-sm text-[#7c3aed]/70 mt-1">
                 Подходов
               </div>
             </Card>
 
-            <Card padding="md" className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-error-600 dark:text-error-400">
+            <Card padding="md" className="text-center border-2 border-[#9333ea]">
+              <div className="text-2xl sm:text-3xl font-bold text-[#7c3aed]">
                 ~{estimatedCalories}
               </div>
-              <div className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mt-1">
+              <div className="text-xs sm:text-sm text-[#7c3aed]/70 mt-1">
                 ккал
               </div>
             </Card>
@@ -303,198 +268,147 @@ export const ActiveWorkout = () => {
   const progress = calculateProgress();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 pb-8">
+    <div className="min-h-screen bg-white text-gray-900 pb-8">
       {/* Header с таймером и прогрессом */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
-        <div className="max-w-screen-xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between py-4">
-            <button
-              onClick={handleCloseWorkout}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              aria-label="Закрыть"
-            >
-              <svg className="w-6 h-6 text-light-secondary dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            <div className="text-center flex-1">
-              <div className="text-2xl sm:text-3xl font-bold text-light-primary dark:text-white tabular-nums">
-                {formatTime(workoutTime)}
-              </div>
-              <div className="text-xs sm:text-sm text-light-secondary dark:text-gray-400 mt-0.5">
-                {workout.name}
-              </div>
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-[#9333ea] shadow-sm">
+        <div className="max-w-[480px] mx-auto px-5">
+          {/* Прогресс */}
+          <div className="pt-4 pb-3">
+            <div className="flex items-center justify-between text-sm text-[#7c3aed] mb-2">
+              <span className="font-medium">{Math.round(progress)}%</span>
+              <span className="font-mono">{formatTime(workoutTime)}</span>
             </div>
-
-            <button
-              onClick={() => setIsWorkoutPaused(!isWorkoutPaused)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              {isWorkoutPaused ? (
-                <svg className="w-6 h-6 text-primary-500 dark:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6 text-light-secondary dark:text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {/* Прогресс бар */}
-          <div className="pb-3">
-            <div className="relative h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+            <div className="relative h-2.5 bg-[#ddd6fe] rounded-full overflow-hidden border-2 border-[#9333ea]">
               <div
-                className="absolute h-full bg-primary-500 transition-all duration-500"
-                style={{ width: `${progress}%` }}
+                className="absolute h-full bg-gradient-to-r from-[#7c3aed] to-[#9333ea] transition-all duration-500 shadow-lg"
+                style={{ 
+                  width: `${progress}%`,
+                  boxShadow: '0 0 20px rgba(124, 58, 237, 0.6)'
+                }}
               />
-            </div>
-            <div className="text-xs text-center text-light-secondary dark:text-gray-400 mt-1.5">
-              {Math.round(progress)}% завершено
             </div>
           </div>
         </div>
       </div>
 
       {/* Current Exercise */}
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 pt-6">
-        <div className="text-center mb-6">
-          <div className="text-sm text-light-secondary dark:text-gray-400 mb-2">
+      <div className="max-w-[480px] mx-auto px-5 pt-8">
+        {/* Название упражнения */}
+        <div className="text-center mb-8">
+          <div className="text-base text-[#7c3aed] mb-2 font-medium">
             Упражнение {currentExerciseIndex + 1} из {workout.exercises.length}
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-light-primary dark:text-white">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
             {currentExercise?.name}
           </h2>
+          <div className="text-sm text-[#9333ea]">
+            Подход {currentSetIndex + 1} / {currentExercise?.sets.length}
+          </div>
         </div>
 
-        {/* Set Tracker */}
-        <Card padding="lg" className="mb-6">
-          <div className="text-center mb-6">
-            <div className="text-lg font-semibold text-light-primary dark:text-gray-200">
-              Подход {currentSetIndex + 1} из {currentExercise?.sets.length}
-            </div>
+        {/* Инпуты для веса и повторений */}
+        <div className="bg-white border-2 border-[#9333ea] rounded-2xl p-6 mb-6 space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-[#7c3aed] mb-2">
+              Вес (кг)
+            </label>
+            <input
+              type="number"
+              value={tempWeight}
+              onChange={(e) => setTempWeight(Number(e.target.value))}
+              className="w-full h-20 text-center text-4xl font-bold bg-white border-2 border-[#9333ea] rounded-xl text-gray-900 focus:border-[#7c3aed] focus:outline-none transition-all"
+              step="2.5"
+              min="0"
+            />
           </div>
 
-          {/* Предыдущие подходы (история) */}
-          {currentSetIndex > 0 && (
-            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-              <div className="text-xs text-light-secondary dark:text-gray-400 mb-1.5">
-                Предыдущий подход:
-              </div>
-              <div className="text-base font-semibold text-light-primary dark:text-gray-200">
-                {currentExercise?.sets[currentSetIndex - 1].weight} кг × {currentExercise?.sets[currentSetIndex - 1].reps} повт.
-              </div>
-            </div>
-          )}
-
-          {/* Инпуты */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-light-primary dark:text-gray-300 mb-2">
-                Вес (кг)
-              </label>
-              <input
-                type="number"
-                value={tempWeight}
-                onChange={(e) => setTempWeight(Number(e.target.value))}
-                className="w-full text-center text-3xl font-bold py-4 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-light-primary dark:text-white outline-none transition-all"
-                step="2.5"
-                min="0"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-light-primary dark:text-gray-300 mb-2">
-                Повторения
-              </label>
-              <input
-                type="number"
-                value={tempReps}
-                onChange={(e) => setTempReps(Number(e.target.value))}
-                className="w-full text-center text-3xl font-bold py-4 border border-gray-200 dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-light-primary dark:text-white outline-none transition-all"
-                min="0"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-[#7c3aed] mb-2">
+              Повторения
+            </label>
+            <input
+              type="number"
+              value={tempReps}
+              onChange={(e) => setTempReps(Number(e.target.value))}
+              className="w-full h-20 text-center text-4xl font-bold bg-white border-2 border-[#9333ea] rounded-xl text-gray-900 focus:border-[#7c3aed] focus:outline-none transition-all"
+              min="0"
+            />
           </div>
+        </div>
 
-          {/* Большая кнопка Complete Set */}
+        {/* Кнопки действий */}
+        <div className="space-y-3 mb-8">
           <button
             onClick={handleCompleteSet}
             disabled={tempWeight === 0 || tempReps === 0}
-            className="w-full py-5 bg-success-600 hover:bg-success-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white text-lg font-semibold rounded-2xl transition-all shadow-sm active:scale-[0.99] disabled:cursor-not-allowed mb-3"
+            className="w-full h-16 bg-gradient-to-r from-[#7c3aed] to-[#9333ea] hover:from-[#6d28d9] hover:to-[#7c3aed] disabled:bg-[#ddd6fe] disabled:from-[#ddd6fe] disabled:to-[#ddd6fe] disabled:text-[#c4b5fd] text-white text-lg font-bold rounded-xl transition-all shadow-lg shadow-[#7c3aed]/40 active:scale-[0.99] disabled:cursor-not-allowed disabled:shadow-none"
           >
-            ✓ Завершить подход
+            ✔ Завершить подход
           </button>
 
-          {/* Кнопка завершить тренировку */}
           <button
             onClick={handleCloseWorkout}
-            className="w-full py-3 border-2 border-gray-300 dark:border-gray-600 hover:border-error-500 dark:hover:border-error-400 text-gray-700 dark:text-gray-300 hover:text-error-600 dark:hover:text-error-400 text-sm font-medium rounded-xl transition-all"
+            className="w-full h-14 text-[#7c3aed] hover:text-[#6d28d9] hover:bg-[#f3e8ff] text-base font-medium transition-all rounded-xl"
           >
-            ✓ Завершить тренировку
+            Завершить тренировку
           </button>
-        </Card>
-
-        {/* Навигация по подходам */}
-        <div className="mb-4">
-          <div className="text-xs text-center text-light-secondary dark:text-gray-400 mb-2">
-            Навигация по подходам
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                if (currentSetIndex > 0) {
-                  setCurrentSetIndex(currentSetIndex - 1);
-                }
-              }}
-              disabled={currentSetIndex === 0}
-              className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              ← Предыдущий
-            </button>
-
-            <button
-              onClick={handleNextSet}
-              disabled={!currentExercise || currentSetIndex === currentExercise.sets.length - 1}
-              className="flex-1 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              Следующий →
-            </button>
-          </div>
         </div>
 
-        {/* Навигация по упражнениям */}
-        <div>
-          <div className="text-xs text-center text-light-secondary dark:text-gray-400 mb-2">
-            Навигация по упражнениям
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                if (currentExerciseIndex > 0) {
-                  setCurrentExerciseIndex(currentExerciseIndex - 1);
-                  setCurrentSetIndex(0);
-                }
-              }}
-              disabled={currentExerciseIndex === 0}
-              className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-medium text-light-primary dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              ← Предыдущее
-            </button>
+        {/* Навигация - упрощенная */}
+        <div className="flex gap-3 mb-8">
+          <button
+            onClick={() => {
+              if (currentExerciseIndex > 0) {
+                setCurrentExerciseIndex(currentExerciseIndex - 1);
+                setCurrentSetIndex(0);
+              }
+            }}
+            disabled={currentExerciseIndex === 0}
+            className="flex-1 h-12 bg-[#e9d5ff] hover:bg-[#ddd6fe] rounded-lg font-medium text-[#6d28d9] disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-            <button
-              onClick={handleNextExercise}
-              disabled={currentExerciseIndex === workout.exercises.length - 1}
-              className={`flex-1 py-3 rounded-xl font-semibold transition-all ${
-                currentExerciseIndex < workout.exercises.length - 1
-                  ? 'bg-success-600 hover:bg-success-700 text-white shadow-md'
-                  : 'border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-              }`}
-            >
-              Следующее →
-            </button>
+          <button
+            onClick={handleNextExercise}
+            disabled={currentExerciseIndex === workout.exercises.length - 1}
+            className="flex-1 h-12 bg-[#e9d5ff] hover:bg-[#ddd6fe] rounded-lg font-medium text-[#6d28d9] disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* История подходов - минимализм */}
+        <div className="bg-white border-2 border-[#9333ea] rounded-xl p-4">
+          <h3 className="text-xs font-medium text-[#7c3aed] uppercase tracking-wider mb-3">
+            Подходы
+          </h3>
+          <div className="space-y-2">
+            {currentExercise?.sets.map((set, idx) => (
+              <div
+                key={idx}
+                className={`flex items-center justify-between p-2.5 rounded-lg transition-all ${
+                  set.completed 
+                    ? 'bg-[#7c3aed] text-white border-2 border-[#7c3aed]' 
+                    : idx === currentSetIndex 
+                    ? 'bg-[#e9d5ff] border-2 border-[#9333ea]'
+                    : 'bg-white border-2 border-[#9333ea]'
+                }`}
+              >
+                <span className="text-sm font-medium">{idx + 1}</span>
+                {set.completed ? (
+                  <span className="text-sm font-medium">
+                    {set.weight}×{set.reps}
+                  </span>
+                ) : (
+                  <span className="text-sm text-[#c4b5fd]">—</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -506,7 +420,7 @@ export const ActiveWorkout = () => {
         title="Отдых"
       >
         <div className="text-center py-8">
-          <div className="text-7xl font-bold text-primary-500 dark:text-primary-400 mb-6 tabular-nums">
+          <div className="text-7xl font-bold text-[#9333ea] mb-6 tabular-nums">
             {formatTime(restTime)}
           </div>
 

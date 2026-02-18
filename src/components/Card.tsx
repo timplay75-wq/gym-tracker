@@ -20,10 +20,10 @@ export function Card({
 }: CardProps) {
   // Variant styles (iOS Minimalist)
   const variantClasses = {
-    default: 'bg-white dark:bg-gray-800 shadow-sm',
-    elevated: 'bg-white dark:bg-gray-800 shadow-md transition-shadow duration-200',
-    glass: 'bg-white/10 dark:bg-white/5 backdrop-blur-lg border border-white/20 dark:border-white/10',
-    interactive: 'bg-white dark:bg-gray-800 shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 active:scale-[0.99]',
+    default: 'bg-white shadow-sm',
+    elevated: 'bg-white shadow-md transition-shadow duration-200',
+    glass: 'bg-white/10 backdrop-blur-lg border border-primary-500',
+    interactive: 'bg-white shadow-sm hover:shadow-md cursor-pointer transition-all duration-200 active:scale-[0.99]',
   };
 
   // Padding styles

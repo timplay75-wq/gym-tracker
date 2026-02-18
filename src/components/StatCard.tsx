@@ -34,37 +34,37 @@ export function StatCard({ title, value, icon, trend, subtitle, className = '' }
   };
 
   const trendColors = {
-    up: 'text-success-600 dark:text-success-400 bg-success-100 dark:bg-success-900/20',
-    down: 'text-error-600 dark:text-error-400 bg-error-100 dark:bg-error-900/20',
-    neutral: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800',
+    up: 'text-success-600 bg-success-100',
+    down: 'text-error-600 bg-error-100',
+    neutral: 'text-primary-600 bg-primary-100',
   };
 
   return (
     <div
       className={`
-        bg-white dark:bg-gray-800
+        bg-white
         rounded-xl p-6
         shadow-md hover:shadow-lg
         transition-all duration-300
-        border border-gray-100 dark:border-gray-700
+        border-2 border-primary-200
         ${className}
       `}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           {/* Title */}
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+          <p className="text-sm font-medium text-primary-600 mb-1">
             {title}
           </p>
 
           {/* Value */}
-          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <p className="text-3xl font-bold text-gray-900 mb-2">
             {value}
           </p>
 
           {/* Subtitle */}
           {subtitle && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-primary-500">
               {subtitle}
             </p>
           )}

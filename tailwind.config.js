@@ -8,19 +8,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary Colors - Minimalist Design
+        // Primary Colors - ALL BRIGHT PURPLE! 💜
         primary: {
-          50: '#f5f6f7',
-          100: '#e9eaeb',
-          200: '#d3d5d8',
-          300: '#bdc0c4',
-          400: '#a7abb0',
-          500: '#202328',  // Main dark accent color
-          600: '#1a1d21',
-          700: '#14161a',
-          800: '#0e1013',
-          900: '#080a0c',
-          950: '#020304',
+          50: '#f3e8ff',   // Светло-фиолетовый
+          100: '#e9d5ff',  // Фиолетовый светлый
+          200: '#d8b4fe',  // Фиолетовый
+          300: '#c084fc',  // Яркий фиолетовый
+          400: '#a855f7',  // Очень яркий фиолетовый
+          500: '#9333ea',  // ОСНОВНОЙ ЯРКИЙ ФИОЛЕТОВЫЙ! 💜
+          600: '#7c3aed',  // Насыщенный фиолетовый
+          700: '#6d28d9',  // Темно-фиолетовый
+          800: '#5b21b6',  // Очень темный фиолетовый
+          900: '#4c1d95',  // Почти черный фиолетовый
+          950: '#2e1065',
         },
         
         // Background Colors
@@ -95,7 +95,7 @@ export default {
       
       // Gradients
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
         'gradient-success': 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
         'gradient-error': 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
         'gradient-dark': 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',

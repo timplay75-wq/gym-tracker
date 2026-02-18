@@ -29,9 +29,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ) => {
     // Variant styles
     const variantClasses = {
-      default: 'border-gray-300 dark:border-gray-600 focus:border-primary-500 dark:focus:border-primary-400',
-      error: 'border-error-500 focus:border-error-600 dark:border-error-400',
-      success: 'border-success-500 focus:border-success-600 dark:border-success-400',
+      default: 'border-[#9333ea] focus:border-[#7c3aed]',
+      error: 'border-error-500 focus:border-error-600',
+      success: 'border-success-500 focus:border-success-600',
     };
 
     const currentVariant = error ? 'error' : success ? 'success' : variant;
@@ -39,7 +39,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          <label className="block text-sm font-medium text-primary-700 mb-1.5">
             {label}
           </label>
         )}
@@ -47,7 +47,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <div className="relative">
           {/* Left icon */}
           {icon && iconPosition === 'left' && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7c3aed]">
               {icon}
             </div>
           )}
@@ -57,11 +57,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             type={type}
             className={`
               w-full px-4 py-3 rounded-xl
-              bg-white dark:bg-gray-800
+              bg-white
               border-2 ${variantClasses[currentVariant]}
-              text-gray-900 dark:text-gray-100
-              placeholder-gray-400 dark:placeholder-gray-500
-              focus:outline-none focus:ring-4 focus:ring-primary-500/20
+              text-gray-900
+              placeholder-[#9333ea]
+              focus:outline-none focus:ring-4 focus:ring-[#9333ea]/20
               transition-all duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
               ${icon && iconPosition === 'left' ? 'pl-10' : ''}
@@ -73,7 +73,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
           {/* Right icon */}
           {icon && iconPosition === 'right' && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7c3aed]">
               {icon}
             </div>
           )}
@@ -81,7 +81,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {/* Error message */}
         {error && (
-          <p className="mt-1.5 text-sm text-error-600 dark:text-error-400 flex items-center gap-1">
+          <p className="mt-1.5 text-sm text-error-600 flex items-center gap-1">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
@@ -95,7 +95,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {/* Success message */}
         {success && (
-          <p className="mt-1.5 text-sm text-success-600 dark:text-success-400 flex items-center gap-1">
+          <p className="mt-1.5 text-sm text-success-600 flex items-center gap-1">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path
                 fillRule="evenodd"
