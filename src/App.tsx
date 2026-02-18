@@ -7,6 +7,8 @@ import { WorkoutBuilder } from './pages/WorkoutBuilder';
 import { ActiveWorkout } from './pages/ActiveWorkout';
 import { Profile } from './pages/Profile';
 import { ExerciseLibrary } from './pages/ExerciseLibrary';
+import { CategoryView } from './pages/CategoryView';
+import { CreateExercise } from './pages/CreateExercise';
 import DesignDemo from './pages/DesignDemo';
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
           <Route path="add" element={<AddWorkout />} />
           <Route path="builder" element={<WorkoutBuilder />} />
           <Route path="exercises" element={<ExerciseLibrary />} />
+          <Route path="category/:categoryId" element={<CategoryView />} />
+          <Route path="create-exercise" element={<CreateExercise />} />
           <Route path="profile" element={<Profile />} />
         </Route>
         <Route path="/active-workout" element={<ActiveWorkout />} />
