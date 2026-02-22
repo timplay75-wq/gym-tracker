@@ -16,6 +16,11 @@ export const SetupExercise = () => {
   const categoryName = location.state?.categoryName as string || '';
   
   const [name, setName] = useState(exerciseName);
+  const [date, setDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // YYYY-MM-DD
+  });
+  const [time, setTime] = useState('');
   const [sets, setSets] = useState<Set[]>([
     { id: '1', reps: 10, weight: 0 }
   ]);
@@ -45,6 +50,8 @@ export const SetupExercise = () => {
       name,
       categoryId,
       categoryName,
+      date,
+      time: time || null,
       sets: sets.map(s => ({ reps: s.reps, weight: s.weight }))
     };
     console.log('Сохранение упражнения:', exercise);
@@ -76,6 +83,32 @@ export const SetupExercise = () => {
             onChange={(e) => setName(e.target.value)}
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#9333ea] focus:outline-none text-base"
             placeholder="Введите название"
+          />
+        </div>
+
+        {/* Дата и время */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Дата тренировки
+          </label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#9333ea] focus:outline-none text-base"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Время (необязательно)
+          </label>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#9333ea] focus:outline-none text-base"
+            placeholder="Выберите время"
           />
         </div>
 
