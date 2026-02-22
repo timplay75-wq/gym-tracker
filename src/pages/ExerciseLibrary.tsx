@@ -108,7 +108,7 @@ export const ExerciseLibrary = () => {
       <div className="max-w-[480px] mx-auto px-5">
         {/* Заголовок */}
         <header className="pt-8 pb-4">
-          <h1 className="text-4xl font-bold text-black text-center">Искать</h1>
+          <h1 className="text-3xl font-bold text-black">Создать</h1>
         </header>
 
         {/* Переключатель вкладок */}

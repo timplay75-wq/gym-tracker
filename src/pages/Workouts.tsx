@@ -25,6 +25,11 @@ export const Workouts = () => {
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   
+  // Для удаления
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
+  const [dontAskAgain, setDontAskAgain] = useState(false);
+  
   // Фильтры
   const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -124,16 +129,52 @@ export const Workouts = () => {
 
   const handleDelete = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (window.confirm('Удалить эту тренировку?')) {
+    
+    // Проверяем, нужно ли спрашивать подтверждение
+    const skipConfirmation = localStorage.getItem('workout-delete-no-confirm') === 'true';
+    
+    if (skipConfirmation) {
+      // Удаляем сразу без подтверждения
       storageService.deleteWorkout(id);
       setAllWorkouts(allWorkouts.filter(w => w.id !== id));
       setShowDetailModal(false);
       setSelectedWorkout(null);
+    } else {
+      // Показываем кастомное окно подтверждения
+      setWorkoutToDelete(id);
+      setShowDeleteModal(true);
     }
   };
 
+  const confirmDelete = () => {
+    if (!workoutToDelete) return;
+    
+    // Сохраняем настройку "больше не спрашивать"
+    if (dontAskAgain) {
+      localStorage.setItem('workout-delete-no-confirm', 'true');
+    }
+    
+    // Удаляем тренировку
+    storageService.deleteWorkout(workoutToDelete);
+    setAllWorkouts(allWorkouts.filter(w => w.id !== workoutToDelete));
+    
+    // Закрываем модалки
+    setShowDeleteModal(false);
+    setShowDetailModal(false);
+    setSelectedWorkout(null);
+    setWorkoutToDelete(null);
+    setDontAskAgain(false);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setWorkoutToDelete(null);
+    setDontAskAgain(false);
+  };
+
   const handleWorkoutClick = (workout: Workout) => {
-    navigate('/exercises');
+    setSelectedWorkout(workout);
+    setShowDetailModal(true);
   };
 
   const handleRepeatWorkout = () => {
@@ -461,6 +502,49 @@ export const Workouts = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        title="Удалить тренировку?"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Вы уверены, что хотите удалить эту тренировку? Это действие нельзя отменить.
+          </p>
+          
+          {/* Чекбокс "больше не спрашивать" */}
+          <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
+            <input
+              type="checkbox"
+              checked={dontAskAgain}
+              onChange={(e) => setDontAskAgain(e.target.checked)}
+              className="w-5 h-5 rounded border-2 border-[#9333ea] text-[#9333ea] focus:ring-[#9333ea] cursor-pointer"
+            />
+            <span className="text-sm text-gray-700">Больше не спрашивать</span>
+          </label>
+
+          {/* Кнопки действий */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={cancelDelete}
+              className="flex-1"
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="primary"
+              onClick={confirmDelete}
+              className="flex-1 bg-red-600 hover:bg-red-700 focus:ring-red-500"
+            >
+              Удалить
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
