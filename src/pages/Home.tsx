@@ -1,7 +1,24 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { scheduleService } from '@/services/schedule';
+import type { ScheduledWorkout } from '@/types/workout';
 
 export const Home = () => {
   const navigate = useNavigate();
+  const [todayWorkouts, setTodayWorkouts] = useState<ScheduledWorkout[]>([]);
+
+  useEffect(() => {
+    // Загружаем запланированные тренировки
+    const workouts = scheduleService.getTodayWorkouts();
+    
+    // Если тренировок нет, создаем примеры для демонстрации
+    if (workouts.length === 0) {
+      scheduleService.createSampleWorkouts();
+      setTodayWorkouts(scheduleService.getTodayWorkouts());
+    } else {
+      setTodayWorkouts(workouts);
+    }
+  }, []);
 
   // Получаем текущее время
   const getCurrentTime = () => {
@@ -77,11 +94,76 @@ export const Home = () => {
           </div>
         </div>
 
-        {/* Пустое состояние */}
-        <div className="flex-1 flex items-center justify-center py-24">
-          <p className="text-center text-gray-400 text-base px-10 leading-relaxed">
-            Добавь упражнения или программу, чтобы записать тренировку
-          </p>
+        {/* Список запланированных тренировок */}
+        <div className="space-y-4">
+          {todayWorkouts.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center py-24">
+              <p className="text-center text-gray-400 text-base px-10 leading-relaxed">
+                На сегодня нет запланированных тренировок
+              </p>
+            </div>
+          ) : (
+            todayWorkouts.map((workout) => (
+              <div
+                key={workout.id}
+                className={`rounded-2xl p-4 border-2 transition-all ${
+                  workout.completed
+                    ? 'bg-gray-50 border-gray-300'
+                    : 'bg-white border-[#9333ea]'
+                }`}
+              >
+                {/* Заголовок тренировки */}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-bold text-black">{workout.name}</h3>
+                  {workout.completed && (
+                    <span className="text-green-600 text-xl">✓</span>
+                  )}
+                </div>
+
+                {/* Список упражнений */}
+                <div className="space-y-2">
+                  {workout.exercises.map((exercise) => (
+                    <div
+                      key={exercise.id}
+                      className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">
+                          {exercise.category === 'chest' && '💪'}
+                          {exercise.category === 'back' && '🦾'}
+                          {exercise.category === 'legs' && '🦵'}
+                          {exercise.category === 'arms' && '💪'}
+                          {exercise.category === 'shoulders' && '🏋️'}
+                          {exercise.category === 'cardio' && '🏃'}
+                          {exercise.category === 'core' && '🔥'}
+                          {exercise.category === 'other' && '⚡'}
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {exercise.name}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {exercise.sets} × {exercise.reps}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Кнопка начать тренировку */}
+                {!workout.completed && (
+                  <button
+                    onClick={() => {
+                      scheduleService.markAsCompleted(workout.id);
+                      setTodayWorkouts(scheduleService.getTodayWorkouts());
+                    }}
+                    className="mt-4 w-full py-3 bg-[#9333ea] text-white rounded-xl font-semibold hover:bg-[#7c3aed] transition-colors"
+                  >
+                    Начать тренировку
+                  </button>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 

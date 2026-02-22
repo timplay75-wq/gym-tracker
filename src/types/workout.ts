@@ -128,3 +128,19 @@ export interface Achievement {
   target?: number;
 }
 
+// ScheduledWorkout - запланированная тренировка на конкретную дату
+export interface ScheduledWorkout {
+  id: string;
+  name: string;
+  date: string; // формат YYYY-MM-DD
+  exercises: {
+    id: string;
+    name: string;
+    category: ExerciseCategory;
+    sets: number;
+    reps: number;
+  }[];
+  notes?: string;
+  completed: boolean;
+  programId?: string; // если часть программы
+}
