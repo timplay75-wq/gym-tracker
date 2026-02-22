@@ -88,7 +88,7 @@ export const Home = () => {
       {/* Большая круглая кнопка + внизу по центру */}
       <div className="fixed bottom-24 left-0 right-0 flex justify-center z-50">
         <button
-          onClick={() => navigate('/builder')}
+          onClick={() => navigate('/exercises')}
           className="w-16 h-16 bg-[#9333ea] rounded-full flex items-center justify-center shadow-lg hover:bg-[#7c3aed] transition-colors"
           aria-label="Добавить тренировку"
         >
