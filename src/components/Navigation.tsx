@@ -14,9 +14,9 @@ const WorkoutsIcon = ({ active }: { active: boolean }) => (
 );
 
 const AddIcon = ({ active }: { active: boolean }) => (
-  <svg className={`w-6 h-6 ${active ? 'fill-current' : 'stroke-current stroke-2 fill-none'}`} viewBox="0 0 24 24">
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
+  <svg className={`w-6 h-6 stroke-current ${active ? 'stroke-[3]' : 'stroke-2'}`} fill="none" viewBox="0 0 24 24">
+    <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
+    <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
   </svg>
 );
 
