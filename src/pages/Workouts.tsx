@@ -133,8 +133,7 @@ export const Workouts = () => {
   };
 
   const handleWorkoutClick = (workout: Workout) => {
-    setSelectedWorkout(workout);
-    setShowDetailModal(true);
+    navigate('/exercises');
   };
 
   const handleRepeatWorkout = () => {
