@@ -22,10 +22,11 @@ const allCategories: Category[] = [
 export const CreateExercise = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const preselectedCategory = location.state?.category as Category | undefined;
+  const preselectedCategory = location.state?.preselectedCategory as Category | undefined;
+  const prefilledName = location.state?.prefilledName as string | undefined;
   
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(preselectedCategory || null);
-  const [exerciseName, setExerciseName] = useState('');
+  const [exerciseName, setExerciseName] = useState(prefilledName || '');
 
   const handleCategorySelect = (category: Category) => {
     setSelectedCategory(category);

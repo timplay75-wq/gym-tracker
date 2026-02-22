@@ -100,7 +100,13 @@ export const ExerciseLibrary = () => {
   const [activeTab, setActiveTab] = useState<'exercises' | 'programs'>('exercises');
 
   const handleCategoryClick = (category: Category) => {
-    navigate(`/category/${category.id}`, { state: { category } });
+    // Переходим на создание упражнения с предзаполненной категорией и названием
+    navigate('/create-exercise', { 
+      state: { 
+        preselectedCategory: category,
+        prefilledName: category.name 
+      } 
+    });
   };
 
   return (
