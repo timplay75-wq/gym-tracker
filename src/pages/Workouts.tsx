@@ -298,7 +298,7 @@ export const Workouts = () => {
                   {searchQuery ? 'Попробуйте изменить запрос' : 'Добавьте первую тренировку!'}
                 </p>
                 {!searchQuery && (
-                  <Button variant="primary" size="lg" className="h-14" onClick={() => navigate('/add-workout')}>
+                  <Button variant="primary" size="lg" className="h-14" onClick={() => navigate('/exercises')}>
                     Создать тренировку
                   </Button>
                 )}

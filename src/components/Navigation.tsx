@@ -13,10 +13,10 @@ const WorkoutsIcon = ({ active }: { active: boolean }) => (
   </svg>
 );
 
-const SearchIcon = ({ active }: { active: boolean }) => (
+const AddIcon = ({ active }: { active: boolean }) => (
   <svg className={`w-6 h-6 ${active ? 'fill-current' : 'stroke-current stroke-2 fill-none'}`} viewBox="0 0 24 24">
-    <circle cx="11" cy="11" r="8" />
-    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
@@ -33,7 +33,7 @@ export const Navigation = () => {
   const navItems = [
     { path: '/', label: 'Главная', Icon: HomeIcon },
     { path: '/workouts', label: 'Тренировки', Icon: WorkoutsIcon },
-    { path: '/exercises', label: 'Создать', Icon: SearchIcon },
+    { path: '/exercises', label: 'Создать', Icon: AddIcon },
     { path: '/profile', label: 'Профиль', Icon: ProfileIcon },
   ];
 
