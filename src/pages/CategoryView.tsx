@@ -132,12 +132,19 @@ export const CategoryView = () => {
         {/* Список упражнений */}
         <div className="divide-y divide-gray-200">
           {currentCategory.exercises.map((exercise, index) => (
-            <div
+            <button
               key={index}
-              className="py-4 text-left"
+              onClick={() => navigate('/setup-exercise', { 
+                state: { 
+                  exerciseName: exercise,
+                  categoryId: currentCategory.id,
+                  categoryName: currentCategory.name
+                } 
+              })}
+              className="w-full py-4 text-left hover:bg-gray-50 transition-colors"
             >
               <span className="font-semibold text-black">{exercise}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>

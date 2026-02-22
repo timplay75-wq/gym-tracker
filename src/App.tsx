@@ -9,6 +9,7 @@ import { Profile } from './pages/Profile';
 import { ExerciseLibrary } from './pages/ExerciseLibrary';
 import { CategoryView } from './pages/CategoryView';
 import { CreateExercise } from './pages/CreateExercise';
+import { SetupExercise } from './pages/SetupExercise';
 import DesignDemo from './pages/DesignDemo';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
           <Route path="exercises" element={<ExerciseLibrary />} />
           <Route path="category/:categoryId" element={<CategoryView />} />
           <Route path="create-exercise" element={<CreateExercise />} />
+          <Route path="setup-exercise" element={<SetupExercise />} />
           <Route path="profile" element={<Profile />} />
         </Route>
         <Route path="/active-workout" element={<ActiveWorkout />} />
