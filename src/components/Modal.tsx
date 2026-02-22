@@ -40,12 +40,12 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade-in"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
         <div
           className={`
             ${sizeClasses[size]} w-full
