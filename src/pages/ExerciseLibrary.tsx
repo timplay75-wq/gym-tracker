@@ -144,17 +144,6 @@ export const ExerciseLibrary = () => {
         {/* Контент вкладки */}
         {activeTab === 'exercises' ? (
           <div>
-            {/* Кнопка создания упражнения */}
-            <button
-              onClick={() => navigate('/create-exercise')}
-              className="w-full py-4 text-left text-black font-semibold flex items-center justify-between border-b border-gray-200"
-            >
-              <span>Создать упражнение</span>
-              <svg className="w-5 h-5 text-[#9333ea]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-
             {/* Список категорий */}
             <div className="divide-y divide-gray-200">
               {categories.map((category) => (
