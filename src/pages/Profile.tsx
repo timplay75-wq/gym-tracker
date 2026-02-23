@@ -42,17 +42,6 @@ export const Profile = () => {
   return (
     <div className="min-h-screen bg-white pb-24">
       <div className="max-w-[480px] mx-auto px-4">
-        {/* Статус бар */}
-        <div className="pt-3 pb-2 flex items-center justify-between text-sm text-gray-500">
-          <span className="font-light">9:41</span>
-          <div className="flex items-center gap-1">
-            <span className="text-xs">LTE</span>
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-            </svg>
-          </div>
-        </div>
-
         {/* Шапка профиля */}
         <div className="pt-6 pb-8 flex flex-col items-center">
           {/* Аватар */}
