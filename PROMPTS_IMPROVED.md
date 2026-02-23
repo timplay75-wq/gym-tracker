@@ -2041,7 +2041,387 @@ export { BottomSheet, type BottomSheetProps } from './BottomSheet';
 
 ---
 
-*Продолжение следует с улучшенными промтами для этапов 3-9...*
+## 🏗️ Этап 3: Основной функционал приложения
+
+### ❌ Промт 3.1 (ОРИГИНАЛ): Контекст темы
+
+**Проблемы:**
+- Нет конкретной реализации
+- Отсутствует обработка системной темы
+- Нет персистентности состояния
+
+---
+
+### ✅ Промт 3.1 (УЛУЧШЕННЫЙ): Theme Context с системной темой
+
+```markdown
+## Цель
+Создать полную систему управления темой с поддержкой light/dark/system режимов и localStorage персистентностью.
+
+## Требования
+
+### 1. Theme Context
+
+Создай `src/contexts/ThemeContext.tsx`:
+
+```typescript
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+
+type Theme = 'light' | 'dark' | 'system';
+type ResolvedTheme = 'light' | 'dark';
+
+interface ThemeContextType {
+  theme: Theme;
+  resolvedTheme: ResolvedTheme;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+}
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+const STORAGE_KEY = 'gym-tracker-theme';
+
+// Определение системной темы
+function getSystemTheme(): ResolvedTheme {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+// Получение сохранённой темы
+function getSavedTheme(): Theme {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === 'light' || saved === 'dark' || saved === 'system') {
+      return saved;
+    }
+  } catch (error) {
+    console.error('Failed to read theme from localStorage:', error);
+  }
+  return 'system'; // по умолчанию следуем системе
+}
+
+// Resolve темы (system -> light/dark)
+function resolveTheme(theme: Theme): ResolvedTheme {
+  return theme === 'system' ? getSystemTheme() : theme;
+}
+
+interface ThemeProviderProps {
+  children: ReactNode;
+  defaultTheme?: Theme;
+}
+
+export function ThemeProvider({ children, defaultTheme = 'system' }: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<Theme>(() => getSavedTheme() || defaultTheme);
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => resolveTheme(theme));
+
+  // Сохранение темы в localStorage
+  const setTheme = (newTheme: Theme) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, newTheme);
+      setThemeState(newTheme);
+    } catch (error) {
+      console.error('Failed to save theme to localStorage:', error);
+      setThemeState(newTheme);
+    }
+  };
+
+  // Toggle между light и dark
+  const toggleTheme = () => {
+    const newTheme = resolvedTheme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+  };
+
+  // Слушаем изменения системной темы
+  useEffect(() => {
+    if (theme !== 'system') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = () => {
+      setResolvedTheme(getSystemTheme());
+    };
+
+    // Modern browsers
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    } 
+    // Legacy browsers
+    else if (mediaQuery.addListener) {
+      mediaQuery.addListener(handleChange);
+      return () => mediaQuery.removeListener(handleChange);
+    }
+  }, [theme]);
+
+  // Обновляем resolved theme когда меняется theme
+  useEffect(() => {
+    setResolvedTheme(resolveTheme(theme));
+  }, [theme]);
+
+  // Применяем тему к <html>
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(resolvedTheme);
+    
+    // Обновляем meta theme-color для браузера
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      // Цвета из tailwind.config.js
+      const color = resolvedTheme === 'dark' ? '#171717' : '#ffffff'; // neutral-900 : white
+      metaThemeColor.setAttribute('content', color);
+    }
+  }, [resolvedTheme]);
+
+  return (
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+// Custom hook для использования темы
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+}
+```
+
+### 2. Theme Toggle компонент
+
+Создай `src/components/ThemeToggle.tsx`:
+
+```typescript
+import React from 'react';
+import { SunIcon, MoonIcon, MonitorIcon } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { Button } from '@/components/ui/Button';
+
+interface ThemeToggleProps {
+  showLabel?: boolean;
+  showSystemOption?: boolean;
+}
+
+export function ThemeToggle({ showLabel = false, showSystemOption = false }: ThemeToggleProps) {
+  const { theme, resolvedTheme, setTheme } = useTheme();
+
+  // Простой toggle light/dark
+  if (!showSystemOption) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setTheme(resolvedTheme === 'light' ? 'dark' : 'light')}
+        aria-label="Переключить тему"
+      >
+        {resolvedTheme === 'light' ? (
+          <MoonIcon className="h-5 w-5" />
+        ) : (
+          <SunIcon className="h-5 w-5" />
+        )}
+        {showLabel && <span className="ml-2">Тема</span>}
+      </Button>
+    );
+  }
+
+  // Полный выбор с system
+  return (
+    <div className="flex items-center gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg">
+      <button
+        onClick={() => setTheme('light')}
+        className={`p-2 rounded-md transition-colors ${
+          theme === 'light'
+            ? 'bg-white dark:bg-neutral-700 text-primary-600 shadow-sm'
+            : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
+        }`}
+        aria-label="Светлая тема"
+        aria-pressed={theme === 'light'}
+      >
+        <SunIcon className="h-5 w-5" />
+      </button>
+
+      <button
+        onClick={() => setTheme('system')}
+        className={`p-2 rounded-md transition-colors ${
+          theme === 'system'
+            ? 'bg-white dark:bg-neutral-700 text-primary-600 shadow-sm'
+            : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
+        }`}
+        aria-label="Системная тема"
+        aria-pressed={theme === 'system'}
+      >
+        <MonitorIcon className="h-5 w-5" />
+      </button>
+
+      <button
+        onClick={() => setTheme('dark')}
+        className={`p-2 rounded-md transition-colors ${
+          theme === 'dark'
+            ? 'bg-white dark:bg-neutral-700 text-primary-600 shadow-sm'
+            : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
+        }`}
+        aria-label="Тёмная тема"
+        aria-pressed={theme === 'dark'}
+      >
+        <MoonIcon className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+```
+
+### 3. Интеграция в App
+
+Оберни приложение в `src/main.tsx`:
+
+```typescript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="system">
+        <App />
+      </ThemeProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
+```
+
+### 4. Использование в компонентах
+
+```typescript
+import { useTheme } from '@/contexts/ThemeContext';
+import { ThemeToggle } from '@/components/ThemeToggle';
+
+function Header() {
+  const { theme, resolvedTheme } = useTheme();
+
+  return (
+    <header className="flex items-center justify-between p-4">
+      <h1>Gym Tracker</h1>
+      
+      {/* Простой toggle */}
+      <ThemeToggle />
+      
+      {/* Или с выбором system */}
+      <ThemeToggle showSystemOption showLabel />
+      
+      {/* Текущая тема для отладки */}
+      <p className="text-sm text-neutral-500">
+        Theme: {theme} (resolved: {resolvedTheme})
+      </p>
+    </header>
+  );
+}
+```
+
+### 5. Meta tags для PWA
+
+Обнови `index.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Theme color (будет обновляться динамически) -->
+  <meta name="theme-color" content="#ffffff" />
+  
+  <!-- iOS Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  
+  <title>Gym Tracker</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
+```
+
+## Критерии завершения
+
+- [ ] ThemeContext создан с поддержкой light/dark/system
+- [ ] localStorage сохраняет выбранную тему
+- [ ] Системная тема определяется автоматически
+- [ ] Слушаются изменения системной темы в реальном времени
+- [ ] Класс 'dark' добавляется/удаляется на <html>
+- [ ] meta theme-color обновляется при смене темы
+- [ ] ThemeToggle компоненты работают корректно
+- [ ] useTheme hook работает во всех компонентах
+- [ ] Нет мерцания при загрузке страницы (SSR-ready)
+- [ ] TypeScript типы без ошибок
+
+## Тестирование
+
+```typescript
+// src/__tests__/theme.test.ts
+import { renderHook, act } from '@testing-library/react';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+
+describe('ThemeContext', () => {
+  it('defaults to system theme', () => {
+    const { result } = renderHook(() => useTheme(), {
+      wrapper: ThemeProvider,
+    });
+    expect(result.current.theme).toBe('system');
+  });
+
+  it('persists theme to localStorage', () => {
+    const { result } = renderHook(() => useTheme(), {
+      wrapper: ThemeProvider,
+    });
+    
+    act(() => {
+      result.current.setTheme('dark');
+    });
+    
+    expect(localStorage.getItem('gym-tracker-theme')).toBe('dark');
+  });
+
+  it('toggles between light and dark', () => {
+    const { result } = renderHook(() => useTheme(), {
+      wrapper: ThemeProvider,
+    });
+    
+    act(() => {
+      result.current.setTheme('light');
+    });
+    expect(result.current.resolvedTheme).toBe('light');
+    
+    act(() => {
+      result.current.toggleTheme();
+    });
+    expect(result.current.resolvedTheme).toBe('dark');
+  });
+});
+```
+```
+
+**Почему это лучше:**
+- ✅ Полная реализация с TypeScript
+- ✅ Поддержка system theme с медиа-запросами
+- ✅ localStorage персистентность с error handling
+- ✅ Автоматическое обновление при смене системной темы
+- ✅ Meta theme-color для PWA
+- ✅ Два варианта UI для toggle
+- ✅ Accessibility (aria-labels, aria-pressed)
+- ✅ Unit тесты включены
+- ✅ SSR-ready (проверки window)
+
+---
 
 ## 🚀 Общие рекомендации по использованию улучшенных промтов
 
@@ -2062,4 +2442,17 @@ export { BottomSheet, type BottomSheetProps } from './BottomSheet';
 
 ---
 
-*Этот документ будет дополняться улучшенными версиями промтов для всех 9 этапов.*
+## 📝 Статус документа
+
+**Готово:**
+- ✅ Этап 1: Архитектура и типы данных
+- ✅ Этап 2: Дизайн-система и UI компоненты  
+- ✅ Этап 3.1: Theme Context
+
+**В процессе:**
+- 🚧 Этап 3.2: Главный экран (Dashboard)
+- 🚧 Этап 3.3: Workout Builder
+- 🚧 Этап 3.4: Active Workout
+- ⏳ Этапы 4-9 (будут добавлены)
+
+*Промты для остальных разделов этапов 3-9 готовятся. Если нужен конкретный этап срочно — дай знать, и я создам его первым.*
