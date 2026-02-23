@@ -1,3 +1,8 @@
+// Базовые типы данных
+export type UUID = string;
+export type ISODate = string; // формат YYYY-MM-DD
+export type Timestamp = number; // миллисекунды с эпохи
+
 // Категории мышечных групп
 export type ExerciseCategory = 
   | 'chest'
@@ -64,8 +69,14 @@ export interface Workout {
   status: WorkoutStatus;
   notes?: string;
   totalVolume?: number; // общий тоннаж
+  totalSets?: number; // общее количество подходов
+  totalReps?: number; // общее количество повторений
   programId?: string; // ID программы, если входит в программу
   dayOfWeek?: DayOfWeek; // день недели для расписания
+  scheduledTime?: string; // время начала (формат HH:MM)
+  startedAt?: Timestamp; // когда начата тренировка
+  completedAt?: Timestamp; // когда завершена тренировка
+  updatedAt?: Timestamp; // последнее обновление
 }
 
 // WorkoutProgram - программа тренировок (сплит)
@@ -143,4 +154,46 @@ export interface ScheduledWorkout {
   notes?: string;
   completed: boolean;
   programId?: string; // если часть программы
+}
+
+// WorkoutListItem - упрощенный элемент списка тренировок
+export interface WorkoutListItem {
+  id: string;
+  name: string;
+  date: ISODate;
+  status: WorkoutStatus;
+  duration?: number;
+  totalVolume?: number;
+  totalSets?: number;
+}
+
+// WorkoutCalendarItem - элемент для календаря
+export interface WorkoutCalendarItem {
+  date: ISODate;
+  workouts: {
+    id: string;
+    name: string;
+    status: WorkoutStatus;
+  }[];
+  hasWorkout: boolean;
+}
+
+// CreateWorkoutInput - данные для создания тренировки
+export interface CreateWorkoutInput {
+  name: string;
+  date?: ISODate;
+  exercises?: Exercise[];
+  notes?: string;
+  scheduledTime?: string;
+  programId?: string;
+}
+
+// MonthStats - статистика за месяц
+export interface MonthStats {
+  month: string; // формат YYYY-MM
+  totalWorkouts: number;
+  completedWorkouts: number;
+  totalDuration: number;
+  totalVolume: number;
+  averageWorkoutsPerWeek: number;
 }
