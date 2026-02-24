@@ -67,7 +67,7 @@ describe('StatCard Component', () => {
     
     expect(screen.getByText('0%')).toBeInTheDocument();
     const trendElement = screen.getByText('0%').closest('div');
-    expect(trendElement).toHaveClass('text-gray-600');
+    expect(trendElement).toHaveClass('text-primary-600');
   });
 
   it('applies custom className', () => {

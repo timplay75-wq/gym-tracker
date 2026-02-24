@@ -11,7 +11,7 @@ describe('Button Component', () => {
   it('applies correct variant classes', () => {
     const { container } = render(<Button variant="primary">Primary</Button>);
     const button = container.querySelector('button');
-    expect(button?.className).toContain('bg-primary-500');
+    expect(button?.className).toContain('bg-[#9333ea]');
   });
 
   it('applies correct size classes', () => {

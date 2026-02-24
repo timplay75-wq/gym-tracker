@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
@@ -124,5 +125,4 @@ describe('Multi-Component Interaction', () => {
   });
 });
 
-// Import React at the top
-import React from 'react';
+// Import React at the top (moved from bottom)

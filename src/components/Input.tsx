@@ -23,10 +23,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       iconPosition = 'left',
       className = '',
       type = 'text',
+      id,
       ...props
     },
     ref
   ) => {
+    const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
     // Variant styles
     const variantClasses = {
       default: 'border-[#9333ea] focus:border-[#7c3aed]',
@@ -39,7 +41,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-primary-700 mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-primary-700 mb-1.5">
             {label}
           </label>
         )}
@@ -54,6 +56,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
           <input
             ref={ref}
+            id={inputId}
             type={type}
             className={`
               w-full px-4 py-3 rounded-xl

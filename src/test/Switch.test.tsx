@@ -17,7 +17,7 @@ describe('Switch Component', () => {
     const { container } = render(<Switch />);
     const switchElement = container.querySelector('[class*="inline-flex h-6"]');
     
-    expect(switchElement).toHaveClass('bg-gray-300');
+    expect(switchElement).toHaveClass('bg-primary-200');
     
     fireEvent.click(switchElement!);
     expect(switchElement).toHaveClass('bg-primary-600');
@@ -39,7 +39,7 @@ describe('Switch Component', () => {
     const { container, rerender } = render(<Switch checked={false} />);
     const switchElement = container.querySelector('[class*="inline-flex h-6"]');
     
-    expect(switchElement).toHaveClass('bg-gray-300');
+    expect(switchElement).toHaveClass('bg-primary-200');
     
     rerender(<Switch checked={true} />);
     expect(switchElement).toHaveClass('bg-primary-600');

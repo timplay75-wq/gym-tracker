@@ -11,7 +11,7 @@ describe('Card Component', () => {
   it('applies default variant classes', () => {
     const { container } = render(<Card>Default Card</Card>);
     const card = container.firstChild as HTMLElement;
-    expect(card).toHaveClass('bg-white', 'dark:bg-gray-800');
+    expect(card).toHaveClass('bg-white');
   });
 
   it('applies elevated variant classes', () => {

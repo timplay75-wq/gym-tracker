@@ -37,7 +37,7 @@ describe('Spinner Component', () => {
 
     rerender(<Spinner variant="gray" />);
     svg = container.querySelector('svg');
-    expect(svg).toHaveClass('text-gray-600');
+    expect(svg).toHaveClass('text-primary-400');
   });
 
   it('applies custom className', () => {

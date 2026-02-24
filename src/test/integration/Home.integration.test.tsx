@@ -30,9 +30,7 @@ describe('Home Page Integration Tests', () => {
 
   it('renders home page with all sections', () => {
     renderWithProviders(<Home />);
-
-    // Check for main sections
-    expect(screen.getByText(/Gym Tracker/i)).toBeInTheDocument();
+    expect(screen.getByText(/Главная/i)).toBeInTheDocument();
   });
 
   it('displays workout statistics', () => {
@@ -79,9 +77,7 @@ describe('Home Page Integration Tests', () => {
 
   it('shows empty state when no workouts exist', () => {
     renderWithProviders(<Home />);
-
-    // Should show some indication of no workouts
-    const emptyStateIndicators = screen.queryAllByText(/no.*workout|start|create/i);
+    const emptyStateIndicators = screen.queryAllByText(/нет тренировок|сегодня|Добавить/i);
     expect(emptyStateIndicators.length).toBeGreaterThan(0);
   });
 });

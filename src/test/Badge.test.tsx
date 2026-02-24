@@ -10,7 +10,7 @@ describe('Badge Component', () => {
 
   it('applies default variant classes', () => {
     render(<Badge variant="default">Default</Badge>);
-    expect(screen.getByText('Default')).toHaveClass('bg-gray-100');
+    expect(screen.getByText('Default')).toHaveClass('bg-primary-100');
   });
 
   it('applies primary variant classes', () => {
