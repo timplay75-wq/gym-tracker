@@ -1,4 +1,5 @@
 ﻿import Workout from '../models/Workout.js';
+import { updateRecordsFromWorkout } from './personalRecordController.js';
 
 // GET /api/workouts
 export const getAllWorkouts = async (req, res) => {
@@ -113,7 +114,10 @@ export const completeWorkout = async (req, res) => {
     workout.completedAt = new Date();
     if (duration) workout.duration = duration;
     if (exercises) workout.exercises = exercises;
-    await workout.save(); // Р·Р°РїСѓСЃРєР°РµС‚ pre-save С…СѓРє РґР»СЏ РїРѕРґСЃС‡С‘С‚Р° РјРµС‚СЂРёРє
+    await workout.save();
+
+    // Автообновляем личные рекорды
+    await updateRecordsFromWorkout(req.user._id, workout);
 
     res.json(workout);
   } catch (error) {

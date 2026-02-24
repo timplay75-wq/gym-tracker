@@ -2,11 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
+import { rateLimit } from 'express-rate-limit';
 import workoutRoutes from './routes/workouts.js';
 import userRoutes from './routes/users.js';
 import programRoutes from './routes/programs.js';
 import statsRoutes from './routes/stats.js';
 import exerciseRoutes from './routes/exercises.js';
+import recordRoutes from './routes/personalRecords.js';
 
 // Загрузка переменных окружения
 dotenv.config();
@@ -16,17 +18,25 @@ connectDB();
 
 const app = express();
 
+// Rate limiting для auth маршрутов
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 минут
+  max: 20,
+  message: { message: 'Слишком много запросов, попробуйте через 15 минут' },
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
+app.use('/api/users', authLimiter, userRoutes);
 app.use('/api/workouts', workoutRoutes);
-app.use('/api/users', userRoutes);
 app.use('/api/programs', programRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/exercises', exerciseRoutes);
+app.use('/api/records', recordRoutes);
 
 // Базовый роут
 app.get('/', (req, res) => {
