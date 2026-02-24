@@ -89,6 +89,14 @@ const WorkoutSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  totalSets: {
+    type: Number,
+    default: 0
+  },
+  totalReps: {
+    type: Number,
+    default: 0
+  },
   programId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'WorkoutProgram'
@@ -96,23 +104,37 @@ const WorkoutSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: false
+    required: [true, 'Пользователь обязателен']
+  },
+  startedAt: {
+    type: Date,
+    default: null
+  },
+  completedAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
 });
 
-// Вычисление общего тоннажа перед сохранением
-WorkoutSchema.pre('save', function(next) {
+// Вычисление общего тоннажа, подходов и повторений
+WorkoutSchema.pre('save', function (next) {
   let totalVolume = 0;
+  let totalSets = 0;
+  let totalReps = 0;
   this.exercises.forEach(exercise => {
     exercise.sets.forEach(set => {
       if (set.completed) {
         totalVolume += set.weight * set.reps;
+        totalSets += 1;
+        totalReps += set.reps;
       }
     });
   });
   this.totalVolume = totalVolume;
+  this.totalSets = totalSets;
+  this.totalReps = totalReps;
   next();
 });
 

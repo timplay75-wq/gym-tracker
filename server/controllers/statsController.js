@@ -1,139 +1,178 @@
-import ExerciseStats from '../models/ExerciseStats.js';
-import Workout from '../models/Workout.js';
+﻿import Workout from '../models/Workout.js';
+import mongoose from 'mongoose';
 
-// Получить статистику по упражнению
-export const getExerciseStats = async (req, res) => {
+// GET /api/stats/summary вЂ” СЃРІРѕРґРЅР°СЏ СЃС‚Р°С‚РёСЃС‚РёРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+export const getSummary = async (req, res) => {
   try {
-    const { exerciseId } = req.params;
-    let stats = await ExerciseStats.findOne({ exerciseId });
-    
-    if (!stats) {
-      // Создать статистику если не существует
-      stats = await calculateExerciseStats(exerciseId);
-    }
-    
-    res.json(stats);
+    const userId = req.user._id;
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    const [total, thisMonth, lastMonth, volumeAgg] = await Promise.all([
+      Workout.countDocuments({ userId, status: 'completed' }),
+      Workout.countDocuments({ userId, status: 'completed', completedAt: { $gte: monthStart } }),
+      Workout.countDocuments({ userId, status: 'completed', completedAt: { $gte: lastMonthStart, $lt: monthStart } }),
+      Workout.aggregate([
+        { $match: { userId: new mongoose.Types.ObjectId(userId), status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$totalVolume' }, avgDuration: { $avg: '$duration' } } },
+      ]),
+    ]);
+
+    const streak = await calculateStreak(userId);
+
+    res.json({
+      totalWorkouts: total,
+      thisMonthWorkouts: thisMonth,
+      lastMonthWorkouts: lastMonth,
+      totalVolume: volumeAgg[0]?.total || 0,
+      avgDuration: Math.round(volumeAgg[0]?.avgDuration || 0),
+      currentStreak: streak,
+    });
+  } catch (error) {
+    console.error('Stats summary error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// GET /api/stats/weekly вЂ” СЃС‚Р°С‚РёСЃС‚РёРєР° РїРѕ РЅРµРґРµР»СЏРј (РїРѕСЃР»РµРґРЅРёРµ 8 РЅРµРґРµР»СЊ)
+export const getWeeklyStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const weeksAgo = new Date();
+    weeksAgo.setDate(weeksAgo.getDate() - 56); // 8 РЅРµРґРµР»СЊ
+
+    const workouts = await Workout.find({
+      userId,
+      status: 'completed',
+      completedAt: { $gte: weeksAgo },
+    }).select('completedAt totalVolume duration');
+
+    // Р“СЂСѓРїРїРёСЂСѓРµРј РїРѕ РЅРµРґРµР»СЏРј
+    const weeks = {};
+    workouts.forEach((w) => {
+      const date = new Date(w.completedAt);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay() + 1);
+      weekStart.setHours(0, 0, 0, 0);
+      const key = weekStart.toISOString().split('T')[0];
+
+      if (!weeks[key]) weeks[key] = { week: key, count: 0, volume: 0, duration: 0 };
+      weeks[key].count += 1;
+      weeks[key].volume += w.totalVolume || 0;
+      weeks[key].duration += w.duration || 0;
+    });
+
+    res.json(Object.values(weeks).sort((a, b) => a.week.localeCompare(b.week)));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Получить все упражнения со статистикой
-export const getAllExercisesStats = async (req, res) => {
+// GET /api/stats/exercises вЂ” С‚РѕРї СѓРїСЂР°Р¶РЅРµРЅРёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїРѕ С‚РѕРЅРЅР°Р¶Сѓ
+export const getTopExercises = async (req, res) => {
   try {
-    const stats = await ExerciseStats.find().sort({ totalVolume: -1 });
-    res.json(stats);
+    const userId = req.user._id;
+
+    const result = await Workout.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId), status: 'completed' } },
+      { $unwind: '$exercises' },
+      { $unwind: '$exercises.sets' },
+      { $match: { 'exercises.sets.completed': true } },
+      {
+        $group: {
+          _id: '$exercises.name',
+          category: { $first: '$exercises.category' },
+          totalVolume: { $sum: { $multiply: ['$exercises.sets.weight', '$exercises.sets.reps'] } },
+          totalSets: { $sum: 1 },
+          maxWeight: { $max: '$exercises.sets.weight' },
+          times: { $addToSet: '$_id' },
+        },
+      },
+      { $addFields: { timesPerformed: { $size: '$times' } } },
+      { $sort: { totalVolume: -1 } },
+      { $limit: 10 },
+    ]);
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Пересчитать статистику для упражнения
-export const recalculateExerciseStats = async (req, res) => {
+// GET /api/stats/exercise/:name вЂ” РёСЃС‚РѕСЂРёСЏ РїРѕ РєРѕРЅРєСЂРµС‚РЅРѕРјСѓ СѓРїСЂР°Р¶РЅРµРЅРёСЋ
+export const getExerciseHistory = async (req, res) => {
   try {
-    const { exerciseId } = req.params;
-    const stats = await calculateExerciseStats(exerciseId);
-    res.json(stats);
+    const userId = req.user._id;
+    const { name } = req.params;
+
+    const workouts = await Workout.find({
+      userId,
+      status: 'completed',
+      'exercises.name': decodeURIComponent(name),
+    }).sort({ completedAt: -1 }).limit(20);
+
+    const history = workouts.map((w) => {
+      const exercise = w.exercises.find((e) => e.name === decodeURIComponent(name));
+      const completedSets = exercise?.sets?.filter((s) => s.completed) || [];
+      const maxWeight = completedSets.reduce((max, s) => Math.max(max, s.weight), 0);
+      const totalVolume = completedSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+
+      return {
+        date: w.completedAt || w.date,
+        sets: completedSets,
+        maxWeight,
+        totalVolume,
+      };
+    });
+
+    res.json(history);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Вспомогательная функция для расчета статистики
-async function calculateExerciseStats(exerciseId) {
-  // Найти все тренировки с этим упражнением
-  const workouts = await Workout.find({
-    'exercises.name': exerciseId // или по ID если используете
-  });
-  
-  let totalVolume = 0;
-  let totalSets = 0;
-  let totalReps = 0;
-  let maxWeight = 0;
-  let weights = [];
-  const performanceHistory = [];
-  const volumeByPeriod = [];
-  let exerciseName = exerciseId;
-  let lastPerformed = null;
-  
-  workouts.forEach(workout => {
-    const exercise = workout.exercises.find(ex => ex.name === exerciseId);
-    if (exercise) {
-      exerciseName = exercise.name;
-      let workoutVolume = 0;
-      
-      exercise.sets.forEach(set => {
-        if (set.completed) {
-          const volume = set.weight * set.reps;
-          totalVolume += volume;
-          workoutVolume += volume;
-          totalSets++;
-          totalReps += set.reps;
-          maxWeight = Math.max(maxWeight, set.weight);
-          weights.push(set.weight);
-        }
-      });
-      
-      performanceHistory.push({
-        date: workout.date,
-        sets: exercise.sets,
-        totalVolume: workoutVolume
-      });
-      
-      volumeByPeriod.push({
-        date: workout.date,
-        volume: workoutVolume
-      });
-      
-      if (!lastPerformed || workout.date > lastPerformed) {
-        lastPerformed = workout.date;
+// Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ: РїРѕРґСЃС‡С‘С‚ streak
+async function calculateStreak(userId) {
+  const workouts = await Workout.find({ userId, status: 'completed' })
+    .sort({ completedAt: -1 })
+    .select('completedAt')
+    .lean();
+
+  if (!workouts.length) return 0;
+
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < workouts.length; i++) {
+    const date = new Date(workouts[i].completedAt);
+    date.setHours(0, 0, 0, 0);
+
+    const expected = new Date(today);
+    expected.setDate(today.getDate() - streak);
+
+    if (date.getTime() === expected.getTime()) {
+      streak++;
+    } else if (streak === 0) {
+      // Р•СЃР»Рё СЃРµРіРѕРґРЅСЏ РЅРµС‚ вЂ” РїСЂРѕРІРµСЂСЏРµРј РІС‡РµСЂР°
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      if (date.getTime() === yesterday.getTime()) {
+        streak++;
+      } else {
+        break;
       }
+    } else {
+      break;
     }
-  });
-  
-  const averageWeight = weights.length > 0 
-    ? weights.reduce((a, b) => a + b, 0) / weights.length 
-    : 0;
-  
-  // Вычислить частоту (раз в неделю)
-  const daysSinceFirst = performanceHistory.length > 0
-    ? (Date.now() - new Date(performanceHistory[performanceHistory.length - 1].date)) / (1000 * 60 * 60 * 24)
-    : 0;
-  const frequency = daysSinceFirst > 0 
-    ? (performanceHistory.length / daysSinceFirst) * 7 
-    : 0;
-  
-  // Найти персональные рекорды
-  const personalRecords = [{
-    exerciseId,
-    exerciseName,
-    maxWeight,
-    maxReps: Math.max(...performanceHistory.flatMap(h => h.sets.map(s => s.reps))),
-    maxVolume: Math.max(...volumeByPeriod.map(v => v.volume)),
-    date: lastPerformed
-  }];
-  
-  // Обновить или создать запись статистики
-  const stats = await ExerciseStats.findOneAndUpdate(
-    { exerciseId },
-    {
-      exerciseId,
-      exerciseName,
-      totalVolume,
-      totalSets,
-      totalReps,
-      maxWeight,
-      averageWeight,
-      volumeByPeriod,
-      performanceHistory,
-      personalRecords,
-      lastPerformed,
-      frequency
-    },
-    { upsert: true, new: true }
-  );
-  
-  return stats;
+  }
+
+  return streak;
 }
 
-export { calculateExerciseStats };
+// РЈСЃС‚Р°СЂРµРІС€РёРµ СЌРЅРґРїРѕРёРЅС‚С‹ (СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚СЊ СЃРѕ СЃС‚Р°СЂС‹Рј routes/stats.js)
+export const getExerciseStats = getSummary;
+export const getAllExercisesStats = getTopExercises;
+export const recalculateExerciseStats = (req, res) => res.json({ message: 'РСЃРїРѕР»СЊР·СѓР№С‚Рµ /api/stats/exercises' });
+

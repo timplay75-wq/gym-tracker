@@ -1,4 +1,5 @@
 import express from 'express';
+import { protect } from '../middleware/auth.js';
 import {
   getAllPrograms,
   getProgramById,
@@ -9,6 +10,8 @@ import {
 } from '../controllers/programController.js';
 
 const router = express.Router();
+
+router.use(protect);
 
 router.get('/', getAllPrograms);
 router.get('/:id', getProgramById);

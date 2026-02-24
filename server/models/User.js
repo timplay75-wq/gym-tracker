@@ -5,7 +5,8 @@ const UserSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Имя обязательно'],
-    trim: true
+    trim: true,
+    minlength: 2,
   },
   email: {
     type: String,
@@ -13,29 +14,47 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Пожалуйста, введите корректный email']
+    match: [/^\S+@\S+\.\S+$/, 'Пожалуйста, введите корректный email'],
   },
   password: {
     type: String,
     required: [true, 'Пароль обязателен'],
     minlength: 6,
-    select: false
-  }
+    select: false,
+  },
+  avatar: {
+    type: String,
+    default: null,
+  },
+  goal: {
+    type: String,
+    enum: ['weight_loss', 'muscle_gain', 'endurance', 'maintenance', 'flexibility', null],
+    default: null,
+  },
+  weight: {
+    type: Number,
+    min: 0,
+    default: null,
+  },
+  height: {
+    type: Number,
+    min: 0,
+    default: null,
+  },
 }, {
-  timestamps: true
+  timestamps: true,
 });
 
 // Хеширование пароля перед сохранением
-UserSchema.pre('save', async function(next) {
+UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
 // Метод для проверки пароля
-UserSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 

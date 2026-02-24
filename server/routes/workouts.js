@@ -1,20 +1,30 @@
 import express from 'express';
 import {
   getAllWorkouts,
+  getTodayWorkout,
   getWorkoutById,
   createWorkout,
   updateWorkout,
   deleteWorkout,
-  getWorkoutStats
+  startWorkout,
+  completeWorkout,
+  getWorkoutStats,
 } from '../controllers/workoutController.js';
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Все роуты защищены
+router.use(protect);
+
 router.get('/', getAllWorkouts);
+router.get('/today', getTodayWorkout);
 router.get('/stats', getWorkoutStats);
 router.get('/:id', getWorkoutById);
 router.post('/', createWorkout);
 router.put('/:id', updateWorkout);
 router.delete('/:id', deleteWorkout);
+router.post('/:id/start', startWorkout);
+router.post('/:id/complete', completeWorkout);
 
 export default router;

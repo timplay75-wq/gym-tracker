@@ -1,91 +1,73 @@
-import WorkoutProgram from '../models/WorkoutProgram.js';
+import Program from '../models/Program.js';
 
-// Получить все программы тренировок
+// GET /api/programs
 export const getAllPrograms = async (req, res) => {
   try {
-    const programs = await WorkoutProgram.find()
-      .populate('workouts')
-      .sort({ createdAt: -1 });
+    const programs = await Program.find({ userId: req.user._id }).sort({ createdAt: -1 });
     res.json(programs);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Получить одну программу
+// GET /api/programs/:id
 export const getProgramById = async (req, res) => {
   try {
-    const program = await WorkoutProgram.findById(req.params.id)
-      .populate('workouts');
-    
-    if (!program) {
-      return res.status(404).json({ message: 'Программа не найдена' });
-    }
-    
+    const program = await Program.findOne({ _id: req.params.id, userId: req.user._id });
+    if (!program) return res.status(404).json({ message: '�������� �� �������' });
     res.json(program);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Создать программу
+// POST /api/programs
 export const createProgram = async (req, res) => {
   try {
-    const program = new WorkoutProgram(req.body);
-    const savedProgram = await program.save();
-    res.status(201).json(savedProgram);
+    const program = await Program.create({ ...req.body, userId: req.user._id, isActive: false });
+    res.status(201).json(program);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// Обновить программу
+// PUT /api/programs/:id
 export const updateProgram = async (req, res) => {
   try {
-    const program = await WorkoutProgram.findByIdAndUpdate(
-      req.params.id,
+    const program = await Program.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
       req.body,
       { new: true, runValidators: true }
     );
-    
-    if (!program) {
-      return res.status(404).json({ message: 'Программа не найдена' });
-    }
-    
+    if (!program) return res.status(404).json({ message: '�������� �� �������' });
     res.json(program);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// Удалить программу
+// DELETE /api/programs/:id
 export const deleteProgram = async (req, res) => {
   try {
-    const program = await WorkoutProgram.findByIdAndDelete(req.params.id);
-    
-    if (!program) {
-      return res.status(404).json({ message: 'Программа не найдена' });
-    }
-    
-    res.json({ message: 'Программа удалена' });
+    const program = await Program.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    if (!program) return res.status(404).json({ message: '�������� �� �������' });
+    res.json({ message: '�������� �������' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Активировать программу
+// POST /api/programs/:id/activate
 export const activateProgram = async (req, res) => {
   try {
-    const program = await WorkoutProgram.findById(req.params.id);
-    
-    if (!program) {
-      return res.status(404).json({ message: 'Программа не найдена' });
-    }
-    
-    program.isActive = true;
-    await program.save(); // pre-save hook деактивирует другие программы
-    
-    res.json(program);
+    await Program.updateMany({ userId: req.user._id }, { isActive: false });
+    const program = await Program.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id },
+      { isActive: true },
+      { new: true }
+    );
+    if (!program) return res.status(404).json({ message: '�������� �� �������' });
+    res.json({ message: `�������� "${program.name}" ������������`, program });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

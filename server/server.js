@@ -6,6 +6,7 @@ import workoutRoutes from './routes/workouts.js';
 import userRoutes from './routes/users.js';
 import programRoutes from './routes/programs.js';
 import statsRoutes from './routes/stats.js';
+import exerciseRoutes from './routes/exercises.js';
 
 // Загрузка переменных окружения
 dotenv.config();
@@ -25,6 +26,7 @@ app.use('/api/workouts', workoutRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/programs', programRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/exercises', exerciseRoutes);
 
 // Базовый роут
 app.get('/', (req, res) => {
