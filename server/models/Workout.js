@@ -17,7 +17,7 @@ const SetSchema = new mongoose.Schema({
   },
   rpe: {
     type: Number, // Rate of Perceived Exertion (1-10)
-    min: 1,
+    min: 0,
     max: 10
   },
   completed: {

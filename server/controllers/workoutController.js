@@ -1,5 +1,24 @@
 ﻿import Workout from '../models/Workout.js';
+import User from '../models/User.js';
 import { updateRecordsFromWorkout } from './personalRecordController.js';
+
+// POST /api/workouts/fix-completed — миграция: добавляет completedAt к завершённым тренировкам без этого поля
+export const fixCompletedWorkouts = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const result = await Workout.updateMany(
+      { userId, status: 'completed', completedAt: { $exists: false } },
+      [{ $set: { completedAt: { $ifNull: ['$updatedAt', '$date', new Date()] } } }]
+    );
+    const result2 = await Workout.updateMany(
+      { userId, status: 'completed', completedAt: null },
+      [{ $set: { completedAt: { $ifNull: ['$updatedAt', '$date', new Date()] } } }]
+    );
+    res.json({ fixed: (result.modifiedCount || 0) + (result2.modifiedCount || 0) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // GET /api/workouts
 export const getAllWorkouts = async (req, res) => {
@@ -10,7 +29,7 @@ export const getAllWorkouts = async (req, res) => {
 
     const total = await Workout.countDocuments(filter);
     const workouts = await Workout.find(filter)
-      .sort({ date: -1 })
+      .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));
 
@@ -54,10 +73,13 @@ export const getWorkoutById = async (req, res) => {
 // POST /api/workouts
 export const createWorkout = async (req, res) => {
   try {
+    console.log('📥 createWorkout body:', JSON.stringify(req.body, null, 2));
     const workout = new Workout({ ...req.body, userId: req.user._id });
     const saved = await workout.save();
+    console.log('✅ workout saved:', saved._id);
     res.status(201).json(saved);
   } catch (error) {
+    console.error('❌ createWorkout error:', error.message);
     res.status(400).json({ message: error.message });
   }
 };
@@ -119,7 +141,10 @@ export const completeWorkout = async (req, res) => {
     // Автообновляем личные рекорды
     await updateRecordsFromWorkout(req.user._id, workout);
 
-    res.json(workout);
+    // Начисляем 10 монет за завершённую тренировку
+    await User.findByIdAndUpdate(req.user._id, { $inc: { coins: 10 } });
+
+    res.json(workout.toObject());
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -146,6 +171,46 @@ export const getWorkoutStats = async (req, res) => {
       thisMonthWorkouts: thisMonth,
       totalVolume: totalVolume[0]?.total || 0,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// GET /api/workouts/calendar?year=2026&month=2 — тренировки по дням месяца
+export const getCalendar = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const now = new Date();
+    const year = parseInt(req.query.year) || now.getFullYear();
+    const month = parseInt(req.query.month) || now.getMonth() + 1;
+
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 1);
+
+    const workouts = await Workout.find({
+      userId,
+      date: { $gte: start, $lt: end },
+    }).select('date status name totalVolume duration').lean();
+
+    const byDay = {};
+    workouts.forEach((w) => {
+      const d = new Date(w.date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (!byDay[key]) byDay[key] = [];
+      byDay[key].push({ _id: w._id, name: w.name, status: w.status, totalVolume: w.totalVolume, duration: w.duration });
+    });
+
+    const result = Object.entries(byDay).map(([date, items]) => ({
+      date,
+      count: items.length,
+      status: items.some((w) => w.status === 'completed') ? 'completed'
+            : items.some((w) => w.status === 'in-progress') ? 'in-progress'
+            : 'planned',
+      workouts: items,
+    }));
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

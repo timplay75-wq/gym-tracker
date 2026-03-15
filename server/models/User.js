@@ -18,9 +18,17 @@ const UserSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Пароль обязателен'],
     minlength: 6,
     select: false,
+  },
+  oauthProvider: {
+    type: String,
+    enum: ['google', 'github', 'microsoft', null],
+    default: null,
+  },
+  oauthId: {
+    type: String,
+    default: null,
   },
   avatar: {
     type: String,
@@ -39,6 +47,23 @@ const UserSchema = new mongoose.Schema({
   height: {
     type: Number,
     min: 0,
+    default: null,
+  },
+  coins: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  purchasedPacks: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ExercisePack',
+  }],
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  resetPasswordExpires: {
+    type: Date,
     default: null,
   },
 }, {

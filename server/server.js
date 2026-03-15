@@ -9,6 +9,10 @@ import programRoutes from './routes/programs.js';
 import statsRoutes from './routes/stats.js';
 import exerciseRoutes from './routes/exercises.js';
 import recordRoutes from './routes/personalRecords.js';
+import oauthRoutes from './routes/oauth.js';
+import measurementRoutes from './routes/measurements.js';
+import shopRoutes from './routes/shop.js';
+import subscriptionRoutes from './routes/subscriptions.js';
 
 // Загрузка переменных окружения
 dotenv.config();
@@ -21,12 +25,18 @@ const app = express();
 // Rate limiting для auth маршрутов
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 минут
-  max: 20,
+  max: process.env.NODE_ENV === 'production' ? 20 : 200,
   message: { message: 'Слишком много запросов, попробуйте через 15 минут' },
+  skip: () => process.env.NODE_ENV === 'development',
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.CORS_ORIGIN
+    : 'http://localhost:5173',
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -37,6 +47,10 @@ app.use('/api/programs', programRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/records', recordRoutes);
+app.use('/api/oauth', oauthRoutes);
+app.use('/api/measurements', measurementRoutes);
+app.use('/api/shop', shopRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 // Базовый роут
 app.get('/', (req, res) => {

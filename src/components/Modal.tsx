@@ -49,22 +49,22 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         <div
           className={`
             ${sizeClasses[size]} w-full
-            bg-white
+            bg-white dark:bg-[#16213e]
             rounded-3xl shadow-2xl
             overflow-hidden
             pointer-events-auto
             animate-scale-in
-            border-2 border-primary-200
+            border-2 border-primary-200 dark:border-gray-700
           `}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           {title && (
-            <div className="px-6 py-4 border-b border-primary-200 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+            <div className="px-6 py-4 border-b border-primary-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-primary-50 transition-colors"
+                className="p-2 rounded-lg hover:bg-primary-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <svg
                   className="w-5 h-5 text-primary-500"

@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-interface Set {
-  id: string;
-  reps: number;
-  weight: number;
-}
+import { workoutsApi } from '@/services/api';
+import { useLanguage } from '@/i18n';
+import { useToast } from '@/hooks/useToast';
 
 export const SetupExercise = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const toast = useToast();
   
   const exerciseName = location.state?.exerciseName as string || '';
   const categoryId = location.state?.categoryId as string || '';
@@ -18,171 +17,112 @@ export const SetupExercise = () => {
   const [name, setName] = useState(exerciseName);
   const [date, setDate] = useState(() => {
     const today = new Date();
-    return today.toISOString().split('T')[0]; // YYYY-MM-DD
+    return today.toISOString().split('T')[0];
   });
-  const [time, setTime] = useState('');
-  const [sets, setSets] = useState<Set[]>([
-    { id: '1', reps: 10, weight: 0 }
-  ]);
 
-  const addSet = () => {
-    const lastSet = sets[sets.length - 1];
-    setSets([...sets, {
-      id: Date.now().toString(),
-      reps: lastSet?.reps || 10,
-      weight: lastSet?.weight || 0
-    }]);
-  };
+  const [saving, setSaving] = useState(false);
 
-  const removeSet = (id: string) => {
-    if (sets.length > 1) {
-      setSets(sets.filter(s => s.id !== id));
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+
+    const categoryMap: Record<string, string> = {
+      chest: 'chest', back: 'back', legs: 'legs',
+      shoulders: 'shoulders', arms: 'arms', abs: 'core',
+      cardio: 'cardio', stretching: 'other',
+    };
+    const category = categoryMap[categoryId] ?? 'other';
+
+    const newExercise = {
+      name: name,
+      category: category,
+      sets: [{ reps: 0, weight: 0 }],
+    };
+
+    try {
+      const dayStr = date;
+      const res = await workoutsApi.getAll({ limit: 50 });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const existing = res.workouts.find((w: any) => {
+        const wd = typeof w.date === 'string' ? w.date.slice(0, 10) : new Date(w.date).toISOString().slice(0, 10);
+        return wd === dayStr;
+      });
+
+      if (existing) {
+        const updatedExercises = [...(existing.exercises || []), newExercise];
+        await workoutsApi.update(existing.id ?? existing._id, { exercises: updatedExercises });
+      } else {
+        await workoutsApi.create({
+          name: name,
+          date: new Date(date + 'T12:00:00'),
+          exercises: [newExercise],
+          status: 'planned',
+        });
+      }
+      navigate('/');
+      toast.success(t.setupExercise.saved);
+    } catch (err) {
+      toast.error(`${t.setupExercise.saveError}: ${err instanceof Error ? err.message : ''}`);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const updateSet = (id: string, field: 'reps' | 'weight', value: number) => {
-    setSets(sets.map(s => s.id === id ? { ...s, [field]: value } : s));
-  };
-
-  const handleSave = () => {
-    // TODO: Сохранить упражнение в тренировку
-    const exercise = {
-      name,
-      categoryId,
-      categoryName,
-      date,
-      time: time || null,
-      sets: sets.map(s => ({ reps: s.reps, weight: s.weight }))
-    };
-    console.log('Сохранение упражнения:', exercise);
-    navigate('/');
-  };
-
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#1a1a2e] pb-24">
       <div className="max-w-[480px] mx-auto px-5">
-        {/* Заголовок */}
+        {/* Header */}
         <header className="pt-8 pb-4 flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="text-[#9333ea]">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-black">{categoryName}</h1>
+          <h1 className="text-2xl font-bold text-black dark:text-white">{categoryName}</h1>
           <div className="w-6" />
         </header>
 
-        {/* Название упражнения */}
+        {/* Exercise name */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Название упражнения
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t.setupExercise.exerciseName}
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#9333ea] focus:outline-none text-base"
-            placeholder="Введите название"
+            className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:border-[#9333ea] focus:outline-none text-base bg-white dark:bg-[#16213e] text-gray-900 dark:text-white"
+            placeholder={t.setupExercise.namePlaceholder}
           />
         </div>
 
-        {/* Дата и время */}
+        {/* Date */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Дата тренировки
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t.setupExercise.trainingDate}
           </label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#9333ea] focus:outline-none text-base"
+            className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:border-[#9333ea] focus:outline-none text-base bg-white dark:bg-[#16213e] text-gray-900 dark:text-white"
           />
         </div>
 
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Время (необязательно)
-          </label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-[#9333ea] focus:outline-none text-base"
-            placeholder="Выберите время"
-          />
+        {/* Info hint */}
+        <div className="mb-6 p-4 bg-[#f3e8ff] dark:bg-[#9333ea]/10 rounded-xl">
+          <p className="text-sm text-[#7c3aed] dark:text-[#c084fc]">
+            {t.setupExercise.setsHint || 'Подходы, вес и повторения настраиваются во время тренировки'}
+          </p>
         </div>
 
-        {/* Подходы */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-black">Подходы</h2>
-            <button
-              onClick={addSet}
-              className="text-[#9333ea] font-semibold flex items-center gap-1"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              Добавить подход
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {sets.map((set, index) => (
-              <div key={set.id} className="bg-gray-50 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-semibold text-black">Подход {index + 1}</span>
-                  {sets.length > 1 && (
-                    <button
-                      onClick={() => removeSet(set.id)}
-                      className="text-red-600 text-sm"
-                    >
-                      Удалить
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Повторения */}
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">
-                      Повторения
-                    </label>
-                    <input
-                      type="number"
-                      value={set.reps}
-                      onChange={(e) => updateSet(set.id, 'reps', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-[#9333ea] focus:outline-none text-center text-lg font-semibold"
-                      min="0"
-                    />
-                  </div>
-
-                  {/* Вес */}
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">
-                      Вес (кг)
-                    </label>
-                    <input
-                      type="number"
-                      value={set.weight}
-                      onChange={(e) => updateSet(set.id, 'weight', parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-[#9333ea] focus:outline-none text-center text-lg font-semibold"
-                      min="0"
-                      step="0.5"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Кнопка сохранения */}
+        {/* Save button */}
         <button
           onClick={handleSave}
-          className="w-full py-4 bg-[#9333ea] text-white rounded-xl font-semibold text-lg hover:bg-[#7c3aed] transition-colors"
+          disabled={saving || !name.trim()}
+          className="w-full py-4 bg-[#9333ea] text-white rounded-xl font-semibold text-lg hover:bg-[#7c3aed] transition-colors disabled:opacity-50"
         >
-          Добавить в тренировку
+          {saving ? t.setupExercise.saving : t.setupExercise.save}
         </button>
       </div>
     </div>

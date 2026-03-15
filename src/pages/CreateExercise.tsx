@@ -1,202 +1,160 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { exercisesApi } from '@/services/api';
+import { useToast } from '@/hooks/useToast';
+import { useLanguage } from '@/i18n';
 
-interface Category {
-  id: string;
-  name: string;
-  count: number;
-  exercises: string[];
-}
+const CATEGORIES = [
+  { id: 'chest', icon: '🏋️' },
+  { id: 'back', icon: '🔙' },
+  { id: 'legs', icon: '🦵' },
+  { id: 'shoulders', icon: '💪' },
+  { id: 'arms', icon: '💪' },
+  { id: 'abs', icon: '🎯' },
+  { id: 'cardio', icon: '❤️' },
+  { id: 'stretching', icon: '🧘' },
+] as const;
 
-const allCategories: Category[] = [
-  { id: 'stretching', name: 'Растяжка', count: 3, exercises: [] },
-  { id: 'cardio', name: 'Кардио', count: 4, exercises: [] },
-  { id: 'chest', name: 'Грудь', count: 4, exercises: [] },
-  { id: 'back', name: 'Спина', count: 3, exercises: [] },
-  { id: 'arms', name: 'Руки', count: 4, exercises: [] },
-  { id: 'legs', name: 'Ноги', count: 4, exercises: [] },
-  { id: 'shoulders', name: 'Плечи', count: 3, exercises: [] },
-  { id: 'abs', name: 'Пресс', count: 3, exercises: [] },
-];
+const categoryToBackend: Record<string, string> = {
+  stretching: 'other', cardio: 'cardio', chest: 'chest', back: 'back',
+  arms: 'arms', legs: 'legs', shoulders: 'shoulders', abs: 'core',
+};
 
 export const CreateExercise = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const preselectedCategory = location.state?.preselectedCategory as Category | undefined;
+  const toast = useToast();
+  const { t } = useLanguage();
   const prefilledName = location.state?.prefilledName as string | undefined;
-  
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(preselectedCategory || null);
-  const [exerciseName, setExerciseName] = useState(prefilledName || '');
+  const preselectedCategory = location.state?.preselectedCategory as string | undefined;
 
-  const handleCategorySelect = (category: Category) => {
-    setSelectedCategory(category);
-  };
+  const [name, setName] = useState(prefilledName || '');
+  const [selectedCategory, setSelectedCategory] = useState(preselectedCategory || '');
+  const [isDoubleWeight, setIsDoubleWeight] = useState(false);
+  const [isBodyweight, setIsBodyweight] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    if (exerciseName.trim() && selectedCategory) {
-      // TODO: Сохранить упражнение
-      console.log('Создание упражнения:', exerciseName, 'в категории:', selectedCategory.name);
+  const handleSave = async () => {
+    if (!name.trim() || !selectedCategory || saving) return;
+    setSaving(true);
+    try {
+      const backendCat = categoryToBackend[selectedCategory] || 'other';
+      await exercisesApi.create({
+        name: name.trim(),
+        category: backendCat,
+        type: backendCat === 'cardio' ? 'cardio' : 'strength',
+        isDoubleWeight,
+        isBodyweight,
+      });
+      toast.success(t.setupExercise.saved);
       navigate(-1);
+    } catch {
+      toast.error(t.common?.error || 'Ошибка сохранения');
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Если категория не выбрана - показываем выбор категории
-  if (!selectedCategory) {
-    return (
-      <div className="min-h-screen bg-white pb-24">
-        <div className="max-w-[480px] mx-auto px-5">
-          {/* Статус бар */}
-          <div className="pt-3 pb-2 flex items-center justify-between text-sm text-gray-500">
-            <span className="font-light">23:40</span>
-            <div className="flex items-center gap-1">
-              <span className="text-xs">LTE 21</span>
-            </div>
-          </div>
-
-          {/* Заголовок */}
-          <header className="pt-4 pb-2">
-            <h1 className="text-3xl font-bold text-black text-center">Новое упражнение</h1>
-            <p className="text-center text-gray-500 mt-2">Выбери категорию</p>
-          </header>
-
-          {/* Список категорий */}
-          <div className="mt-6 divide-y divide-gray-200">
-            {allCategories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategorySelect(category)}
-                className="w-full py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
-              >
-                <span className="font-semibold text-black">{category.name}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-500 text-sm">{category.count}</span>
-                  <svg className="w-5 h-5 text-[#9333ea]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Виртуальная клавиатура */}
-          <div className="fixed bottom-0 left-0 right-0 bg-gray-200 p-2">
-            <div className="max-w-[480px] mx-auto">
-              {/* Верхний ряд */}
-              <div className="grid grid-cols-10 gap-1 mb-1">
-                {['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з'].map((key) => (
-                  <button key={key} className="bg-white rounded py-3 text-sm font-medium">
-                    {key.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              {/* Средний ряд */}
-              <div className="grid grid-cols-9 gap-1 mb-1 px-2">
-                {['ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д'].map((key) => (
-                  <button key={key} className="bg-white rounded py-3 text-sm font-medium">
-                    {key.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              {/* Нижний ряд */}
-              <div className="grid grid-cols-9 gap-1 mb-1">
-                <button className="bg-white rounded py-3 text-xs">123</button>
-                {['я', 'ч', 'с', 'м', 'и', 'т', 'ь'].map((key) => (
-                  <button key={key} className="bg-white rounded py-3 text-sm font-medium">
-                    {key.toUpperCase()}
-                  </button>
-                ))}
-                <button className="bg-white rounded py-3">⌫</button>
-              </div>
-              {/* Пробел и Готово */}
-              <div className="grid grid-cols-3 gap-1">
-                <button className="bg-white rounded py-3 text-sm">123</button>
-                <button className="bg-white rounded py-3 text-sm">Пробел</button>
-                <button className="bg-[#9333ea] text-white rounded py-3 text-sm font-semibold">
-                  Готово
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Если категория выбрана - показываем ввод названия
   return (
-    <div className="min-h-screen bg-white pb-64">
+    <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#1a1a2e] pb-8">
       <div className="max-w-[480px] mx-auto px-5">
-        {/* Статус бар */}
-        <div className="pt-3 pb-2 flex items-center justify-between text-sm text-gray-500">
-          <span className="font-light">23:39</span>
-          <div className="flex items-center gap-1">
-            <span className="text-xs">LTE</span>
-          </div>
-        </div>
-
-        {/* Заголовок */}
-        <header className="pt-4 pb-2">
-          <h1 className="text-3xl font-bold text-black text-center">{selectedCategory.name}</h1>
+        {/* Header */}
+        <header className="pt-6 pb-4 flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <h1 className="text-2xl font-bold text-black dark:text-white">{t.exercises.newExercise || 'Новое упражнение'}</h1>
         </header>
 
-        {/* Поле ввода */}
-        <div className="mt-12 text-center">
-          <h2 className="text-xl text-gray-900 mb-4">Название упражнения</h2>
-          <div className="relative">
-            <input
-              type="text"
-              value={exerciseName}
-              onChange={(e) => setExerciseName(e.target.value)}
-              className="w-full text-center text-lg border-b-2 border-gray-300 focus:border-[#9333ea] outline-none py-2"
-              placeholder=""
-              autoFocus
-            />
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#9333ea] animate-pulse" />
-          </div>
+        {/* Name */}
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            {t.setupExercise?.exerciseName || 'Название упражнения'}
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl focus:border-[#9333ea] focus:outline-none text-base bg-white dark:bg-[#16213e] text-gray-900 dark:text-white"
+            placeholder={t.exercises.enterName || 'Введите название'}
+            autoFocus
+          />
         </div>
-      </div>
 
-      {/* Виртуальная клавиатура */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-200 p-2">
-        <div className="max-w-[480px] mx-auto">
-          {/* Верхний ряд */}
-          <div className="grid grid-cols-10 gap-1 mb-1">
-            {['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з'].map((key) => (
-              <button key={key} className="bg-white rounded py-3 text-sm font-medium">
-                {key.toUpperCase()}
-              </button>
-            ))}
-          </div>
-          {/* Средний ряд */}
-          <div className="grid grid-cols-9 gap-1 mb-1 px-2">
-            {['ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д'].map((key) => (
-              <button key={key} className="bg-white rounded py-3 text-sm font-medium">
-                {key.toUpperCase()}
-              </button>
-            ))}
-          </div>
-          {/* Нижний ряд */}
-          <div className="grid grid-cols-9 gap-1 mb-1">
-            <button className="bg-white rounded py-3 text-xs">123</button>
-            {['я', 'ч', 'с', 'м', 'и', 'т', 'ь'].map((key) => (
-              <button key={key} className="bg-white rounded py-3 text-sm font-medium">
-                {key.toUpperCase()}
-              </button>
-            ))}
-            <button className="bg-white rounded py-3">⌫</button>
-          </div>
-          {/* Пробел и Ввод */}
-          <div className="grid grid-cols-3 gap-1">
-            <button className="bg-white rounded py-3 text-sm">123</button>
-            <button className="bg-white rounded py-3 text-sm">Пробел</button>
-            <button 
-              onClick={handleSave}
-              className="bg-[#9333ea] text-white rounded py-3 text-sm font-semibold"
-            >
-              Ввод
-            </button>
+        {/* Category selection */}
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            {t.exercises.selectCategory || 'Категория'}
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {CATEGORIES.map((cat) => {
+              const active = selectedCategory === cat.id;
+              const label = (t.exercises as Record<string, string>)[cat.id] || cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`py-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                    active
+                      ? 'bg-[#9333ea] text-white shadow-md shadow-purple-300 dark:shadow-purple-900/40'
+                      : 'bg-white dark:bg-[#16213e] text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+                  }`}
+                >
+                  <span className="text-lg">{cat.icon}</span>
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
+
+        {/* Toggles */}
+        <div className="mt-6 space-y-3">
+          {/* Double weight */}
+          <label className="flex items-center justify-between bg-white dark:bg-[#16213e] rounded-xl px-4 py-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{t.exercises.doubleWeight || 'Двойной вес'}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t.exercises.doubleWeightHint || '2 гантели — вес ×2 в статистике'}</p>
+            </div>
+            <div
+              onClick={() => setIsDoubleWeight(!isDoubleWeight)}
+              className={`w-11 h-6 rounded-full flex items-center px-0.5 transition-colors cursor-pointer ${
+                isDoubleWeight ? 'bg-[#9333ea]' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                isDoubleWeight ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </div>
+          </label>
+
+          {/* Bodyweight */}
+          <label className="flex items-center justify-between bg-white dark:bg-[#16213e] rounded-xl px-4 py-3.5 border border-gray-100 dark:border-gray-800 cursor-pointer">
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{t.exercises.bodyweight || 'Собственный вес'}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t.exercises.bodyweightHint || 'Подтягивания, отжимания и т.п.'}</p>
+            </div>
+            <div
+              onClick={() => setIsBodyweight(!isBodyweight)}
+              className={`w-11 h-6 rounded-full flex items-center px-0.5 transition-colors cursor-pointer ${
+                isBodyweight ? 'bg-[#9333ea]' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                isBodyweight ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </div>
+          </label>
+        </div>
+
+        {/* Save */}
+        <button
+          onClick={handleSave}
+          disabled={saving || !name.trim() || !selectedCategory}
+          className="w-full mt-8 py-3.5 bg-[#9333ea] text-white rounded-xl font-semibold text-base active:bg-[#7c3aed] transition-colors disabled:opacity-50"
+        >
+          {saving ? '...' : (t.exercises.createExercise || 'Создать')}
+        </button>
       </div>
     </div>
   );

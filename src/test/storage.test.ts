@@ -14,7 +14,6 @@ describe('Storage Service', () => {
       date: new Date().toISOString(),
       exercises: [],
       duration: 0,
-      completed: false,
     };
 
     it('saves workout to localStorage', () => {
@@ -79,7 +78,7 @@ describe('Storage Service', () => {
         date: new Date('2024-01-01').toISOString(),
         exercises: [],
         duration: 0,
-        completed: true,
+        completedAt: new Date('2024-01-01').toISOString(),
       };
 
       const workout2 = {
@@ -88,7 +87,7 @@ describe('Storage Service', () => {
         date: new Date('2024-01-15').toISOString(),
         exercises: [],
         duration: 0,
-        completed: true,
+        completedAt: new Date('2024-01-15').toISOString(),
       };
 
       storageService.saveWorkout(workout1);
@@ -107,7 +106,7 @@ describe('Storage Service', () => {
           date: new Date().toISOString(),
           exercises: [],
           duration: 0,
-          completed: true,
+          completedAt: new Date().toISOString(),
         });
       }
 
@@ -125,7 +124,7 @@ describe('Storage Service', () => {
           date: new Date().toISOString(),
           exercises: [],
           duration: 0,
-          completed: true,
+          completedAt: new Date().toISOString(),
         });
       }
 
@@ -150,7 +149,7 @@ describe('Storage Service', () => {
           },
         ],
         duration: 3600,
-        completed: true,
+        completedAt: new Date().toISOString(),
       };
 
       storageService.saveWorkout(workoutWithTonnage);

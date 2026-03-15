@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="#1a1a2e"/>
+  <!-- Dumbbell -->
+  <g transform="translate(256,256) rotate(-45)">
+    <!-- Bar -->
+    <rect x="-120" y="-8" width="240" height="16" rx="8" fill="url(#g)"/>
+    <!-- Left weight outer -->
+    <rect x="-160" y="-48" width="40" height="96" rx="10" fill="url(#g)"/>
+    <!-- Left weight inner -->
+    <rect x="-140" y="-36" width="20" height="72" rx="6" fill="#c084fc" opacity="0.4"/>
+    <!-- Left cap -->
+    <rect x="-180" y="-32" width="20" height="64" rx="8" fill="url(#g)"/>
+    <!-- Right weight outer -->
+    <rect x="120" y="-48" width="40" height="96" rx="10" fill="url(#g)"/>
+    <!-- Right weight inner -->
+    <rect x="120" y="-36" width="20" height="72" rx="6" fill="#c084fc" opacity="0.4"/>
+    <!-- Right cap -->
+    <rect x="160" y="-32" width="20" height="64" rx="8" fill="url(#g)"/>
+  </g>
+</svg>

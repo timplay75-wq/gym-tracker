@@ -52,7 +52,7 @@ export const storageService = {
 
   getStats: () => {
     const workouts = storageService.getWorkouts();
-    const totalWorkouts = workouts.filter(w => w.completed).length;
+    const totalWorkouts = workouts.filter(w => w.completedAt).length;
     
     let totalTonnage = 0;
     workouts.forEach(workout => {

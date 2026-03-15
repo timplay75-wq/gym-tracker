@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Home } from '../../pages/Home';
 import { ThemeProvider } from '../../contexts/ThemeContext';
+import { ToastProvider } from '../../contexts/ToastContext';
 
 // Mock navigation
 vi.mock('react-router-dom', async () => {
@@ -17,7 +18,9 @@ const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <BrowserRouter>
       <ThemeProvider>
-        {component}
+        <ToastProvider>
+          {component}
+        </ToastProvider>
       </ThemeProvider>
     </BrowserRouter>
   );
@@ -28,56 +31,30 @@ describe('Home Page Integration Tests', () => {
     localStorage.clear();
   });
 
-  it('renders home page with all sections', () => {
+  it('renders calendar and today label', () => {
     renderWithProviders(<Home />);
-    expect(screen.getByText(/Главная/i)).toBeInTheDocument();
-  });
-
-  it('displays workout statistics', () => {
-    // Add some mock workouts to localStorage
-    const mockWorkouts = [
-      {
-        id: '1',
-        name: 'Chest Day',
-        date: new Date().toISOString(),
-        exercises: [],
-        duration: 3600,
-        completed: true,
-      },
-      {
-        id: '2',
-        name: 'Leg Day',
-        date: new Date().toISOString(),
-        exercises: [],
-        duration: 4200,
-        completed: true,
-      },
-    ];
-
-    localStorage.setItem('workouts', JSON.stringify(mockWorkouts));
-
-    renderWithProviders(<Home />);
-
-    // Should display workout count or recent workouts
-    waitFor(() => {
-      const workoutElements = screen.queryAllByText(/Chest Day|Leg Day/i);
-      expect(workoutElements.length).toBeGreaterThan(0);
-    });
-  });
-
-  it('handles quick start workout click', () => {
-    renderWithProviders(<Home />);
-
-    const quickStartButton = screen.queryByText(/Start.*Workout/i);
-    if (quickStartButton) {
-      fireEvent.click(quickStartButton);
-      // Navigation should occur (tested via mock)
-    }
+    expect(screen.getByText(/Сегодня/i)).toBeInTheDocument();
   });
 
   it('shows empty state when no workouts exist', () => {
     renderWithProviders(<Home />);
-    const emptyStateIndicators = screen.queryAllByText(/нет тренировок|сегодня|Добавить/i);
+    const emptyStateIndicators = screen.queryAllByText(/нет тренировок|Сегодня|Создать/i);
     expect(emptyStateIndicators.length).toBeGreaterThan(0);
+  });
+
+  it('renders FAB buttons', () => {
+    renderWithProviders(<Home />);
+    expect(screen.getByLabelText(/Создать тренировку/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Профиль/i)).toBeInTheDocument();
+  });
+
+  it('renders month/year header', () => {
+    renderWithProviders(<Home />);
+    // Should show current month name in Russian
+    const monthNames = ['январ', 'феврал', 'март', 'апрел', 'ма', 'июн', 'июл', 'август', 'сентябр', 'октябр', 'ноябр', 'декабр'];
+    const now = new Date();
+    const monthPart = monthNames[now.getMonth()];
+    const header = screen.getByText(new RegExp(monthPart, 'i'));
+    expect(header).toBeInTheDocument();
   });
 });

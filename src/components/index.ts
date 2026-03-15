@@ -18,6 +18,7 @@ export { Select } from './Select';
 export type { SelectOption } from './Select';
 export { ExerciseIcon, CategoryBadge, StatusBadge, AchievementBadge } from './ExerciseIcon';
 export { MuscleGroup, SimpleMuscleGroup, MuscleMap } from './MuscleGroup';
+export { NumberStepper } from './NumberStepper';
 
 // Layout Components
 export { Layout } from './Layout';

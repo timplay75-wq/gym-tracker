@@ -1,4 +1,3 @@
-import React from 'react';
 import { getMuscleGroupEmoji, getEquipmentEmoji } from '../constants/emojis';
 import { MUSCLE_ICONS, getMuscleIcon } from '../constants/muscleIcons';
 

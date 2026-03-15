@@ -50,7 +50,7 @@ export function Button({
   // Variant styles (Minimalist iOS-style)
   const variantClasses = {
     primary: 'bg-[#9333ea] text-white hover:bg-[#7c3aed] active:bg-[#6d28d9] shadow-lg shadow-[#9333ea]/30',
-    secondary: 'bg-white text-[#7c3aed] hover:bg-[#f3e8ff] active:bg-[#e9d5ff] border-2 border-[#9333ea]',
+    secondary: 'bg-white dark:bg-[#16213e] text-[#7c3aed] hover:bg-[#f3e8ff] dark:hover:bg-[#1a1a2e] active:bg-[#e9d5ff] border-2 border-[#9333ea]',
     outline: 'border-2 border-[#9333ea] text-[#7c3aed] hover:bg-[#9333ea] hover:text-white active:bg-[#7c3aed]',
     ghost: 'text-[#7c3aed] hover:bg-[#9333ea] hover:text-white active:bg-[#7c3aed]',
     danger: 'bg-error-600 text-white hover:bg-error-700 active:bg-error-800 shadow-sm',

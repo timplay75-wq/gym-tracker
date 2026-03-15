@@ -29,6 +29,14 @@ const ExerciseSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  isDoubleWeight: {
+    type: Boolean,
+    default: false,
+  },
+  isBodyweight: {
+    type: Boolean,
+    default: false,
+  },
   isCustom: {
     type: Boolean,
     default: false,

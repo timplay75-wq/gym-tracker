@@ -1,4 +1,5 @@
 ﻿import Workout from '../models/Workout.js';
+import Exercise from '../models/Exercise.js';
 import mongoose from 'mongoose';
 
 // GET /api/stats/summary вЂ” СЃРІРѕРґРЅР°СЏ СЃС‚Р°С‚РёСЃС‚РёРєР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
@@ -91,7 +92,6 @@ export const getTopExercises = async (req, res) => {
       },
       { $addFields: { timesPerformed: { $size: '$times' } } },
       { $sort: { totalVolume: -1 } },
-      { $limit: 10 },
     ]);
 
     res.json(result);
@@ -99,34 +99,127 @@ export const getTopExercises = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// GET /api/stats/muscles — распределение нагрузки по группам мышц
+export const getMuscleDistribution = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { period } = req.query; // week, month, year, all
+    const now = new Date();
+    let dateFilter = {};
 
+    if (period === 'week') {
+      const weekAgo = new Date(now);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      dateFilter = { completedAt: { $gte: weekAgo } };
+    } else if (period === 'month') {
+      const monthAgo = new Date(now);
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      dateFilter = { completedAt: { $gte: monthAgo } };
+    } else if (period === 'year') {
+      const yearAgo = new Date(now);
+      yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+      dateFilter = { completedAt: { $gte: yearAgo } };
+    }
+
+    const result = await Workout.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId), status: 'completed', ...dateFilter } },
+      { $unwind: '$exercises' },
+      { $unwind: '$exercises.sets' },
+      { $match: { 'exercises.sets.completed': true } },
+      {
+        $group: {
+          _id: '$exercises.category',
+          volume: { $sum: { $multiply: ['$exercises.sets.weight', '$exercises.sets.reps'] } },
+          sets: { $sum: 1 },
+          exercises: { $addToSet: '$exercises.name' },
+        },
+      },
+      { $addFields: { exerciseCount: { $size: '$exercises' } } },
+      { $sort: { volume: -1 } },
+    ]);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 // GET /api/stats/exercise/:name вЂ” РёСЃС‚РѕСЂРёСЏ РїРѕ РєРѕРЅРєСЂРµС‚РЅРѕРјСѓ СѓРїСЂР°Р¶РЅРµРЅРёСЋ
 export const getExerciseHistory = async (req, res) => {
   try {
     const userId = req.user._id;
     const { name } = req.params;
+    const decodedName = decodeURIComponent(name);
 
-    const workouts = await Workout.find({
-      userId,
-      status: 'completed',
-      'exercises.name': decodeURIComponent(name),
-    }).sort({ completedAt: -1 }).limit(20);
+    const [workouts, exerciseDoc] = await Promise.all([
+      Workout.find({
+        userId,
+        'exercises.name': decodedName,
+        'exercises.sets.completed': true,
+      }).sort({ completedAt: -1, date: -1 }).limit(50),
+      Exercise.findOne({
+        name: decodedName,
+        $or: [{ createdBy: userId }, { isCustom: false }],
+      }),
+    ]);
+
+    // Personal records across ALL data
+    let prMaxWeight = 0;
+    let prMaxReps = 0;
+    let prMaxVolume = 0;
+    let prMaxWeightDate = null;
+    let prMaxRepsDate = null;
+    let prMaxVolumeDate = null;
 
     const history = workouts.map((w) => {
-      const exercise = w.exercises.find((e) => e.name === decodeURIComponent(name));
+      const exercise = w.exercises.find((e) => e.name === decodedName);
       const completedSets = exercise?.sets?.filter((s) => s.completed) || [];
-      const maxWeight = completedSets.reduce((max, s) => Math.max(max, s.weight), 0);
-      const totalVolume = completedSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+      if (!completedSets.length) return null;
+      const maxWeight = completedSets.reduce((max, s) => Math.max(max, s.weight || 0), 0);
+      const maxReps = completedSets.reduce((max, s) => Math.max(max, s.reps || 0), 0);
+      const totalVolume = completedSets.reduce((sum, s) => sum + (s.weight || 0) * (s.reps || 0), 0);
+      const totalReps = completedSets.reduce((sum, s) => sum + (s.reps || 0), 0);
+      const date = w.completedAt || w.date;
+
+      // Track PRs
+      if (maxWeight > prMaxWeight) { prMaxWeight = maxWeight; prMaxWeightDate = date; }
+      if (maxReps > prMaxReps) { prMaxReps = maxReps; prMaxRepsDate = date; }
+      if (totalVolume > prMaxVolume) { prMaxVolume = totalVolume; prMaxVolumeDate = date; }
 
       return {
-        date: w.completedAt || w.date,
-        sets: completedSets,
+        date,
+        sets: completedSets.map((s) => ({ weight: s.weight, reps: s.reps })),
         maxWeight,
+        maxReps,
         totalVolume,
+        totalReps,
+        setsCount: completedSets.length,
       };
     });
 
-    res.json(history);
+    const filteredHistory = history.filter(Boolean);
+
+    // Detect flags from Exercise doc, with fallback auto-detection from data
+    let isBodyweight = exerciseDoc?.isBodyweight || false;
+    let isDoubleWeight = exerciseDoc?.isDoubleWeight || false;
+
+    // Fallback: if all completed sets across all sessions have weight=0, treat as bodyweight
+    if (!isBodyweight && filteredHistory.length > 0) {
+      const allWeightsZero = filteredHistory.every((h) => h.maxWeight === 0);
+      if (allWeightsZero) isBodyweight = true;
+    }
+
+    res.json({
+      exerciseName: decodedName,
+      totalSessions: workouts.length,
+      isDoubleWeight,
+      isBodyweight,
+      personalRecords: {
+        maxWeight: { value: prMaxWeight, date: prMaxWeightDate },
+        maxReps: { value: prMaxReps, date: prMaxRepsDate },
+        maxVolume: { value: prMaxVolume, date: prMaxVolumeDate },
+      },
+      history: filteredHistory.reverse(), // chronological order for charts
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -172,6 +265,27 @@ async function calculateStreak(userId) {
 }
 
 // РЈСЃС‚Р°СЂРµРІС€РёРµ СЌРЅРґРїРѕРёРЅС‚С‹ (СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚СЊ СЃРѕ СЃС‚Р°СЂС‹Рј routes/stats.js)
+// GET /api/stats/weekdays — frequency by day of week
+export const getWeekdayFrequency = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const result = await Workout.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(userId), status: 'completed' } },
+      { $group: { _id: { $dayOfWeek: '$completedAt' }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]);
+    // MongoDB $dayOfWeek: 1=Sun, 2=Mon,...7=Sat → convert to 0=Mon...6=Sun
+    const days = [0, 0, 0, 0, 0, 0, 0];
+    result.forEach(r => {
+      const idx = r._id === 1 ? 6 : r._id - 2;
+      days[idx] = r.count;
+    });
+    res.json(days);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getExerciseStats = getSummary;
 export const getAllExercisesStats = getTopExercises;
 export const recalculateExerciseStats = (req, res) => res.json({ message: 'РСЃРїРѕР»СЊР·СѓР№С‚Рµ /api/stats/exercises' });

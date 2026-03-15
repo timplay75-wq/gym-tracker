@@ -5,8 +5,9 @@ import { Login } from '../pages/Login';
 
 // Mock useAuth
 const mockLogin = vi.fn();
+const mockOauthLogin = vi.fn();
 vi.mock('../context/AuthContext', () => ({
-  useAuth: () => ({ login: mockLogin }),
+  useAuth: () => ({ login: mockLogin, oauthLogin: mockOauthLogin }),
 }));
 
 // Mock navigation
@@ -32,7 +33,7 @@ describe('Login Page — пользовательские сценарии', () 
     renderLogin();
     expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('••••••')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /войти/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^\s*войти\s*$/i })).toBeInTheDocument();
   });
 
   it('показывает ссылку на регистрацию', () => {
@@ -50,7 +51,7 @@ describe('Login Page — пользовательские сценарии', () 
     fireEvent.change(screen.getByPlaceholderText('••••••'), {
       target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /войти/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^\s*войти\s*$/i }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('user@test.com', 'password123');
@@ -68,7 +69,7 @@ describe('Login Page — пользовательские сценарии', () 
     fireEvent.change(screen.getByPlaceholderText('••••••'), {
       target: { value: 'wrongpass' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /войти/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^\s*войти\s*$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Неверный email или пароль')).toBeInTheDocument();
@@ -85,9 +86,9 @@ describe('Login Page — пользовательские сценарии', () 
     fireEvent.change(screen.getByPlaceholderText('••••••'), {
       target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /войти/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^\s*войти\s*$/i }));
 
-    expect(screen.getByText('Вход...')).toBeInTheDocument();
+    expect(screen.getByText('Загрузка...')).toBeInTheDocument();
     await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
   });
 

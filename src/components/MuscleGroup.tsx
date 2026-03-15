@@ -1,4 +1,3 @@
-import React from 'react';
 import { ExerciseIcon } from './ExerciseIcon';
 import { MUSCLE_ICONS } from '../constants/muscleIcons';
 
@@ -11,7 +10,7 @@ interface MuscleInfo {
 
 interface MuscleGroupProps {
   /** Список задействованных мышц */
-  muscles: MuscleInfo[];
+  muscles: readonly MuscleInfo[];
   /** Размер иконок */
   size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Показывать имена мышц */
@@ -124,7 +123,7 @@ export function SimpleMuscleGroup({
  */
 interface MuscleMapProps {
   /** Активные (задействованные) мышцы */
-  activeMuscles: MuscleInfo[];
+  activeMuscles: readonly MuscleInfo[];
   /** Показывать все мышцы или только активные */
   showAll?: boolean;
   /** Размер карты */
@@ -134,7 +133,6 @@ interface MuscleMapProps {
 
 export function MuscleMap({
   activeMuscles,
-  showAll = false,
   size = 'md',
   className = '',
 }: MuscleMapProps) {

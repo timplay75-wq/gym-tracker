@@ -1,5 +1,7 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 // Генерация JWT токена
 const generateToken = (id) => {
@@ -121,5 +123,98 @@ export const deleteMe = async (req, res) => {
     res.json({ message: 'Аккаунт удалён' });
   } catch (error) {
     res.status(500).json({ message: 'Ошибка удаления аккаунта' });
+  }
+};
+
+// POST /api/users/forgot-password
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email обязателен' });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    // Всегда отвечаем 200, чтобы не раскрывать наличие email
+    if (!user || user.oauthProvider) {
+      return res.json({ message: 'Если email зарегистрирован, вы получите письмо' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    await User.findByIdAndUpdate(user._id, {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+    });
+
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const resetUrl = `${clientUrl}/reset-password/${token}`;
+
+    // Production: отправляем реальный email через SMTP
+    if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"Gym Tracker" <noreply@gymtracker.app>',
+        to: user.email,
+        subject: 'Gym Tracker — Сброс пароля',
+        html: `
+          <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #7C4DFF;">💪 Gym Tracker</h2>
+            <p>Вы запросили сброс пароля.</p>
+            <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #7C4DFF; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Сбросить пароль</a>
+            <p style="margin-top: 16px; font-size: 13px; color: #666;">Ссылка действительна 1 час.</p>
+          </div>
+        `,
+      });
+      console.log(`[Reset Password] Email sent to ${user.email}`);
+      res.json({ message: 'Если email зарегистрирован, вы получите письмо' });
+    } else {
+      // Development: возвращаем ссылку прямо в ответе
+      console.log(`[Reset Password] 🔗 Link: ${resetUrl}`);
+      res.json({
+        message: 'Если email зарегистрирован, вы получите письмо',
+        devResetUrl: resetUrl,
+      });
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
+// POST /api/users/reset-password
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password)
+      return res.status(400).json({ message: 'Токен и пароль обязательны' });
+    if (password.length < 6)
+      return res.status(400).json({ message: 'Пароль минимум 6 символов' });
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user)
+      return res.status(400).json({ message: 'Токен недействителен или истёк' });
+
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.json({ message: 'Пароль успешно изменён' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 };

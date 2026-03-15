@@ -76,6 +76,7 @@ export interface Workout {
   scheduledTime?: string; // время начала (формат HH:MM)
   startedAt?: Timestamp; // когда начата тренировка
   completedAt?: Timestamp; // когда завершена тренировка
+  createdAt?: Date; // когда создана
   updatedAt?: Timestamp; // последнее обновление
 }
 
@@ -128,16 +129,6 @@ export interface WorkoutSummary {
   mostTrainedMuscleGroup?: ExerciseCategory;
 }
 
-// Achievement - достижение
-export interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  unlockedAt?: Date;
-  progress?: number; // 0-100
-  target?: number;
-}
 
 // ScheduledWorkout - запланированная тренировка на конкретную дату
 export interface ScheduledWorkout {

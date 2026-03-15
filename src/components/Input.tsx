@@ -31,7 +31,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
     // Variant styles
     const variantClasses = {
-      default: 'border-[#9333ea] focus:border-[#7c3aed]',
+      default: 'border-[#9333ea] focus:border-[#7c3aed] dark:border-gray-600 dark:focus:border-[#9333ea]',
       error: 'border-error-500 focus:border-error-600',
       success: 'border-success-500 focus:border-success-600',
     };
@@ -41,7 +41,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-primary-700 mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-primary-700 dark:text-gray-300 mb-1.5">
             {label}
           </label>
         )}
@@ -60,10 +60,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             type={type}
             className={`
               w-full px-4 py-3 rounded-xl
-              bg-white
+              bg-white dark:bg-[#16213e]
               border-2 ${variantClasses[currentVariant]}
-              text-gray-900
-              placeholder-[#9333ea]
+              text-gray-900 dark:text-white
+              placeholder-[#9333ea] dark:placeholder-gray-500
               focus:outline-none focus:ring-4 focus:ring-[#9333ea]/20
               transition-all duration-200
               disabled:opacity-50 disabled:cursor-not-allowed

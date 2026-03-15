@@ -1,6 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { storageService } from '@/services/storage';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { workoutsApi } from '@/services/api';
+import { useLanguage } from '@/i18n';
+import { useToast } from '@/hooks/useToast';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import type { Workout } from '@/types';
 import { formatDate } from '@/utils/helpers';
 import { Card, Modal, Button, Input } from '@/components';
@@ -21,27 +24,61 @@ type FilterPeriod = 'week' | 'month' | 'year' | 'all';
 
 export const Workouts = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useLanguage();
+  const toast = useToast();
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>([]);
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Для удаления
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [workoutToDelete, setWorkoutToDelete] = useState<string | null>(null);
   const [dontAskAgain, setDontAskAgain] = useState(false);
   
+  // Свайп для удаления
+  const [swipedId, setSwipedId] = useState<string | null>(null);
+  const [dragState, setDragState] = useState<{ id: string; offset: number } | null>(null);
+  const touchData = useRef<{ x: number; y: number; id: string } | null>(null);
+
+  // Pull-to-refresh
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const loadWorkouts = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const res = await workoutsApi.getAll({ limit: 200 });
+      const sorted = res.workouts.sort((a, b) => {
+        const ca = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const cb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (cb !== ca) return cb - ca;
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+      setAllWorkouts(sorted);
+    } catch (err) {
+      console.error('Load error:', err);
+      setLoadError(err instanceof Error ? err.message : t.workouts.loadError);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t.workouts.loadError]);
+
+  const { pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: loadWorkouts,
+    containerRef,
+  });
+
   // Фильтры
   const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Перезагружаем при каждом навигировании на страницу (location.key меняется при каждом переходе)
   useEffect(() => {
-    const loadedWorkouts = storageService.getWorkouts();
-    // Сортируем по дате (новые сначала)
-    const sorted = loadedWorkouts.sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    setAllWorkouts(sorted);
-  }, []);
+    loadWorkouts();
+  }, [location.key, loadWorkouts]);
 
   // Вспомогательные функции
   const calculateVolume = (workout: Workout): number => {
@@ -127,7 +164,7 @@ export const Workouts = () => {
     return { totalWorkouts, totalVolume, totalSets, totalExercises };
   }, [filteredWorkouts]);
 
-  const handleDelete = (id: string, e?: React.MouseEvent) => {
+  const handleDelete = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     
     // Проверяем, нужно ли спрашивать подтверждение
@@ -135,10 +172,16 @@ export const Workouts = () => {
     
     if (skipConfirmation) {
       // Удаляем сразу без подтверждения
-      storageService.deleteWorkout(id);
-      setAllWorkouts(allWorkouts.filter(w => w.id !== id));
-      setShowDetailModal(false);
-      setSelectedWorkout(null);
+      try {
+        await workoutsApi.delete(id);
+        setAllWorkouts(allWorkouts.filter(w => w.id !== id));
+        toast.success(t.workouts.deleted);
+        setShowDetailModal(false);
+        setSelectedWorkout(null);
+      } catch (err) {
+        console.error('Delete error:', err);
+        toast.error('Ошибка удаления');
+      }
     } else {
       // Показываем кастомное окно подтверждения
       setWorkoutToDelete(id);
@@ -146,7 +189,7 @@ export const Workouts = () => {
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!workoutToDelete) return;
     
     // Сохраняем настройку "больше не спрашивать"
@@ -155,8 +198,14 @@ export const Workouts = () => {
     }
     
     // Удаляем тренировку
-    storageService.deleteWorkout(workoutToDelete);
-    setAllWorkouts(allWorkouts.filter(w => w.id !== workoutToDelete));
+    try {
+      await workoutsApi.delete(workoutToDelete);
+      setAllWorkouts(allWorkouts.filter(w => w.id !== workoutToDelete));
+      toast.success(t.workouts.deleted);
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error('Ошибка удаления');
+    }
     
     // Закрываем модалки
     setShowDeleteModal(false);
@@ -172,55 +221,161 @@ export const Workouts = () => {
     setDontAskAgain(false);
   };
 
+  const handleSwipeDelete = async (id: string) => {
+    setSwipedId(null);
+    setDragState(null);
+    try {
+      await workoutsApi.delete(id);
+      setAllWorkouts(prev => prev.filter(w => w.id !== id));
+      toast.success(t.workouts.deleted);
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error('Ошибка удаления');
+    }
+  };
+
+  const onSwipeTouchStart = (id: string, e: React.TouchEvent) => {
+    if (swipedId && swipedId !== id) {
+      setSwipedId(null);
+      touchData.current = null;
+      return;
+    }
+    touchData.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, id };
+  };
+
+  const onSwipeTouchMove = (id: string, e: React.TouchEvent) => {
+    if (!touchData.current || touchData.current.id !== id) return;
+    if (swipedId === id) return;
+    const dx = e.touches[0].clientX - touchData.current.x;
+    const dy = Math.abs(e.touches[0].clientY - touchData.current.y);
+    if (dx < 0 && Math.abs(dx) > dy) {
+      setDragState({ id, offset: Math.max(dx, -72) });
+    }
+  };
+
+  const onSwipeTouchEnd = (id: string) => {
+    if (!touchData.current || touchData.current.id !== id) {
+      touchData.current = null;
+      return;
+    }
+    const currentOffset = dragState?.id === id ? dragState.offset : 0;
+    if (currentOffset < -60) {
+      setSwipedId(id);
+    }
+    setDragState(null);
+    touchData.current = null;
+  };
+
   const handleWorkoutClick = (workout: Workout) => {
     setSelectedWorkout(workout);
     setShowDetailModal(true);
   };
 
-  const handleRepeatWorkout = () => {
+  const handleRepeatWorkout = async () => {
     if (!selectedWorkout) return;
     
-    // Создаем копию тренировки
-    const newWorkout: Workout = {
-      ...selectedWorkout,
-      id: Math.random().toString(36).substr(2, 9),
+    // Создаем копию тренировки без _id полей (MongoDB сам сгенерирует)
+    const workoutData = {
+      name: selectedWorkout.name,
       date: new Date(),
-      status: 'in-progress',
-      // Сбрасываем completed флаги на подходах
+      status: 'in-progress' as const,
+      notes: selectedWorkout.notes,
+      dayOfWeek: selectedWorkout.dayOfWeek,
       exercises: selectedWorkout.exercises.map(ex => ({
-        ...ex,
-        sets: ex.sets.map(set => ({ ...set, completed: false }))
-      }))
+        name: ex.name,
+        category: ex.category,
+        type: ex.type,
+        equipment: ex.equipment,
+        targetMuscles: ex.targetMuscles,
+        sets: ex.sets.map(set => ({
+          weight: set.weight,
+          reps: set.reps,
+          restTime: set.restTime,
+          rpe: set.rpe,
+          completed: false,
+        })),
+      })),
     };
 
-    setShowDetailModal(false);
-    navigate('/active-workout', { state: { workout: newWorkout } });
+    try {
+      const saved = await workoutsApi.create(workoutData);
+      setShowDetailModal(false);
+      navigate('/active-workout', { state: { workout: saved } });
+    } catch (err) {
+      console.error('Repeat error:', err);
+    }
   };
 
   // Периоды для фильтра
   const filterPeriods: { value: FilterPeriod; label: string }[] = [
-    { value: 'week', label: 'Неделя' },
-    { value: 'month', label: 'Месяц' },
-    { value: 'year', label: 'Год' },
-    { value: 'all', label: 'Всё время' },
+    { value: 'week', label: t.workouts.week },
+    { value: 'month', label: t.workouts.month },
+    { value: 'year', label: t.workouts.year },
+    { value: 'all', label: t.workouts.all },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div ref={containerRef} className="min-h-screen bg-[#f5f5f5] dark:bg-[#1a1a2e] pb-8 overflow-auto">
+      {/* Pull-to-refresh indicator */}
+      {(pullDistance > 0 || isRefreshing) && (
+        <div
+          className="flex items-center justify-center transition-all"
+          style={{ height: pullDistance }}
+        >
+          <div
+            className={`w-6 h-6 border-2 border-[#7c3aed] border-t-transparent rounded-full ${
+              isRefreshing ? 'animate-spin' : ''
+            }`}
+            style={!isRefreshing ? { transform: `rotate(${pullDistance * 4}deg)` } : undefined}
+          />
+        </div>
+      )}
       <div className="max-w-[480px] mx-auto px-5">
         {/* Header */}
-        <header className="pt-6 pb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Тренировки
-          </h1>
+        <header className="pt-6 pb-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/')} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+              <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t.workouts.title}</h1>
+          </div>
+          <button
+            onClick={() => {
+              setIsLoading(true);
+              setLoadError(null);
+              loadWorkouts();
+            }}
+            className="text-[#7c3aed] text-sm font-medium"
+          >
+            ↻
+          </button>
         </header>
+
+        {/* Состояния загрузки / ошибки */}
+        {isLoading && !isRefreshing && (
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 border-2 border-[#7c3aed] border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {loadError && !isLoading && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-4 text-center">
+            <p className="text-red-600 dark:text-red-400 text-sm font-medium mb-2">{t.workouts.loadError}: {loadError}</p>
+            <button
+              onClick={() => loadWorkouts()}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm"
+            >
+              {t.workouts.retry}
+            </button>
+          </div>
+        )}
 
         {/* Фильтры */}
         <div className="space-y-3 mb-5">
           {/* Поиск */}
           <Input
             type="text"
-            placeholder="Поиск тренировок..."
+            placeholder={t.workouts.search}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full h-12 text-base"
@@ -235,7 +390,7 @@ export const Workouts = () => {
                 className={`px-5 py-2.5 rounded-lg font-medium whitespace-nowrap transition-all text-sm ${
                   filterPeriod === period.value
                     ? 'bg-[#7c3aed] text-white shadow-lg shadow-[#9333ea]/50'
-                    : 'bg-white text-[#7c3aed] hover:bg-[#f3e8ff] border-2 border-[#9333ea]'
+                    : 'bg-white dark:bg-[#16213e] text-[#7c3aed] hover:bg-[#f3e8ff] dark:hover:bg-[#1a1a2e] border-2 border-[#9333ea]'
                 }`}
               >
                 {period.label}
@@ -252,7 +407,7 @@ export const Workouts = () => {
                 {periodStats.totalWorkouts}
               </div>
               <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
-                Тренировок
+                {t.workouts.totalWorkouts}
               </div>
             </Card>
             
@@ -261,7 +416,7 @@ export const Workouts = () => {
                 {periodStats.totalVolume.toFixed(0)}
               </div>
               <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
-                Тоннаж (кг)
+                {t.workouts.totalVolume}
               </div>
             </Card>
 
@@ -270,7 +425,7 @@ export const Workouts = () => {
                 {periodStats.totalSets}
               </div>
               <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
-                Подходов
+                {t.workouts.sets}
               </div>
             </Card>
 
@@ -279,7 +434,7 @@ export const Workouts = () => {
                 {periodStats.totalExercises}
               </div>
               <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
-                Упражнений
+                {t.workouts.exercises}
               </div>
             </Card>
           </div>
@@ -292,31 +447,31 @@ export const Workouts = () => {
               <div className="py-12">
                 <div className="text-5xl mb-4">📊</div>
                 <p className="text-lg text-primary-700 mb-2 font-medium">
-                  {searchQuery ? 'Ничего не найдено' : 'Нет завершенных тренировок'}
+                  {searchQuery ? t.workouts.nothingFound : t.workouts.noWorkouts}
                 </p>
                 <p className="text-sm text-primary-500 mb-6">
-                  {searchQuery ? 'Попробуйте изменить запрос' : 'Добавьте первую тренировку!'}
+                  {searchQuery ? t.workouts.nothingFoundHint : t.workouts.addFirst}
                 </p>
                 {!searchQuery && (
                   <Button variant="primary" size="lg" className="h-14" onClick={() => navigate('/exercises')}>
-                    Создать тренировку
+                    {t.workouts.noWorkoutsDesc}
                   </Button>
                 )}
               </div>
             </Card>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-8 animate-stagger">
               {Object.entries(groupedWorkouts)
                 .sort(([a], [b]) => b.localeCompare(a))
                 .map(([monthKey, monthWorkouts]) => (
                   <div key={monthKey}>
                     {/* Заголовок месяца */}
                     <div className="flex items-center gap-3 mb-3">
-                      <h2 className="text-lg font-semibold text-gray-900 capitalize">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
                         {formatMonthYear(monthKey)}
                       </h2>
                       <div className="text-sm text-primary-500">
-                        {monthWorkouts.length} {monthWorkouts.length === 1 ? 'тренировка' : 'тренировок'}
+                        {monthWorkouts.length} {monthWorkouts.length === 1 ? t.workouts.workout1 : t.workouts.workoutsMany}
                       </div>
                     </div>
 
@@ -330,65 +485,95 @@ export const Workouts = () => {
                           workout.exercises.map(ex => ex.category)
                         )].slice(0, 3); // Показываем максимум 3
 
+                        const isDragging = dragState?.id === workout.id;
+                        const isOpen = swipedId === workout.id;
+                        const translateX = isDragging ? (dragState?.offset ?? 0) : isOpen ? -72 : 0;
+
                         return (
-                          <Card 
-                            key={workout.id} 
-                            padding="sm" 
-                            variant="interactive"
-                            onClick={() => handleWorkoutClick(workout)}
-                            className="hover:shadow-md transition-shadow"
+                          <div
+                            key={workout.id}
+                            className="relative overflow-hidden rounded-xl"
+                            onTouchStart={(e) => onSwipeTouchStart(workout.id, e)}
+                            onTouchMove={(e) => onSwipeTouchMove(workout.id, e)}
+                            onTouchEnd={() => onSwipeTouchEnd(workout.id)}
                           >
-                            <div className="flex items-center justify-between gap-3">
-                              {/* Левая часть - название и дата */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  {/* Группы мышц эмодзи */}
-                                  <div className="flex gap-1 text-lg">
-                                    {muscleGroups.map((cat, idx) => (
-                                      <span key={idx}>{MUSCLE_CATEGORY_EMOJI[cat] || '⚡'}</span>
-                                    ))}
-                                  </div>
-                                  
-                                  <h3 className="text-base font-semibold text-gray-900 truncate">
-                                    {workout.name}
-                                  </h3>
-                                  
-                                  {workout.status === 'completed' && (
-                                    <span className="text-success-600 text-sm">✓</span>
-                                  )}
-                                </div>
-                                
-                                <div className="flex items-center gap-3 text-xs text-primary-500">
-                                  <span>{formatDate(new Date(workout.date))}</span>
-                                  <span>•</span>
-                                  <span>{workout.exercises.length} упр.</span>
-                                  {volume > 0 && (
-                                    <>
-                                      <span>•</span>
-                                      <span>{volume.toFixed(0)} кг</span>
-                                    </>
-                                  )}
-                                  {workout.duration && (
-                                    <>
-                                      <span>•</span>
-                                      <span>{workout.duration} мин</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              {/* Кнопка удалить */}
+                            {/* Кнопка удаления (за карточкой) */}
+                            <div className="absolute right-0 inset-y-0 w-[72px] flex items-center justify-center bg-red-500 rounded-r-xl">
                               <button
-                                onClick={(e) => handleDelete(workout.id, e)}
-                                className="p-1.5 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors flex-shrink-0"
-                                aria-label="Удалить"
+                                onClick={() => handleSwipeDelete(workout.id)}
+                                className="flex flex-col items-center justify-center gap-1 text-white w-full h-full"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
+                                <span className="text-xs font-medium">Удалить</span>
                               </button>
                             </div>
-                          </Card>
+
+                            {/* Карточка тренировки */}
+                            <div style={{ transform: `translateX(${translateX}px)`, transition: isDragging ? 'none' : 'transform 0.2s ease' }}>
+                              <Card 
+                                padding="sm" 
+                                variant="interactive"
+                                onClick={() => {
+                                  if (isOpen) { setSwipedId(null); return; }
+                                  handleWorkoutClick(workout);
+                                }}
+                                className="hover:shadow-md transition-shadow"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  {/* Левая часть - название и дата */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      {/* Группы мышц эмодзи */}
+                                      <div className="flex gap-1 text-lg">
+                                        {muscleGroups.map((cat, idx) => (
+                                          <span key={idx}>{MUSCLE_CATEGORY_EMOJI[cat] || '⚡'}</span>
+                                        ))}
+                                      </div>
+                                      
+                                      <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                                        {workout.name}
+                                      </h3>
+                                      
+                                      {workout.status === 'completed' && (
+                                        <span className="text-success-600 text-sm">✓</span>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 text-xs text-primary-500">
+                                      <span>{formatDate(new Date(workout.date))}</span>
+                                      <span>•</span>
+                                      <span>{workout.exercises.length} {t.workouts.exercisesShort}</span>
+                                      {volume > 0 && (
+                                        <>
+                                          <span>•</span>
+                                          <span>{volume.toFixed(0)} {t.home.kg}</span>
+                                        </>
+                                      )}
+                                      {workout.duration && (
+                                        <>
+                                          <span>•</span>
+                                          <span>{workout.duration} {t.workouts.min}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Кнопка удалить (desktop) */}
+                                  <button
+                                    onClick={(e) => handleDelete(workout.id, e)}
+                                    className="p-1.5 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors flex-shrink-0"
+                                    aria-label={t.common.delete}
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </Card>
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
@@ -406,18 +591,18 @@ export const Workouts = () => {
           setShowDetailModal(false);
           setSelectedWorkout(null);
         }}
-        title={selectedWorkout?.name || 'Детали тренировки'}
+        title={selectedWorkout?.name || t.workouts.detailsTitle}
       >
         {selectedWorkout && (
           <div className="space-y-4">
             {/* Информация о тренировке */}
-            <div className="bg-white rounded-2xl p-4 border-2 border-primary-500">
+            <div className="bg-white dark:bg-[#16213e] rounded-2xl p-4 border-2 border-primary-500">
               <div className="text-sm text-primary-600 mb-1">
                 {formatDate(new Date(selectedWorkout.date))}
               </div>
               {selectedWorkout.duration && (
                 <div className="text-sm text-primary-600">
-                  Длительность: {selectedWorkout.duration} мин
+                  {t.workouts.durationLabel}: {selectedWorkout.duration} {t.workouts.min}
                 </div>
               )}
             </div>
@@ -434,7 +619,7 @@ export const Workouts = () => {
                   <Card key={idx} padding="sm">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-lg">{MUSCLE_CATEGORY_EMOJI[exercise.category] || '⚡'}</span>
-                      <div className="font-semibold text-gray-900">
+                      <div className="font-semibold text-gray-900 dark:text-white">
                         {exercise.name}
                       </div>
                     </div>
@@ -445,9 +630,9 @@ export const Workouts = () => {
                           key={setIdx}
                           className="flex justify-between items-center text-primary-500"
                         >
-                          <span>Подход {setIdx + 1}:</span>
-                          <span className={set.completed ? 'text-gray-900' : ''}>
-                            {set.weight} кг × {set.reps} {set.completed ? '✓' : ''}
+                          <span>{t.workouts.setLabel} {setIdx + 1}:</span>
+                          <span className={set.completed ? 'text-gray-900 dark:text-white' : ''}>
+                            {set.weight} {t.home.kg} × {set.reps} {set.completed ? '✓' : ''}
                           </span>
                         </div>
                       ))}
@@ -455,7 +640,7 @@ export const Workouts = () => {
 
                     {exerciseVolume > 0 && (
                       <div className="mt-2 pt-2 border-t border-primary-500 text-xs text-primary-600">
-                        Тоннаж: {exerciseVolume} кг
+                        {t.workouts.tonnageLabel}: {exerciseVolume} {t.home.kg}
                       </div>
                     )}
                   </Card>
@@ -464,13 +649,13 @@ export const Workouts = () => {
             </div>
 
             {/* Общая статистика */}
-            <div className="grid grid-cols-2 gap-3 p-4 bg-white rounded-2xl border-2 border-primary-500">
+            <div className="grid grid-cols-2 gap-3 p-4 bg-white dark:bg-[#16213e] rounded-2xl border-2 border-primary-500">
               <div className="text-center">
                 <div className="text-2xl font-bold text-[#7c3aed]">
                   {calculateVolume(selectedWorkout)}
                 </div>
                 <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
-                  Общий тоннаж (кг)
+                  {t.workouts.totalTonnage}
                 </div>
               </div>
               <div className="text-center">
@@ -478,7 +663,7 @@ export const Workouts = () => {
                   {countSets(selectedWorkout)}
                 </div>
                 <div className="text-xs text-[#7c3aed]/70 mt-1 font-medium">
-                  Всего подходов
+                  {t.workouts.totalSets}
                 </div>
               </div>
             </div>
@@ -490,7 +675,7 @@ export const Workouts = () => {
                 onClick={handleRepeatWorkout}
                 className="flex-1"
               >
-                🔁 Повторить тренировку
+                {t.workouts.repeatWorkout}
               </Button>
               <Button
                 variant="outline"
@@ -508,23 +693,23 @@ export const Workouts = () => {
       <Modal
         isOpen={showDeleteModal}
         onClose={cancelDelete}
-        title="Удалить тренировку?"
+        title={t.workouts.deleteWorkout}
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-gray-700">
-            Вы уверены, что хотите удалить эту тренировку? Это действие нельзя отменить.
+          <p className="text-gray-700 dark:text-gray-300">
+            {t.workouts.deleteConfirm}
           </p>
           
           {/* Чекбокс "больше не спрашивать" */}
-          <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
+          <label className="flex items-center gap-2 cursor-pointer p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <input
               type="checkbox"
               checked={dontAskAgain}
               onChange={(e) => setDontAskAgain(e.target.checked)}
               className="w-5 h-5 rounded border-2 border-[#9333ea] text-[#9333ea] focus:ring-[#9333ea] cursor-pointer"
             />
-            <span className="text-sm text-gray-700">Больше не спрашивать</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">{t.workouts.dontAskAgain}</span>
           </label>
 
           {/* Кнопки действий */}
@@ -534,14 +719,14 @@ export const Workouts = () => {
               onClick={cancelDelete}
               className="flex-1"
             >
-              Отмена
+              {t.common.cancel}
             </Button>
             <Button
               variant="primary"
               onClick={confirmDelete}
               className="flex-1 bg-red-600 hover:bg-red-700 focus:ring-red-500"
             >
-              Удалить
+              {t.common.delete}
             </Button>
           </div>
         </div>

@@ -4,8 +4,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { Register } from '../pages/Register';
 
 const mockRegister = vi.fn();
+const mockOauthLogin = vi.fn();
 vi.mock('../context/AuthContext', () => ({
-  useAuth: () => ({ register: mockRegister }),
+  useAuth: () => ({ register: mockRegister, oauthLogin: mockOauthLogin }),
 }));
 
 const mockNavigate = vi.fn();
@@ -107,6 +108,6 @@ describe('Register Page — пользовательские сценарии', 
 
   it('показывает ссылку на страницу входа', () => {
     renderRegister();
-    expect(screen.getByText(/войти/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /войти/i })).toBeInTheDocument();
   });
 });

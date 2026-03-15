@@ -4,34 +4,35 @@ import Exercise from '../models/Exercise.js';
 const defaultExercises = [
   // Грудь
   { name: 'Жим штанги лёжа', category: 'chest', type: 'strength', equipment: 'штанга', targetMuscles: ['грудь', 'трицепс', 'передняя дельта'] },
-  { name: 'Жим гантелей лёжа', category: 'chest', type: 'strength', equipment: 'гантели', targetMuscles: ['грудь', 'трицепс'] },
-  { name: 'Отжимания', category: 'chest', type: 'strength', equipment: null, targetMuscles: ['грудь', 'трицепс'] },
-  { name: 'Разводка гантелей', category: 'chest', type: 'strength', equipment: 'гантели', targetMuscles: ['грудь'] },
+  { name: 'Жим гантелей лёжа', category: 'chest', type: 'strength', equipment: 'гантели', targetMuscles: ['грудь', 'трицепс'], isDoubleWeight: true },
+  { name: 'Отжимания', category: 'chest', type: 'strength', equipment: null, targetMuscles: ['грудь', 'трицепс'], isBodyweight: true },
+  { name: 'Разводка гантелей', category: 'chest', type: 'strength', equipment: 'гантели', targetMuscles: ['грудь'], isDoubleWeight: true },
   // Спина
-  { name: 'Подтягивания', category: 'back', type: 'strength', equipment: 'турник', targetMuscles: ['широчайшие', 'бицепс'] },
+  { name: 'Подтягивания', category: 'back', type: 'strength', equipment: 'турник', targetMuscles: ['широчайшие', 'бицепс'], isBodyweight: true },
   { name: 'Тяга штанги в наклоне', category: 'back', type: 'strength', equipment: 'штанга', targetMuscles: ['широчайшие', 'ромбовидные'] },
   { name: 'Тяга верхнего блока', category: 'back', type: 'strength', equipment: 'тренажёр', targetMuscles: ['широчайшие'] },
-  { name: 'Тяга гантели одной рукой', category: 'back', type: 'strength', equipment: 'гантели', targetMuscles: ['широчайшие', 'ромбовидные'] },
+  { name: 'Тяга гантели одной рукой', category: 'back', type: 'strength', equipment: 'гантели', targetMuscles: ['широчайшие', 'ромбовидные'], isDoubleWeight: true },
   // Ноги
   { name: 'Приседания со штангой', category: 'legs', type: 'strength', equipment: 'штанга', targetMuscles: ['квадрицепс', 'ягодицы', 'бицепс бедра'] },
+  { name: 'Приседания', category: 'legs', type: 'strength', equipment: null, targetMuscles: ['квадрицепс', 'ягодицы'], isBodyweight: true },
   { name: 'Жим ногами', category: 'legs', type: 'strength', equipment: 'тренажёр', targetMuscles: ['квадрицепс', 'ягодицы'] },
-  { name: 'Выпады', category: 'legs', type: 'strength', equipment: 'гантели', targetMuscles: ['квадрицепс', 'ягодицы'] },
+  { name: 'Выпады', category: 'legs', type: 'strength', equipment: 'гантели', targetMuscles: ['квадрицепс', 'ягодицы'], isDoubleWeight: true },
   { name: 'Румынская тяга', category: 'legs', type: 'strength', equipment: 'штанга', targetMuscles: ['бицепс бедра', 'ягодицы'] },
   // Плечи
   { name: 'Жим штанги стоя', category: 'shoulders', type: 'strength', equipment: 'штанга', targetMuscles: ['передняя дельта', 'средняя дельта'] },
-  { name: 'Боковые подъёмы гантелей', category: 'shoulders', type: 'strength', equipment: 'гантели', targetMuscles: ['средняя дельта'] },
-  { name: 'Армейский жим гантелей', category: 'shoulders', type: 'strength', equipment: 'гантели', targetMuscles: ['дельта', 'трицепс'] },
+  { name: 'Боковые подъёмы гантелей', category: 'shoulders', type: 'strength', equipment: 'гантели', targetMuscles: ['средняя дельта'], isDoubleWeight: true },
+  { name: 'Армейский жим гантелей', category: 'shoulders', type: 'strength', equipment: 'гантели', targetMuscles: ['дельта', 'трицепс'], isDoubleWeight: true },
   // Руки
   { name: 'Подъём штанги на бицепс', category: 'arms', type: 'strength', equipment: 'штанга', targetMuscles: ['бицепс'] },
   { name: 'Французский жим', category: 'arms', type: 'strength', equipment: 'штанга', targetMuscles: ['трицепс'] },
-  { name: 'Молотковые сгибания', category: 'arms', type: 'strength', equipment: 'гантели', targetMuscles: ['бицепс', 'плечевая мышца'] },
+  { name: 'Молотковые сгибания', category: 'arms', type: 'strength', equipment: 'гантели', targetMuscles: ['бицепс', 'плечевая мышца'], isDoubleWeight: true },
   // Пресс
-  { name: 'Скручивания', category: 'core', type: 'strength', equipment: null, targetMuscles: ['прямая мышца живота'] },
-  { name: 'Планка', category: 'core', type: 'strength', equipment: null, targetMuscles: ['кор'] },
-  { name: 'Подъём ног в висе', category: 'core', type: 'strength', equipment: 'турник', targetMuscles: ['нижний пресс'] },
+  { name: 'Скручивания', category: 'core', type: 'strength', equipment: null, targetMuscles: ['прямая мышца живота'], isBodyweight: true },
+  { name: 'Планка', category: 'core', type: 'strength', equipment: null, targetMuscles: ['кор'], isBodyweight: true },
+  { name: 'Подъём ног в висе', category: 'core', type: 'strength', equipment: 'турник', targetMuscles: ['нижний пресс'], isBodyweight: true },
   // Кардио
-  { name: 'Бег', category: 'cardio', type: 'cardio', equipment: null, targetMuscles: ['ноги', 'кардио'] },
-  { name: 'Прыжки на скакалке', category: 'cardio', type: 'cardio', equipment: 'скакалка', targetMuscles: ['кардио'] },
+  { name: 'Бег', category: 'cardio', type: 'cardio', equipment: null, targetMuscles: ['ноги', 'кардио'], isBodyweight: true },
+  { name: 'Прыжки на скакалке', category: 'cardio', type: 'cardio', equipment: 'скакалка', targetMuscles: ['кардио'], isBodyweight: true },
   { name: 'Велотренажёр', category: 'cardio', type: 'cardio', equipment: 'тренажёр', targetMuscles: ['ноги', 'кардио'] },
 ];
 

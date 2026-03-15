@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Workout, WorkoutListItem } from '@/types';
-import * as workoutService from '@/services/workoutService';
+import { workoutsApi } from '@/services/api';
 
 interface DashboardStats {
   weekWorkouts: number;
@@ -21,34 +21,42 @@ export function useDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // Тренировка на сегодня
-      const today = workoutService.getTodayWorkout();
+      const [today, recentRes, apiStats] = await Promise.all([
+        workoutsApi.getToday(),
+        workoutsApi.getAll({ status: 'completed', limit: 5 }),
+        workoutsApi.getStats(),
+      ]);
+
       setTodayWorkout(today);
-      
-      // Последние тренировки
-      const recent = workoutService.getRecentWorkouts(5);
+
+      // Маппим в WorkoutListItem
+      const recent: WorkoutListItem[] = recentRes.workouts.map(w => ({
+        id: w.id,
+        name: w.name,
+        date: typeof w.date === 'string' ? w.date : w.date.toISOString().split('T')[0],
+        status: w.status,
+        duration: w.duration,
+        totalVolume: w.totalVolume,
+        totalSets: w.totalSets,
+      }));
       setRecentWorkouts(recent);
-      
-      // Статистика за неделю
-      const weekWorkouts = workoutService.getWeekWorkouts();
-      const completedThisWeek = weekWorkouts.filter(w => w.status === 'completed');
-      
-      // Статистика за месяц
-      const monthStats = workoutService.getMonthStats();
-      
-      // Streak
-      const streak = workoutService.calculateStreak();
-      
+
+      // Подсчёт тренировок за неделю из последних данных
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const weekRes = await workoutsApi.getAll({ status: 'completed', limit: 100 });
+      const weekCount = weekRes.workouts.filter(w => new Date(w.date) >= weekAgo).length;
+
       setStats({
-        weekWorkouts: completedThisWeek.length,
-        monthVolume: monthStats.totalVolume,
-        currentStreak: streak,
-        activeProgram: null, // TODO: из settings или context
+        weekWorkouts: weekCount,
+        monthVolume: apiStats.totalVolume,
+        currentStreak: 0,
+        activeProgram: null,
       });
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
@@ -62,20 +70,20 @@ export function useDashboard() {
     loadData();
   }, [loadData]);
 
-  const handleStartWorkout = useCallback((id: string) => {
+  const handleStartWorkout = useCallback(async (id: string) => {
     try {
-      workoutService.startWorkout(id);
-      loadData();
+      await workoutsApi.update(id, { status: 'in-progress' });
+      await loadData();
     } catch (err) {
       console.error('Failed to start workout:', err);
       setError('Не удалось начать тренировку');
     }
   }, [loadData]);
 
-  const handleCreateWorkout = useCallback((input: Partial<Workout>) => {
+  const handleCreateWorkout = useCallback(async (input: Partial<Workout>) => {
     try {
-      const workout = workoutService.createWorkout(input);
-      loadData();
+      const workout = await workoutsApi.create(input);
+      await loadData();
       return workout;
     } catch (err) {
       console.error('Failed to create workout:', err);
