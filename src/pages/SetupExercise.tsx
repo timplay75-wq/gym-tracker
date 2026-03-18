@@ -50,7 +50,7 @@ export const SetupExercise = () => {
 
       if (existing) {
         const updatedExercises = [...(existing.exercises || []), newExercise];
-        await workoutsApi.update(existing.id ?? existing._id, { exercises: updatedExercises });
+        await workoutsApi.update(existing.id, { exercises: updatedExercises });
       } else {
         await workoutsApi.create({
           name: name,

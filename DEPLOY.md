@@ -4,7 +4,7 @@
 
 ```
 ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│   Vercel/Netlify │────▶│  Render/Railway   │────▶│  MongoDB Atlas   │
+│     Vercel       │────▶│     Railway      │────▶│  MongoDB Atlas   │
 │   (фронтенд)    │     │  (бэкенд API)     │     │  (база данных)   │
 │   React SPA      │     │  Express + Node   │     │  уже настроена   │
 └──────────────────┘     └──────────────────┘     └──────────────────┘
@@ -20,137 +20,175 @@
 
 ---
 
-## 2. Бэкенд — Render (бесплатно)
+## 2. Бэкенд — Railway (бесплатно, $5 кредит/мес)
 
-### Шаг 1: Подготовка репозитория
+> Репозиторий уже на GitHub: `https://github.com/timplay75-wq/gym-tracker.git`
+> Railway НЕ засыпает (в отличие от Render) — сервер всегда онлайн.
 
-Залить проект на GitHub (если ещё нет):
+### Шаг 1: Регистрация на Railway
 
-```bash
-git init
-git add .
-git commit -m "initial"
-git remote add origin https://github.com/YOUR_USER/gym-tracker.git
-git push -u origin main
-```
+1. Открыть https://railway.app
+2. **Login** → **Login with GitHub**
+3. Разрешить доступ к репозиториям
 
-### Шаг 2: Создание сервиса на Render
+### Шаг 2: Создание проекта
 
-1. Зайти на https://render.com → Sign Up (через GitHub)
-2. **New → Web Service**
-3. Подключить репозиторий `gym-tracker`
-4. Настройки:
-   - **Name**: `gym-tracker-api`
-   - **Region**: Frankfurt (EU) — ближе к серверу Atlas
-   - **Root Directory**: `server`
-   - **Runtime**: Node
-   - **Build Command**: `npm install`
-   - **Start Command**: `node server.js`
-   - **Instance Type**: Free
+1. На дашборде нажать **New Project**
+2. Выбрать **Deploy from GitHub repo**
+3. Найти `timplay75-wq/gym-tracker` → выбрать
+4. Railway спросит "Do you want to deploy?" → **пока НЕ нажимать Deploy**
+5. Нажать на появившийся сервис → **Settings**
 
-### Шаг 3: Переменные окружения
+### Шаг 3: Настройки сервиса
 
-В Render → Environment → добавить:
+В разделе **Settings** → **General**:
 
-| Переменная | Значение |
+| Поле | Значение |
+|---|---|
+| **Root Directory** | `/server` |
+| **Start Command** | `node server.js` |
+
+В разделе **Settings** → **Networking**:
+1. Нажать **Generate Domain** — Railway даст URL вида `gym-tracker-api-production-xxxx.up.railway.app`
+2. **Запомнить этот URL** — он понадобится дальше
+
+### Шаг 4: Переменные окружения
+
+Перейти во вкладку **Variables** → добавить каждую (кнопка **+ New Variable**):
+
+| Key | Value |
 |---|---|
 | `NODE_ENV` | `production` |
-| `PORT` | `10000` (Render по умолчанию) |
-| `MONGODB_URI` | `mongodb+srv://...` (ваш URI из Atlas) |
-| `JWT_SECRET` | Сгенерировать: `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+| `PORT` | `5000` |
+| `MONGODB_URI` | `mongodb+srv://timplay75_db_user:5913TimPlay@cluster0.tut0gpp.mongodb.net/gym-tracker` |
+| `JWT_SECRET` | *(скопировать из server/.env — длинная строка)* |
 | `JWT_EXPIRES_IN` | `7d` |
-| `CORS_ORIGIN` | `https://gym-tracker-xxx.vercel.app` (URL фронта, заполнить позже) |
-| `BACKEND_URL` | `https://gym-tracker-api.onrender.com` |
-| `FRONTEND_URL` | `https://gym-tracker-xxx.vercel.app` (заполнить позже) |
+| `CORS_ORIGIN` | `*` *(временно, обновим после деплоя фронта)* |
+| `BACKEND_URL` | *(URL из шага 3, вида https://xxx.up.railway.app)* |
+| `FRONTEND_URL` | `https://gym-tracker.vercel.app` |
 
-> ⚠️ Render Free засыпает через 15 мин без запросов. Первый запрос после сна — ~30с. Для работы без задержек — план Starter ($7/мес).
+Railway автоматически задеплоит после добавления переменных.
 
-### Шаг 4: Деплой
+### Шаг 5: Проверить деплой
 
-Render автоматически делает деплой при каждом push в `main`. После деплоя проверить:
+- Подождать 1-2 минуты, пока статус станет **Active** (зелёная точка)
+- Открыть ваш Railway URL в браузере
+- Должно показать: `{"message":"Gym Tracker API работает!"}`
+- Проверить также `/health`: `{"status":"ok"}`
 
-```
-https://gym-tracker-api.onrender.com/
-→ { "message": "Gym Tracker API работает!" }
-```
+> ✅ Railway не засыпает — UptimeRobot не нужен!
 
 ---
 
 ## 3. Фронтенд — Vercel (бесплатно)
 
-### Шаг 1: Создание проекта
+### Шаг 6: Регистрация на Vercel
 
-1. Зайти на https://vercel.com → Sign Up (через GitHub)
-2. **Import Project** → выбрать `gym-tracker`
-3. Настройки:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `.` (корень)
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
+1. Открыть https://vercel.com
+2. **Sign Up** → **Continue with GitHub**
+3. Разрешить доступ к репозиториям
 
-### Шаг 2: Переменные окружения
+### Шаг 7: Создание проекта
 
-В Vercel → Settings → Environment Variables:
+1. На дашборде нажать **Add New...** → **Project**
+2. Найти `timplay75-wq/gym-tracker` → нажать **Import**
+3. Заполнить:
 
-| Переменная | Значение |
+| Поле | Значение |
 |---|---|
-| `VITE_API_URL` | `https://gym-tracker-api.onrender.com/api` |
+| Project Name | `gym-tracker` |
+| Framework Preset | `Vite` |
+| Root Directory | `.` (оставить пустым — корень) |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
 
-> ⚠️ Переменные Vite должны начинаться с `VITE_`
+4. Раскрыть **Environment Variables** и добавить:
 
-### Шаг 3: Деплой
+| Key | Value |
+|---|---|
+| `VITE_API_URL` | *(ваш Railway URL + /api, вида https://xxx.up.railway.app/api)* |
 
-Vercel автоматически собирает при push в `main`. После деплоя:
+> ⚠️ Переменная **обязательно** с префиксом `VITE_` — иначе Vite её игнорирует
 
-```
-https://gym-tracker-xxx.vercel.app
-```
-
-### Шаг 4: Обновить CORS
-
-Вернуться в Render → Environment → обновить:
-- `CORS_ORIGIN` = `https://gym-tracker-xxx.vercel.app`
-- `FRONTEND_URL` = `https://gym-tracker-xxx.vercel.app`
-
-Передеплоить бэкенд (Manual Deploy → Deploy latest commit).
+5. Нажать **Deploy**
+6. Подождать 1-2 минуты → получите URL вида `https://gym-tracker.vercel.app`
 
 ---
 
-## 4. Свой домен (опционально)
+## 4. Связать фронт и бэк
 
-### На Vercel:
-1. Settings → Domains → Add Domain
-2. Добавить `gym.yourdomain.com`
-3. Настроить DNS: CNAME на `cname.vercel-dns.com`
+### Шаг 8: Обновить CORS на Railway
 
-### На Render:
-1. Settings → Custom Domains → Add Custom Domain
-2. Добавить `api.gym.yourdomain.com`
-3. Настроить DNS: CNAME на `gym-tracker-api.onrender.com`
+1. Вернуться на https://railway.app → ваш проект
+2. Открыть сервис → **Variables**
+3. Изменить переменные:
 
-### Обновить после привязки домена:
-- Vercel: `VITE_API_URL` = `https://api.gym.yourdomain.com/api`
-- Render: `CORS_ORIGIN` = `https://gym.yourdomain.com`
+| Key | Старое значение | Новое значение |
+|---|---|---|
+| `CORS_ORIGIN` | `*` | `https://gym-tracker.vercel.app` |
+| `FRONTEND_URL` | `https://gym-tracker.vercel.app` | *(подтвердить что правильный URL)* |
+
+4. Railway автоматически передеплоится
+
+### Проверка: всё должно работать
+
+| URL | Ожидаемый результат |
+|---|---|
+| *(Railway URL)* | `{"message":"Gym Tracker API работает!"}` |
+| *(Railway URL)/health* | `{"status":"ok"}` |
+| `https://gym-tracker.vercel.app` | Открывается приложение |
+| Регистрация в приложении | Создаётся аккаунт, данные в MongoDB Atlas |
 
 ---
 
-## 5. HTTPS
+## 5. Свой домен (если купил)
 
-✅ Vercel и Render автоматически настраивают HTTPS (Let's Encrypt).
+### Шаг 9: Привязка домена
+
+**Фронтенд (Vercel):**
+1. Vercel → проект → **Settings → Domains → Add**
+2. Ввести `gymtracker.ru` (или ваш домен)
+3. Vercel покажет нужные DNS-записи
+4. На Рег.ру → DNS → добавить:
+   - `A` запись `@` → `76.76.21.21`
+   - `CNAME` запись `www` → `cname.vercel-dns.com`
+
+**Бэкенд (Railway):**
+1. Railway → сервис → **Settings → Networking → Custom Domain**
+2. Ввести `api.gymtracker.ru`
+3. Railway покажет CNAME-запись
+4. На Рег.ру → DNS → добавить:
+   - `CNAME` запись `api` → *(значение из Railway)*
+
+**Обновить env после привязки:**
+
+| Где | Key | Новое значение |
+|---|---|---|
+| Vercel | `VITE_API_URL` | `https://api.gymtracker.ru/api` |
+| Railway | `CORS_ORIGIN` | `https://gymtracker.ru` |
+| Railway | `FRONTEND_URL` | `https://gymtracker.ru` |
+| Railway | `BACKEND_URL` | `https://api.gymtracker.ru` |
+
+---
+
+## 6. HTTPS
+
+✅ Vercel и Railway автоматически настраивают HTTPS (Let's Encrypt).
 
 Никаких дополнительных действий не нужно.
 
 ---
 
-## 6. Альтернативы
+## 7. Альтернативы
 
 ### Бэкенд
 
 | Платформа | Бесплатно | Авто-деплой | Сон |
 |---|---|---|---|
-| **Render** | ✅ | ✅ | 15 мин |
-| **Railway** | 500ч/мес | ✅ | Нет |
+| **Railway** ⭐ | $5 кредит/мес | ✅ | Нет |
+| **Render** | ✅ | ✅ | 15 мин (засыпает) |
 | **Fly.io** | 3 VM | ✅ | Нет |
+| **Koyeb** | 1 сервис | ✅ | Нет |
 | **VPS (Hetzner)** | €3.79/мес | ❌ (pm2) | Нет |
 
 ### Фронтенд
@@ -163,7 +201,7 @@ https://gym-tracker-xxx.vercel.app
 
 ---
 
-## 7. VPS вариант (для продвинутых)
+## 8. VPS вариант (для продвинутых)
 
 Если хотите полный контроль (например Hetzner VPS):
 

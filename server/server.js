@@ -57,6 +57,11 @@ app.get('/', (req, res) => {
   res.json({ message: 'Gym Tracker API работает!' });
 });
 
+// Health-check для UptimeRobot / keep-alive пинга
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Обработка ошибок 404
 app.use((req, res) => {
   res.status(404).json({ message: 'Роут не найден' });

@@ -16,9 +16,9 @@ export const ForgotPassword = () => {
     setError('');
     setLoading(true);
     try {
-      const res = await authApi.forgotPassword(email);
-      if (res && (res as { devResetUrl?: string }).devResetUrl) {
-        setDevUrl((res as { devResetUrl: string }).devResetUrl);
+      const res = await authApi.forgotPassword(email) as { message: string; devResetUrl?: string };
+      if (res?.devResetUrl) {
+        setDevUrl(res.devResetUrl);
       }
       setSent(true);
     } catch (err: unknown) {
