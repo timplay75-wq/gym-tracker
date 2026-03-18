@@ -32,9 +32,21 @@ const authLimiter = rateLimit({
 
 // Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? process.env.CORS_ORIGIN
-    : 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Разрешить запросы без origin (curl, мобильные приложения)
+    if (!origin) return callback(null, true);
+    
+    const allowed = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim());
+    // Разрешить все Vercel preview URLs проекта
+    if (
+      allowed.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin === 'http://localhost:5173'
+    ) {
+      return callback(null, true);
+    }
+    callback(new Error('CORS not allowed'));
+  },
   credentials: true,
 }));
 app.use(express.json());
