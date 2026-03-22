@@ -14,9 +14,12 @@ export default defineConfig({
         name: 'Gym Tracker',
         short_name: 'GymTracker',
         description: 'Приложение для отслеживания тренировок',
-        theme_color: '#1f2937',
-        background_color: '#ffffff',
+        theme_color: '#9333ea',
+        background_color: '#1a1a2e',
         display: 'standalone',
+        orientation: 'portrait',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
             src: '/icons/icon-192x192.png',
@@ -27,6 +30,12 @@ export default defineConfig({
             src: '/icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png'
+          },
+          {
+            src: '/icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       },
