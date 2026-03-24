@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, BellOff, BellRing, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useLanguage } from '@/i18n';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useToast } from '@/hooks/useToast';
@@ -57,24 +57,6 @@ export const NotificationsSettings = () => {
           </button>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{nt.title}</h1>
         </header>
-
-        {/* Permission banner */}
-        {permissionBlocked ? (
-          <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 flex gap-3 items-start">
-            <BellOff className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700 dark:text-red-400">{nt.permissionDenied}</p>
-          </div>
-        ) : permission === 'granted' ? (
-          <div className="mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-2xl p-4 flex gap-3 items-center">
-            <BellRing className="w-5 h-5 text-green-600 shrink-0" />
-            <p className="text-sm font-medium text-green-700 dark:text-green-400">{nt.permissionGranted}</p>
-          </div>
-        ) : (
-          <div className="mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex gap-3 items-start">
-            <Bell className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-700 dark:text-amber-400">{nt.permissionDefault}</p>
-          </div>
-        )}
 
         {/* Main settings card */}
         <div className="bg-white dark:bg-[#16213e] rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-4">

@@ -207,14 +207,23 @@ export function ExportImportSection() {
                 <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 mb-4">
                   <p className="text-sm font-semibold text-[#9333ea] mb-2">{t.profile.foundData || 'Found data:'}</p>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      💪 {importPreview.workouts} {t.profile.workouts || 'workouts'}
+                    <p className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                      <span className="inline-flex w-5 h-5 rounded-md bg-[#f3e8ff] dark:bg-[#9333ea]/20 items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-[#9333ea]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 8v8M18 8v8M4 10v4M20 10v4M8 12h8" /></svg>
+                      </span>
+                      {importPreview.workouts} {t.profile.workouts || 'workouts'}
                     </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      🏋️ {importPreview.exercises} {t.profile.exercisesLabel || 'exercises'}
+                    <p className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                      <span className="inline-flex w-5 h-5 rounded-md bg-[#dbeafe] dark:bg-[#3b82f6]/20 items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-[#3b82f6]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 8v8M18 8v8M4 10v4M20 10v4M8 12h8" /></svg>
+                      </span>
+                      {importPreview.exercises} {t.profile.exercisesLabel || 'exercises'}
                     </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      📋 {importPreview.programs} {t.profile.programsLabel || 'programs'}
+                    <p className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                      <span className="inline-flex w-5 h-5 rounded-md bg-[#dcfce7] dark:bg-[#22c55e]/20 items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-[#22c55e]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                      </span>
+                      {importPreview.programs} {t.profile.programsLabel || 'programs'}
                     </p>
                   </div>
                 </div>

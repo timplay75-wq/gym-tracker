@@ -239,7 +239,11 @@ export function BodyMetrics() {
           </div>
         ) : filtered.length < 2 ? (
           <div className="bg-white dark:bg-[#16213e] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8 flex flex-col items-center text-center mb-4">
-            <span className="text-4xl mb-3">⚖️</span>
+            <div className="w-16 h-16 bg-[#f3e8ff] dark:bg-[#9333ea]/20 rounded-full flex items-center justify-center mb-3">
+              <svg className="w-8 h-8 text-[#9333ea]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.364-6.364-1.06 1.06M6.696 17.304l-1.06 1.06M18.364 18.364l-1.06-1.06M6.696 6.696 5.636 5.636M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
             <p className="font-semibold text-gray-800 dark:text-white mb-1">{bm.noData}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">{bm.noDataSub}</p>
           </div>
@@ -313,17 +317,15 @@ export function BodyMetrics() {
         )}
       </div>
 
-      {/* ── FAB — центр ── */}
-      <div className="fixed bottom-20 left-0 right-0 flex justify-center pointer-events-none" style={{ zIndex: 40 }}>
-        <button
-          onClick={openForm}
-          className="pointer-events-auto w-14 h-14 bg-[#7c3aed] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#6d28d9] active:scale-95 transition-all"
-        >
+      {/* ── FAB — fixed position ── */}
+      <button
+        onClick={openForm}
+        className="fixed bottom-24 right-4 z-40 w-14 h-14 bg-[#7c3aed] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#6d28d9] active:scale-95 transition-all"
+      >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-        </button>
-      </div>
+      </button>
 
       {/* ── Add entry bottom sheet ── */}
       {showForm && (

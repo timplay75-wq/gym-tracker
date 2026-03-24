@@ -8,17 +8,23 @@ import type { Workout } from '@/types';
 import { formatDate } from '@/utils/helpers';
 import { Card, Modal, Button, Input } from '@/components';
 
-// Категории мышечных групп с эмодзи
-const MUSCLE_CATEGORY_EMOJI: Record<string, string> = {
-  chest: '💪',
-  back: '🦾', 
-  legs: '🦵',
-  shoulders: '🏋️',
-  arms: '💪',
-  core: '🔥',
-  cardio: '🏃',
-  other: '⚡',
-};
+// Компонент иконки категории мышцы
+function CategoryIcon({ category }: { category?: string }) {
+  const colorMap: Record<string, string> = {
+    chest: '#9333ea', back: '#3b82f6', legs: '#22c55e',
+    shoulders: '#f59e0b', arms: '#ef4444', core: '#f97316',
+    cardio: '#06b6d4', other: '#6b7280',
+  };
+  const color = colorMap[category || 'other'] || '#6b7280';
+  return (
+    <div
+      className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
+      style={{ backgroundColor: color + '20' }}
+    >
+      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+    </div>
+  );
+}
 
 type FilterPeriod = 'week' | 'month' | 'year' | 'all';
 
@@ -445,7 +451,11 @@ export const Workouts = () => {
           {filteredWorkouts.length === 0 ? (
             <Card padding="lg" className="text-center shadow-sm">
               <div className="py-12">
-                <div className="text-5xl mb-4">📊</div>
+                <div className="w-16 h-16 bg-purple-50 dark:bg-purple-900/20 rounded-full flex items-center justify-center mb-4 mx-auto">
+                  <svg className="w-8 h-8 text-[#9333ea] opacity-60" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                </div>
                 <p className="text-lg text-primary-700 mb-2 font-medium">
                   {searchQuery ? t.workouts.nothingFound : t.workouts.noWorkouts}
                 </p>
@@ -526,9 +536,9 @@ export const Workouts = () => {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
                                       {/* Группы мышц эмодзи */}
-                                      <div className="flex gap-1 text-lg">
+                                      <div className="flex gap-1">
                                         {muscleGroups.map((cat, idx) => (
-                                          <span key={idx}>{MUSCLE_CATEGORY_EMOJI[cat] || '⚡'}</span>
+                                          <CategoryIcon key={idx} category={cat} />
                                         ))}
                                       </div>
                                       
@@ -618,7 +628,7 @@ export const Workouts = () => {
                 return (
                   <Card key={idx} padding="sm">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{MUSCLE_CATEGORY_EMOJI[exercise.category] || '⚡'}</span>
+                      <CategoryIcon category={exercise.category} />
                       <div className="font-semibold text-gray-900 dark:text-white">
                         {exercise.name}
                       </div>

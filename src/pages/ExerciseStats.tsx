@@ -216,7 +216,11 @@ export function ExerciseStats() {
         {/* Personal Records */}
         <section>
           <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-            <span className="text-lg">🏆</span>
+            <div className="w-6 h-6 rounded-lg bg-[#fef3c7] dark:bg-[#f59e0b]/20 flex items-center justify-center">
+              <svg className="w-3.5 h-3.5 text-[#f59e0b]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8m-4-4v4M7 4h10l-1.5 8H8.5L7 4zM4 4h2m12 0h2" />
+              </svg>
+            </div>
             {t.exerciseStats.personalRecords}
           </h2>
           <div className="grid grid-cols-3 gap-3">

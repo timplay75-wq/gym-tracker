@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n';
-import { exercisesApi } from '@/services/api';
+import { exercisesApi, programsApi, workoutsApi } from '@/services/api';
 
 const categoryToBackend: Record<string, string> = {
   stretching: 'other',
@@ -23,9 +23,13 @@ interface Category {
 
 export const ExerciseLibrary = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'exercises' | 'programs'>('exercises');
   const [customCounts, setCustomCounts] = useState<Record<string, number>>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
 
   useEffect(() => {
     exercisesApi.getAll().then((exercises: any[]) => {
@@ -37,6 +41,56 @@ export const ExerciseLibrary = () => {
       setCustomCounts(counts);
     }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'programs') {
+      setLoadingPrograms(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (programsApi.getAll() as Promise<any[]>).then(data => {
+        setPrograms(data);
+      }).catch(() => setPrograms([])).finally(() => setLoadingPrograms(false));
+    }
+  }, [activeTab]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleApplyProgram = async (prog: any) => {
+    const date = (location.state?.date as string) || new Date().toISOString().slice(0, 10);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let exercises: any[] = [];
+    if (prog.exercises && prog.exercises.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      exercises = prog.exercises.map((ex: any) => ({
+        name: ex.name, category: ex.category || 'other',
+        sets: Array.from({ length: ex.sets || 3 }, () => ({ weight: 0, reps: 0, completed: false })),
+      }));
+    } else if (prog.days && prog.days.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      exercises = prog.days.flatMap((d: any) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (d.exercises || []).map((ex: any) => ({
+          name: ex.name, category: ex.category || 'other',
+          sets: Array.from({ length: ex.sets || 3 }, () => ({ weight: ex.weight || 0, reps: ex.reps || 0, completed: false })),
+        }))
+      );
+    }
+    if (!exercises.length) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await workoutsApi.getAll({ limit: 50 }) as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const match = res.workouts.find((w: any) => {
+        const wd = typeof w.date === 'string' ? w.date.slice(0, 10) : new Date(w.date).toISOString().slice(0, 10);
+        return wd === date;
+      });
+      if (match) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await workoutsApi.update((match as any).id || (match as any)._id, { exercises: [...(match as any).exercises, ...exercises] });
+      } else {
+        await workoutsApi.create({ name: prog.name, date: new Date(date).toISOString(), exercises });
+      }
+      navigate('/');
+    } catch { /* ignore */ }
+  };
 
   const categories: Category[] = [
     { id: 'stretching', name: t.exercises.stretching, count: 3 + (customCounts['stretching'] || 0), exercises: [...t.exerciseLib.stretching] },
@@ -50,7 +104,7 @@ export const ExerciseLibrary = () => {
   ];
 
   const handleCategoryClick = (category: Category) => {
-    navigate(`/category/${category.id}`, { state: { category } });
+    navigate(`/category/${category.id}`, { state: { category, date: location.state?.date } });
   };
 
   return (
@@ -127,13 +181,48 @@ export const ExerciseLibrary = () => {
           </div>
         ) : (
           // Вкладка "Программы"
-          <div className="flex items-center justify-center py-20">
+          <div>
             <button
-              onClick={() => navigate('/create-program')}
-              className="px-8 py-4 border-2 border-[#9333ea] rounded-xl text-[#9333ea] font-semibold hover:bg-[#9333ea] hover:text-white transition-colors"
+              onClick={() => navigate('/create-program', { state: { fromDate: location.state?.date } })}
+              className="w-full mb-4 py-3 border-2 border-dashed border-[#9333ea] rounded-xl text-[#9333ea] font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#9333ea]/10 active:bg-[#9333ea]/20 transition-colors"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
               {t.exercises.createProgram}
             </button>
+
+            {loadingPrograms ? (
+              <div className="flex justify-center py-8">
+                <div className="w-6 h-6 border-2 border-[#7c3aed] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : programs.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                {t.programs?.noPrograms || 'Нет программ'}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {programs.map((prog: any) => {
+                  const exerciseCount: number = prog.exercises?.length
+                    || prog.days?.reduce((s: number, d: any) => s + (d.exercises?.length || 0), 0)
+                    || 0;
+                  return (
+                    <div key={prog._id} className="bg-white dark:bg-[#16213e] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-1 truncate">{prog.name}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        {exerciseCount} {t.programs?.exercises || 'упр.'}
+                      </p>
+                      <button
+                        onClick={() => handleApplyProgram(prog)}
+                        className="w-full py-2 rounded-xl bg-[#9333ea] text-white text-sm font-semibold active:bg-[#7c3aed] transition-colors"
+                      >
+                        + Добавить к дню
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n';
-import { exercisesApi } from '@/services/api';
+import { exercisesApi, workoutsApi } from '@/services/api';
 import { useToast } from '@/hooks/useToast';
 import { Pencil, Trash2, Type } from 'lucide-react';
 
@@ -66,6 +66,14 @@ function SwipeCard({ exercise, isCustom, editMode, onCreate, onStats, onRename, 
     }
   };
 
+  const handleCardClick = () => {
+    if (Math.abs(offsetX) > 5) {
+      setOffsetX(0);
+    } else {
+      onCreate();
+    }
+  };
+
   const resetSwipe = () => setOffsetX(0);
 
   if (editMode) {
@@ -90,7 +98,10 @@ function SwipeCard({ exercise, isCustom, editMode, onCreate, onStats, onRename, 
             </div>
           ) : (
             <span className="text-gray-300 dark:text-gray-600 shrink-0">
-              🚫
+              <svg className="w-4 h-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6" />
+              </svg>
             </span>
           )}
         </div>
@@ -118,20 +129,19 @@ function SwipeCard({ exercise, isCustom, editMode, onCreate, onStats, onRename, 
 
       {/* Card content (slides) */}
       <div
-        className="relative bg-white dark:bg-[#16213e] border border-gray-100 dark:border-gray-800 p-4 transition-transform z-10"
+        className="relative bg-white dark:bg-[#16213e] border border-gray-100 dark:border-gray-800 p-4 transition-transform z-10 cursor-pointer active:bg-gray-50 dark:active:bg-white/5"
         style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.25s ease' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClick={handleCardClick}
       >
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{exercise}</h3>
-        <button
-          onClick={onCreate}
-          className="w-full py-2.5 bg-[#9333ea] text-white rounded-lg font-semibold text-sm active:bg-[#7c3aed] transition-colors flex items-center justify-center gap-1.5"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-          {t.exercises.createExercise}
-        </button>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900 dark:text-white">{exercise}</h3>
+          <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
       </div>
     </div>
   );
@@ -158,6 +168,37 @@ export const CategoryView = () => {
   };
 
   const currentCategory = category || (categoryId ? defaultCategories[categoryId] : null);
+
+  // Прямое добавление упражнения на день
+  const dateStr = (location.state?.date as string) || new Date().toISOString().slice(0, 10);
+
+  const addExerciseToDay = async (exerciseName: string) => {
+    const backendCat = categoryToBackend[currentCategory?.id || ''] || 'other';
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await workoutsApi.getAll({ limit: 50 }) as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const match = res.workouts.find((w: any) => {
+        const wd = typeof w.date === 'string' ? w.date.slice(0, 10) : new Date(w.date).toISOString().slice(0, 10);
+        return wd === dateStr;
+      });
+      const newExercise = {
+        name: exerciseName,
+        category: backendCat,
+        sets: [{ weight: 0, reps: 0, completed: false }],
+      };
+      if (match) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await workoutsApi.update((match as any).id || (match as any)._id, { exercises: [...(match as any).exercises, newExercise] });
+      } else {
+        await workoutsApi.create({ name: exerciseName, date: new Date(dateStr).toISOString(), exercises: [newExercise] });
+      }
+      toast.success(t.exercises.exerciseAdded || 'Добавлено!');
+      navigate('/');
+    } catch {
+      toast.error(t.errors?.saveFailed || 'Ошибка');
+    }
+  };
 
   const [customExercises, setCustomExercises] = useState<{ id: string; name: string }[]>([]);
 
@@ -266,9 +307,7 @@ export const CategoryView = () => {
                 isCustom={isCustom}
                 editMode={editMode}
                 t={t}
-                onCreate={() => navigate('/setup-exercise', {
-                  state: { exerciseName: exercise, categoryId: currentCategory.id, categoryName: currentCategory.name }
-                })}
+                onCreate={() => addExerciseToDay(exercise)}
                 onStats={() => navigate(`/stats/exercise/${encodeURIComponent(exercise)}`)}
                 onRename={customEx ? () => { setRenameModal(customEx); setNewName(customEx.name); } : undefined}
                 onDelete={customEx ? () => setDeleteTarget(customEx) : undefined}

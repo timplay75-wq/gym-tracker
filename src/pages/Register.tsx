@@ -51,7 +51,9 @@ export const Register = () => {
         {/* Лого */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#9d6fff] to-[#7C4DFF] flex items-center justify-center mb-3">
-            <span className="text-white text-2xl">💪</span>
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 8v8M18 8v8M4 10v4M20 10v4M8 12h8" />
+            </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gym Tracker</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.auth.subtitle}</p>

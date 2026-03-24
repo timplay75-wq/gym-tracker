@@ -4,7 +4,7 @@ import { workoutsApi, programsApi } from '@/services/api';
 import { useLanguage } from '@/i18n';
 import { useToast } from '@/hooks/useToast';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import { Plus, User, Calendar as CalendarIcon, Layers, Pencil, Copy, ClipboardList, MessageSquare, RotateCcw } from 'lucide-react';
+import { Plus, User, Calendar as CalendarIcon, Layers, MoreVertical, Copy, ClipboardList, RotateCcw } from 'lucide-react';
 import { hapticLight, hapticMedium, hapticSuccess } from '@/utils/haptics';
 import { SwipeExerciseCard } from '@/components/SwipeExerciseCard';
 import { EditWorkoutSheet } from '@/components/EditWorkoutSheet';
@@ -120,8 +120,7 @@ export const Home = () => {
   // Multi-select mode
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
-  const [commentModal, setCommentModal] = useState(false);
-  const [commentText, setCommentText] = useState('');
+
   const [programModal, setProgramModal] = useState(false);
   const [programName, setProgramName] = useState('');
 
@@ -229,23 +228,7 @@ export const Home = () => {
     }
   };
 
-  const handleAddComment = async () => {
-    if (!dayWorkout || !commentText.trim()) return;
-    hapticMedium();
-    try {
-      const wId = dayWorkout.id ?? dayWorkout._id;
-      const currentNotes = dayWorkout.notes || '';
-      const newNotes = currentNotes ? `${currentNotes}\n${commentText.trim()}` : commentText.trim();
-      await workoutsApi.update(wId, { notes: newNotes });
-      toast.success(t.home.commentAdded);
-      setCommentModal(false);
-      setCommentText('');
-      exitSelectMode();
-      loadDay(selectedDate);
-    } catch {
-      toast.error(t.errors?.saveFailed || 'Error');
-    }
-  };
+
 
   const handleSaveWorkout = async (data: { name: string; date: string; notes: string; exercises: ExerciseItem[] }) => {
     if (!dayWorkout) return;
@@ -361,7 +344,7 @@ export const Home = () => {
               onClick={() => { setSelectMode(true); hapticLight(); }}
               className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-[#9333ea] active:scale-95 transition-all"
             >
-              <Pencil className="w-4 h-4" />
+              <MoreVertical className="w-4 h-4" />
             </button>
           )
         )}
@@ -441,7 +424,7 @@ export const Home = () => {
           <User className="w-5 h-5 text-white" strokeWidth={2} />
         </button>
         <button
-          onClick={() => navigate('/exercises')}
+          onClick={() => navigate('/exercises', { state: { date: selectedDate.toISOString().slice(0, 10) } })}
           className="w-14 h-14 bg-[#9333ea] rounded-full flex items-center justify-center shadow-xl shadow-purple-400/40 active:scale-95 transition-transform btn-ripple"
           aria-label={t.home.createWorkout}
         >
@@ -494,7 +477,7 @@ export const Home = () => {
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">
               {t.home.selectedCount}: {selectedIndices.size}
             </p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={handleRepeatToday}
                 className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 active:scale-95 transition-all"
@@ -522,44 +505,13 @@ export const Home = () => {
                 </div>
                 <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{t.home.saveAsProgram}</span>
               </button>
-              <button
-                onClick={() => setCommentModal(true)}
-                className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 active:scale-95 transition-all"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#fef3c7] dark:bg-[#f59e0b]/20 flex items-center justify-center">
-                  <MessageSquare className="w-4.5 h-4.5 text-[#f59e0b]" />
-                </div>
-                <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{t.home.addComment}</span>
-              </button>
+
             </div>
           </div>
         </div>
       )}
 
-      {/* Comment modal */}
-      {commentModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center" onClick={() => setCommentModal(false)}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative bg-white dark:bg-[#16213e] rounded-2xl p-6 mx-6 max-w-[340px] w-full shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{t.home.addComment}</h3>
-            <textarea
-              value={commentText}
-              onChange={e => setCommentText(e.target.value)}
-              placeholder={t.home.enterComment}
-              className="w-full h-24 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1a1a2e] text-gray-900 dark:text-white text-sm resize-none focus:ring-2 focus:ring-[#9333ea] outline-none"
-              autoFocus
-            />
-            <div className="flex gap-3 mt-4">
-              <button onClick={() => setCommentModal(false)} className="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-sm">
-                {t.common?.cancel || 'Отмена'}
-              </button>
-              <button onClick={handleAddComment} disabled={!commentText.trim()} className="flex-1 py-2.5 rounded-xl bg-[#9333ea] text-white font-semibold text-sm active:bg-[#7c3aed] disabled:opacity-40">
-                {t.home.saveChanges}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Program name modal */}
       {programModal && (

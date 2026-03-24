@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
-import { programsApi } from '@/services/api';
+import { programsApi, workoutsApi } from '@/services/api';
 import { NumberStepper } from '@/components';
 import { useLanguage } from '@/i18n';
 
@@ -38,8 +38,9 @@ export const CreateProgram = () => {
   const toast = useToast();
 
   // Если пришли из редактирования — заполняем формы данными
-  const editProgram = (location.state as { program?: ProgramState })?.program;
+  const editProgram = (location.state as { program?: ProgramState; fromDate?: string })?.program;
   const isEditMode = !!editProgram;
+  const fromDate = (location.state as { program?: ProgramState; fromDate?: string })?.fromDate;
 
   const [programName, setProgramName] = useState(editProgram?.name || '');
   const [description, setDescription] = useState(editProgram?.description || '');
@@ -120,7 +121,38 @@ export const CreateProgram = () => {
         await programsApi.create(payload);
         toast.success(t.programs.created);
       }
-      navigate('/programs');
+
+      // Если открыто через '+' на главной — добавить упражнения на выбранный день
+      if (fromDate) {
+        const allExercises = days
+          .flatMap(d => d.exercises)
+          .filter(ex => ex.name.trim())
+          .map(ex => ({
+            name: ex.name,
+            category: ex.category || 'other',
+            sets: Array.from({ length: ex.sets || 3 }, () => ({
+              weight: ex.weight || 0, reps: ex.reps || 0, completed: false,
+            })),
+          }));
+        if (allExercises.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const res = await workoutsApi.getAll({ limit: 50 }) as any;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const match = res.workouts.find((w: any) => {
+            const wd = typeof w.date === 'string' ? w.date.slice(0, 10) : new Date(w.date).toISOString().slice(0, 10);
+            return wd === fromDate;
+          });
+          if (match) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await workoutsApi.update((match as any).id || (match as any)._id, { exercises: [...(match as any).exercises, ...allExercises] });
+          } else {
+            await workoutsApi.create({ name: programName.trim(), date: new Date(fromDate).toISOString(), exercises: allExercises });
+          }
+        }
+        navigate('/');
+      } else {
+        navigate('/programs');
+      }
     } catch {
       toast.error('Ошибка сохранения');
     } finally {
