@@ -41,7 +41,9 @@ app.use(cors({
     if (
       allowed.includes(origin) ||
       origin.endsWith('.vercel.app') ||
-      origin === 'http://localhost:5173'
+      origin === 'http://localhost:5173' ||
+      origin === 'https://tonna.ge' ||
+      origin === 'https://www.tonna.ge'
     ) {
       return callback(null, true);
     }
