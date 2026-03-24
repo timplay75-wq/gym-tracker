@@ -193,7 +193,7 @@ export const CategoryView = () => {
       } else {
         await workoutsApi.create({ name: exerciseName, date: new Date(dateStr).toISOString(), exercises: [newExercise] });
       }
-      toast.success(t.exercises.exerciseAdded || 'Добавлено!');
+      toast.success(t.exercises.done || 'Добавлено!');
       navigate('/');
     } catch {
       toast.error(t.errors?.saveFailed || 'Ошибка');
