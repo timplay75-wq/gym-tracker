@@ -218,7 +218,7 @@ export const ru = {
     units: 'Единицы измерения',
     notifications: 'Уведомления',
     language: 'Язык',
-    theme: 'Тема оформления',
+    theme: 'Тёмная тема',
     themeValue: 'Фиолетовая',
     workoutsSection: 'Тренировки',
     myPrograms: 'Мои программы',
@@ -602,6 +602,12 @@ export const ru = {
       sunday: 'Вс',
     },
     startWorkout: 'Начать тренировку',
+    applyToDay: 'Применить к дню',
+    selectDate: 'Выберите дату',
+    apply: 'Применить',
+    pickExercises: 'Выберите упражнения',
+    noExercisesSelected: 'Выберите хотя бы одно упражнение',
+    applied: 'Упражнения добавлены',
     // Шаблоны
     tpl: {
       ppl: 'Push / Pull / Legs',

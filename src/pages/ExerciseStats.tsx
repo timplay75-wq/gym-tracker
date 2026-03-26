@@ -114,7 +114,7 @@ export function ExerciseStats() {
   }
 
   /* ───── empty state ───── */
-  if (!data || data.history.length === 0) {
+  if (!data) {
     return (
       <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#1a1a2e] pb-28 flex flex-col items-center justify-center px-4">
         <div className="w-20 h-20 rounded-full bg-[#f3e8ff] flex items-center justify-center mb-4">
@@ -315,91 +315,100 @@ export function ExerciseStats() {
         </section>
 
         {/* Weight/Reps Progress Chart */}
-        {chartData.length > 0 && (
-          <section className="bg-gray-50 dark:bg-[#16213e] rounded-2xl p-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-              {isBodyweight ? (t.exerciseStats.repsProgress || 'Прогресс повторений') : t.exerciseStats.weightProgress}
-            </h2>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: '#6b7280' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: '#6b7280' }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                  domain={isBodyweight ? ['dataMin - 2', 'dataMax + 2'] : ['dataMin - 5', 'dataMax + 5']}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,.1)' }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [
-                    isBodyweight
-                      ? `${Number(value)} ${t.exerciseStats.reps}`
-                      : `${Number(value)} ${t.exerciseStats.kg}`,
-                    isBodyweight ? t.exerciseStats.maxReps : t.exerciseStats.maxWeight,
-                  ]}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  labelFormatter={(label: any) => String(label)}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="weight"
-                  stroke="#9333ea"
-                  strokeWidth={2.5}
-                  dot={{ fill: '#9333ea', r: 4 }}
-                  activeDot={{ r: 6, fill: '#7c3aed' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </section>
-        )}
+        <section className="bg-gray-50 dark:bg-[#16213e] rounded-2xl p-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+            {isBodyweight ? (t.exerciseStats.repsProgress || 'Прогресс повторений') : t.exerciseStats.weightProgress}
+          </h2>
+          {chartData.length === 0 ? (
+            <div className="h-[200px] flex items-center justify-center">
+              <p className="text-sm text-gray-400 dark:text-gray-600">{t.exerciseStats.noData}</p>
+            </div>
+          ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: '#6b7280' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: '#6b7280' }}
+                axisLine={false}
+                tickLine={false}
+                width={40}
+                domain={[0, isBodyweight ? 'dataMax + 2' : 'dataMax + 5']}
+              />
+              <Tooltip
+                contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,.1)' }}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(value: any) => [
+                  isBodyweight
+                    ? `${Number(value)} ${t.exerciseStats.reps}`
+                    : `${Number(value)} ${t.exerciseStats.kg}`,
+                  isBodyweight ? t.exerciseStats.maxReps : t.exerciseStats.maxWeight,
+                ]}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                labelFormatter={(label: any) => String(label)}
+              />
+              <Line
+                type="monotone"
+                dataKey="weight"
+                stroke="#9333ea"
+                strokeWidth={2.5}
+                dot={{ fill: '#9333ea', r: 4 }}
+                activeDot={{ r: 6, fill: '#7c3aed' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+          )}
+        </section>
 
         {/* Volume/Total Reps Progress Chart */}
-        {chartData.length > 0 && (
-          <section className="bg-gray-50 dark:bg-[#16213e] rounded-2xl p-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-              {isBodyweight ? (t.exerciseStats.totalRepsProgress || 'Общие повторения') : t.exerciseStats.volumeProgress}
-            </h2>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={chartData} barCategoryGap="20%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: '#6b7280' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: '#6b7280' }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v: number) => isBodyweight ? String(v) : (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))}
-                  width={40}
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,.1)' }}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => [
-                    isBodyweight
-                      ? `${Number(value)} ${t.exerciseStats.reps}`
-                      : `${Math.round(Number(value))} ${t.exerciseStats.kg}`,
-                    isBodyweight ? t.exerciseStats.totalReps : t.exerciseStats.totalVolume,
-                  ]}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  labelFormatter={(label: any) => String(label)}
-                />
-                <Bar dataKey="volume" fill="#7c3aed" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
-        )}
+        <section className="bg-gray-50 dark:bg-[#16213e] rounded-2xl p-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
+            {isBodyweight ? (t.exerciseStats.totalRepsProgress || 'Общие повторения') : t.exerciseStats.volumeProgress}
+          </h2>
+          {chartData.length === 0 ? (
+            <div className="h-[200px] flex items-center justify-center">
+              <p className="text-sm text-gray-400 dark:text-gray-600">{t.exerciseStats.noData}</p>
+            </div>
+          ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chartData} barCategoryGap="20%">
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: '#6b7280' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: '#6b7280' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => isBodyweight ? String(v) : (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))}
+                width={40}
+                domain={[0, 'dataMax + 5']}
+              />
+              <Tooltip
+                contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,.1)' }}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(value: any) => [
+                  isBodyweight
+                    ? `${Number(value)} ${t.exerciseStats.reps}`
+                    : `${Math.round(Number(value))} ${t.exerciseStats.kg}`,
+                  isBodyweight ? t.exerciseStats.totalReps : t.exerciseStats.totalVolume,
+                ]}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                labelFormatter={(label: any) => String(label)}
+              />
+              <Bar dataKey="volume" fill="#7c3aed" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          )}
+        </section>
 
         {/* History Timeline */}
         <section>

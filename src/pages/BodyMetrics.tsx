@@ -159,7 +159,7 @@ export function BodyMetrics() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#1a1a2e] pb-24">
+    <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#1a1a2e]">
       <div className="max-w-[480px] mx-auto px-4">
 
         {/* ── Header ── */}
@@ -317,15 +317,17 @@ export function BodyMetrics() {
         )}
       </div>
 
-      {/* ── FAB — fixed position ── */}
-      <button
-        onClick={openForm}
-        className="fixed bottom-24 right-4 z-40 w-14 h-14 bg-[#7c3aed] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#6d28d9] active:scale-95 transition-all"
-      >
+      {/* ── FAB — centered in content ── */}
+      <div className="flex justify-center py-6">
+        <button
+          onClick={openForm}
+          className="w-14 h-14 bg-[#7c3aed] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#6d28d9] active:scale-95 transition-all"
+        >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-      </button>
+        </button>
+      </div>
 
       {/* ── Add entry bottom sheet ── */}
       {showForm && (

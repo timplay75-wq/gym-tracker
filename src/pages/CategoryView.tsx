@@ -78,7 +78,7 @@ function SwipeCard({ exercise, isCustom, editMode, onCreate, onStats, onRename, 
 
   if (editMode) {
     return (
-      <div className="relative overflow-hidden rounded-xl mb-2">
+      <div className="relative overflow-hidden rounded-xl mb-3">
         <div className="bg-white dark:bg-[#16213e] border border-gray-100 dark:border-gray-800 p-4 flex items-center gap-3">
           <h3 className="font-semibold text-gray-900 dark:text-white flex-1 truncate">{exercise}</h3>
           {isCustom ? (
@@ -110,7 +110,7 @@ function SwipeCard({ exercise, isCustom, editMode, onCreate, onStats, onRename, 
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl mb-2 bg-[#f5f5f5] dark:bg-[#1a1a2e]">
+    <div className="relative overflow-hidden rounded-xl mb-3 bg-[#f5f5f5] dark:bg-[#1a1a2e]">
       {/* Left side — Stats (revealed on swipe right) */}
       <div
         className="absolute inset-y-0 left-0 w-20 flex items-center justify-center bg-[#9333ea] transition-opacity duration-150"

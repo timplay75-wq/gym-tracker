@@ -220,7 +220,7 @@ export const en: Translations = {
     units: 'Units',
     notifications: 'Notifications',
     language: 'Language',
-    theme: 'App theme',
+    theme: 'Dark mode',
     themeValue: 'Purple',
     workoutsSection: 'Workouts',
     myPrograms: 'My Programs',
@@ -603,6 +603,12 @@ export const en: Translations = {
       sunday: 'Sun',
     },
     startWorkout: 'Start workout',
+    applyToDay: 'Apply to day',
+    selectDate: 'Select date',
+    apply: 'Apply',
+    pickExercises: 'Pick exercises',
+    noExercisesSelected: 'Select at least one exercise',
+    applied: 'Exercises added',
     // Templates
     tpl: {
       ppl: 'Push / Pull / Legs',

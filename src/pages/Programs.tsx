@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { programsApi, workoutsApi } from '@/services/api';
 import { useLanguage } from '@/i18n';
 import { getTemplates } from '@/data/programTemplates';
-import type { Program, ProgramDay } from '@/data/programTemplates';
+import type { Program } from '@/data/programTemplates';
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
 
 /* ───── иконки ───── */
 const PlusIcon = () => (
@@ -40,6 +42,8 @@ export function Programs() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [applyModal, setApplyModal] = useState<{ prog: Program; date: string } | null>(null);
+  const [applying, setApplying] = useState(false);
 
   const templates = getTemplates(t);
 
@@ -58,18 +62,6 @@ export function Programs() {
   useEffect(() => { fetchPrograms(); }, [fetchPrograms]);
 
   /* действия */
-  const handleActivate = async (id: string, isActive: boolean) => {
-    try {
-      if (isActive) {
-        // deactivate: update isActive=false
-        await programsApi.update(id, { isActive: false });
-      } else {
-        await programsApi.activate(id);
-      }
-      await fetchPrograms();
-    } catch { /* ignore */ }
-  };
-
   const handleDelete = (id: string) => setDeleteConfirmId(id);
 
   const confirmDelete = async () => {
@@ -95,27 +87,39 @@ export function Programs() {
     } catch { /* ignore */ }
   };
 
-  const handleStartWorkout = async (day: ProgramDay) => {
+  const handleApply = async () => {
+    if (!applyModal) return;
+    setApplying(true);
+    const { prog, date } = applyModal;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allExercises = prog.days.flatMap((d: any) => d.exercises || []);
     try {
-      const saved = await workoutsApi.create({
-        name: day.name,
-        date: new Date(),
-        status: 'in-progress' as const,
-        exercises: day.exercises.map((ex) => ({
-          name: ex.name,
-          category: ex.category,
-          type: 'strength' as const,
-          sets: Array.from({ length: ex.sets }, () => ({
-            weight: ex.weight,
-            reps: ex.reps,
-            restTime: ex.restTime,
-            completed: false,
-          })),
-        })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await workoutsApi.getAll({ limit: 50 }) as any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const match = res.workouts?.find((w: any) => {
+        const wd = typeof w.date === 'string' ? w.date.slice(0, 10) : new Date(w.date).toISOString().slice(0, 10);
+        return wd === date;
       });
-      navigate('/active-workout', { state: { workout: saved } });
-    } catch {
-      /* ignore */
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newExercises = allExercises.map((ex: any) => ({
+        name: ex.name,
+        category: ex.category || 'other',
+        sets: [{ weight: ex.weight || 0, reps: ex.reps || 10, completed: false }],
+      }));
+      if (match) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await workoutsApi.update((match as any).id || (match as any)._id, {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          exercises: [...(match as any).exercises, ...newExercises],
+        });
+      } else {
+        await workoutsApi.create({ name: prog.name, date: new Date(date).toISOString(), exercises: newExercises });
+      }
+      setApplyModal(null);
+      navigate('/', { state: { date } });
+    } catch { /* ignore */ } finally {
+      setApplying(false);
     }
   };
 
@@ -217,47 +221,32 @@ export function Programs() {
                           <p className="text-xs text-[#6b7280] dark:text-gray-400 mt-3 mb-3">{prog.description}</p>
                         )}
 
-                        {/* Days list */}
-                        <div className="space-y-2 mb-3">
-                          {prog.days.map((day, i) => (
-                            <div key={day._id || i} className="bg-[#f9fafb] dark:bg-[#1a1a2e] rounded-xl p-3">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#e9d5ff] text-[#7c3aed] font-medium">
-                                    {dayLabel(day.dayOfWeek)}
-                                  </span>
-                                  <span className="text-sm font-medium text-[#1e1b4b] dark:text-white">{day.name}</span>
-                                </div>
-                                <button
-                                  onClick={() => handleStartWorkout(day)}
-                                  className="text-xs px-2.5 py-1 rounded-lg bg-[#9333ea] text-white font-medium hover:bg-[#7c3aed] transition-colors"
-                                >
-                                  {t.programs.startWorkout}
-                                </button>
-                              </div>
-                              <div className="text-xs text-[#6b7280] dark:text-gray-400">
-                              </div>
+                        {/* Exercise list — flat */}
+                        <div className="mt-3 mb-4 space-y-1.5">
+                          {prog.days.flatMap((d, di) => d.exercises.map((ex, ei) => (
+                            <div key={`${di}-${ei}`} className="flex items-center gap-2 py-1.5 px-2 bg-[#f9fafb] dark:bg-[#1a1a2e] rounded-xl">
+                              <div className="w-2 h-2 rounded-full bg-[#9333ea] flex-shrink-0" />
+                              <span className="text-sm text-[#1e1b4b] dark:text-white flex-1">{ex.name}</span>
+                              <span className="text-xs text-[#6b7280] dark:text-gray-500">
+                                {ex.sets}×{ex.reps}
+                              </span>
                             </div>
-                          ))}
+                          )))}
                         </div>
 
                         {/* Actions */}
                         <div className="flex gap-2">
                           <button
-                            onClick={() => navigate('/create-program', { state: { program: prog } })}
-                            className="flex-1 py-2 rounded-xl text-sm font-medium bg-[#f3e8ff] text-[#7c3aed] hover:bg-[#e9d5ff] transition-colors"
+                            onClick={() => setApplyModal({ prog, date: todayStr() })}
+                            className="flex-1 py-2 rounded-xl text-sm font-semibold bg-[#9333ea] text-white hover:bg-[#7c3aed] transition-colors"
                           >
-                            {t.programs.editProgram}
+                            {t.programs.applyToDay}
                           </button>
                           <button
-                            onClick={() => handleActivate(prog._id, prog.isActive)}
-                            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${
-                              prog.isActive
-                                ? 'bg-[#f3f4f6] dark:bg-gray-800 text-[#6b7280] dark:text-gray-400 hover:bg-[#e5e7eb] dark:hover:bg-gray-700'
-                                : 'bg-[#f3e8ff] dark:bg-purple-900/30 text-[#7c3aed] hover:bg-[#e9d5ff]'
-                            }`}
+                            onClick={() => navigate('/create-program', { state: { program: prog } })}
+                            className="py-2 px-3 rounded-xl text-sm font-medium bg-[#f3e8ff] text-[#7c3aed] hover:bg-[#e9d5ff] transition-colors"
                           >
-                            {prog.isActive ? t.programs.deactivate : t.programs.activate}
+                            {t.programs.editProgram}
                           </button>
                           <button
                             onClick={() => handleDelete(prog._id)}
@@ -333,6 +322,39 @@ export function Programs() {
                 {t.common.delete || 'Удалить'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Apply to Day Modal ═══ */}
+      {applyModal && (
+        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setApplyModal(null)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative w-full max-w-[480px] mx-auto bg-white dark:bg-[#16213e] rounded-t-3xl px-4 pt-5 pb-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-5" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t.programs.applyToDay}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{applyModal.prog.name}</p>
+            <div className="mb-4">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">{t.programs.selectDate}</label>
+              <input
+                type="date"
+                value={applyModal.date}
+                onChange={e => setApplyModal({ ...applyModal, date: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0f1629] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#9333ea]"
+              />
+            </div>
+            <button
+              onClick={handleApply}
+              disabled={applying}
+              className="w-full py-3.5 bg-[#9333ea] text-white rounded-2xl font-semibold text-base disabled:opacity-50 hover:bg-[#7c3aed] transition-colors"
+            >
+              {applying ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {t.programs.apply}
+                </span>
+              ) : t.programs.apply}
+            </button>
           </div>
         </div>
       )}
