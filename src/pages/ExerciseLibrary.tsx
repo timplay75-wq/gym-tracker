@@ -161,17 +161,17 @@ export const ExerciseLibrary = () => {
             </button>
 
             {/* Список категорий */}
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            <div className="space-y-2">
               {categories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => handleCategoryClick(category)}
-                  className="w-full py-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[#16213e] transition-colors"
+                  className="w-full p-4 text-left flex items-center justify-between bg-white dark:bg-[#16213e] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-[#1a2744] active:scale-[0.98] transition-all"
                 >
-                  <span className="font-semibold text-black dark:text-white">{category.name}</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{category.name}</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-gray-500 dark:text-gray-400 text-sm">{category.count}</span>
-                    <svg className="w-5 h-5 text-[#9333ea]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <span className="text-xs font-medium text-[#9333ea] bg-[#f3e8ff] dark:bg-[#9333ea]/20 px-2.5 py-1 rounded-full">{category.count}</span>
+                    <svg className="w-4 h-4 text-[#9333ea]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>

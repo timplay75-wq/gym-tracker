@@ -92,7 +92,12 @@ export function Programs() {
     setApplying(true);
     const { prog, date } = applyModal;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allExercises = prog.days.flatMap((d: any) => d.exercises || []);
+    const p = prog as any;
+    // поддерживаем оба формата: exercises на верхнем уровне И days[].exercises
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allExercises: any[] = p.exercises?.length
+      ? p.exercises
+      : prog.days.flatMap((d: any) => d.exercises || []);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res = await workoutsApi.getAll({ limit: 50 }) as any;
@@ -223,12 +228,22 @@ export function Programs() {
 
                         {/* Exercise list — flat */}
                         <div className="mt-3 mb-4 space-y-1.5">
-                          {prog.days.flatMap((d, di) => d.exercises.map((ex, ei) => (
+                          {(prog as any).exercises?.length
+                            ? (prog as any).exercises.map((ex: any, ei: number) => (
+                              <div key={ei} className="flex items-center gap-2 py-1.5 px-2 bg-[#f9fafb] dark:bg-[#1a1a2e] rounded-xl">
+                                <div className="w-2 h-2 rounded-full bg-[#9333ea] flex-shrink-0" />
+                                <span className="text-sm text-[#1e1b4b] dark:text-white flex-1">{ex.name}</span>
+                                <span className="text-xs text-[#6b7280] dark:text-gray-500">
+                                  {typeof ex.sets === 'number' ? `${ex.sets}×${ex.reps}` : `${ex.sets?.length ?? 1}×${ex.sets?.[0]?.reps ?? '—'}`}
+                                </span>
+                              </div>
+                            ))
+                            : prog.days.flatMap((d, di) => d.exercises.map((ex, ei) => (
                             <div key={`${di}-${ei}`} className="flex items-center gap-2 py-1.5 px-2 bg-[#f9fafb] dark:bg-[#1a1a2e] rounded-xl">
                               <div className="w-2 h-2 rounded-full bg-[#9333ea] flex-shrink-0" />
                               <span className="text-sm text-[#1e1b4b] dark:text-white flex-1">{ex.name}</span>
                               <span className="text-xs text-[#6b7280] dark:text-gray-500">
-                                {ex.sets}×{ex.reps}
+                                {typeof ex.sets === 'number' ? `${ex.sets}×${ex.reps}` : `${(ex.sets as any)?.length ?? 1}×${(ex.sets as any)?.[0]?.reps ?? '—'}`}
                               </span>
                             </div>
                           )))}

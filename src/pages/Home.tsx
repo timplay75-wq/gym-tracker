@@ -146,7 +146,7 @@ export const Home = () => {
       const todayStr = new Date().toISOString().slice(0, 10);
       const copied = selectedExercises().map(ex => ({
         name: ex.name, category: ex.category || 'other',
-        sets: ex.sets.map(() => ({ weight: 0, reps: 0, completed: false })),
+        sets: [{ weight: 0, reps: 0, completed: false }],
       }));
       // Find or create today's workout
       const res = await workoutsApi.getAll({ limit: 50 });

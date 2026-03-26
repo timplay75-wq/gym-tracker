@@ -103,7 +103,7 @@ export const ActiveWorkout = () => {
   const handleAddSet = () => {
     hapticLight();
     const last = sets[sets.length - 1];
-    setSets(prev => [...prev, { weight: last?.weight || '', reps: last?.reps || '' }]);
+    setSets(prev => [...prev, { weight: last?.weight || '', reps: '' }]);
     setHasChanges(true);
   };
 
