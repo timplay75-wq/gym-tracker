@@ -42,6 +42,8 @@ export function Programs() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const [applyModal, setApplyModal] = useState<{ prog: Program; date: string } | null>(null);
   const [applying, setApplying] = useState(false);
 
@@ -71,6 +73,17 @@ export function Programs() {
       setPrograms((prev) => prev.filter((p) => p._id !== deleteConfirmId));
     } catch { /* ignore */ } finally {
       setDeleteConfirmId(null);
+    }
+  };
+
+  const confirmDeleteAll = async () => {
+    setDeletingAll(true);
+    try {
+      await Promise.all(programs.map(p => programsApi.delete(p._id)));
+      setPrograms([]);
+    } catch { /* ignore */ } finally {
+      setDeletingAll(false);
+      setDeleteAllConfirm(false);
     }
   };
 
@@ -144,13 +157,24 @@ export function Programs() {
           </button>
           <h1 className="text-xl font-bold text-[#1e1b4b] dark:text-white">{t.programs.title}</h1>
         </div>
-        <button
-          onClick={() => navigate('/create-program')}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#9333ea] text-white text-sm font-medium hover:bg-[#7c3aed] active:bg-[#6d28d9] transition-colors"
-        >
-          <PlusIcon />
-          {t.programs.createNew}
-        </button>
+        <div className="flex items-center gap-2">
+          {programs.length > 0 && tab === 'my' && (
+            <button
+              onClick={() => setDeleteAllConfirm(true)}
+              className="p-2 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              title="Удалить всё"
+            >
+              <TrashIcon />
+            </button>
+          )}
+          <button
+            onClick={() => navigate('/create-program')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#9333ea] text-white text-sm font-medium hover:bg-[#7c3aed] active:bg-[#6d28d9] transition-colors"
+          >
+            <PlusIcon />
+            {t.programs.createNew}
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -316,6 +340,29 @@ export function Programs() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ═══ Delete ALL Confirm Modal ═══ */}
+      {deleteAllConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteAllConfirm(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-white dark:bg-[#16213e] rounded-2xl shadow-xl p-6 w-full max-w-[320px]" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </div>
+            <h3 className="text-center font-bold text-gray-900 dark:text-white mb-1">Удалить все программы?</h3>
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-5">Будет удалено {programs.length} программ(ы). Это действие нельзя отменить.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteAllConfirm(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                {t.common.cancel}
+              </button>
+              <button onClick={confirmDeleteAll} disabled={deletingAll} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+                {deletingAll && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                Удалить все
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const WorkoutDaySchema = new mongoose.Schema({
   dayOfWeek: {
     type: String,
-    enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+    enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'all'],
     required: true,
   },
   name: {
