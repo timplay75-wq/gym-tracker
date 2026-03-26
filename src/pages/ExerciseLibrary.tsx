@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n';
 import { exercisesApi, programsApi, workoutsApi } from '@/services/api';
-
 const categoryToBackend: Record<string, string> = {
   stretching: 'other',
   cardio: 'cardio',
@@ -30,6 +29,7 @@ export const ExerciseLibrary = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [programs, setPrograms] = useState<any[]>([]);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     exercisesApi.getAll().then((exercises: any[]) => {
@@ -53,8 +53,7 @@ export const ExerciseLibrary = () => {
   }, [activeTab]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleApplyProgram = async (prog: any) => {
-    const date = (location.state?.date as string) || new Date().toISOString().slice(0, 10);
+  const handleApplyProgram = async (prog: any) => {    const date = (location.state?.date as string) || new Date().toISOString().slice(0, 10);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let exercises: any[] = [];
     if (prog.exercises && prog.exercises.length > 0) {
@@ -92,6 +91,16 @@ export const ExerciseLibrary = () => {
     } catch { /* ignore */ }
   };
 
+  const confirmDeleteProgram = async () => {
+    if (!deleteConfirmId) return;
+    try {
+      await programsApi.delete(deleteConfirmId);
+      setPrograms(prev => prev.filter(p => p._id !== deleteConfirmId));
+    } catch { /* ignore */ } finally {
+      setDeleteConfirmId(null);
+    }
+  };
+
   const categories: Category[] = [
     { id: 'stretching', name: t.exercises.stretching, count: 3 + (customCounts['stretching'] || 0), exercises: [...t.exerciseLib.stretching] },
     { id: 'cardio', name: t.exercises.cardio, count: 4 + (customCounts['cardio'] || 0), exercises: [...t.exerciseLib.cardio] },
@@ -108,6 +117,7 @@ export const ExerciseLibrary = () => {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#1a1a2e] pb-8">
       <div className="max-w-[480px] mx-auto px-5">
         {/* Заголовок */}
@@ -204,7 +214,7 @@ export const ExerciseLibrary = () => {
               <div className="space-y-3">
                 {programs.map((prog: any) => {
                   const exerciseCount: number = prog.exercises?.length
-                    || prog.days?.reduce((s: number, d: any) => s + (d.exercises?.length || 0), 0)
+                    || (prog.days || []).reduce((s: number, d: any) => s + (d.exercises?.length || 0), 0)
                     || 0;
                   return (
                     <div key={prog._id} className="bg-white dark:bg-[#16213e] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
@@ -212,12 +222,26 @@ export const ExerciseLibrary = () => {
                       <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                         {exerciseCount} {t.programs?.exercises || 'упр.'}
                       </p>
-                      <button
-                        onClick={() => handleApplyProgram(prog)}
-                        className="w-full py-2 rounded-xl bg-[#9333ea] text-white text-sm font-semibold active:bg-[#7c3aed] transition-colors"
-                      >
-                        + Добавить к дню
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApplyProgram(prog)}
+                          className="flex-1 py-2 rounded-xl bg-[#9333ea] text-white text-sm font-semibold active:bg-[#7c3aed] transition-colors"
+                        >
+                          + {t.programs?.applyToDay || 'Добавить к дню'}
+                        </button>
+                        <button
+                          onClick={() => navigate('/create-program', { state: { program: prog } })}
+                          className="py-2 px-3 rounded-xl text-sm font-medium bg-[#f3e8ff] text-[#7c3aed] hover:bg-[#e9d5ff] transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(prog._id)}
+                          className="py-2 px-3 rounded-xl text-sm font-medium bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -227,5 +251,28 @@ export const ExerciseLibrary = () => {
         )}
       </div>
     </div>
+
+    {/* Delete program confirm modal */}
+    {deleteConfirmId && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteConfirmId(null)}>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="relative bg-white dark:bg-[#16213e] rounded-2xl shadow-xl p-6 w-full max-w-[320px]" onClick={e => e.stopPropagation()}>
+          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </div>
+          <h3 className="text-center font-bold text-gray-900 dark:text-white mb-1">{t.programs?.title || 'Программа'}</h3>
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-5">{t.programs?.deleteConfirm || 'Удалить программу?'}</p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+              {t.common?.cancel || 'Отмена'}
+            </button>
+            <button onClick={confirmDeleteProgram} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors">
+              {t.common?.delete || 'Удалить'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };

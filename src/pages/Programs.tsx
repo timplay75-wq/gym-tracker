@@ -218,7 +218,11 @@ export function Programs() {
             <div className="space-y-3 animate-stagger">
               {programs.map((prog) => {
                 const isExpanded = expandedId === prog._id;
-                const totalExercises = prog.days.reduce((s, d) => s + d.exercises.length, 0);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const p = prog as any;
+                const totalExercises: number = p.exercises?.length
+                  || (prog.days || []).reduce((s, d) => s + (d.exercises?.length || 0), 0)
+                  || 0;
 
                 return (
                   <div key={prog._id} className="bg-white dark:bg-[#16213e] rounded-2xl shadow-sm border border-[#e5e7eb] dark:border-gray-700 overflow-hidden">
@@ -262,7 +266,7 @@ export function Programs() {
                                 </span>
                               </div>
                             ))
-                            : prog.days.flatMap((d, di) => d.exercises.map((ex, ei) => (
+                            : (prog.days || []).flatMap((d, di) => d.exercises.map((ex, ei) => (
                             <div key={`${di}-${ei}`} className="flex items-center gap-2 py-1.5 px-2 bg-[#f9fafb] dark:bg-[#1a1a2e] rounded-xl">
                               <div className="w-2 h-2 rounded-full bg-[#9333ea] flex-shrink-0" />
                               <span className="text-sm text-[#1e1b4b] dark:text-white flex-1">{ex.name}</span>
