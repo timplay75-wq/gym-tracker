@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n';
 import { exercisesApi, programsApi, workoutsApi } from '@/services/api';
+import { MuscleIcon } from '@/components/MuscleIcon';
 const categoryToBackend: Record<string, string> = {
   stretching: 'other',
   cardio: 'cardio',
@@ -176,9 +177,12 @@ export const ExerciseLibrary = () => {
                 <button
                   key={category.id}
                   onClick={() => handleCategoryClick(category)}
-                  className="w-full p-4 text-left flex items-center justify-between bg-white dark:bg-[#16213e] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-[#1a2744] active:scale-[0.98] transition-all"
+                  className="w-full p-3 text-left flex items-center gap-3 bg-white dark:bg-[#16213e] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-[#1a2744] active:scale-[0.98] transition-all"
                 >
-                  <span className="font-semibold text-gray-900 dark:text-white">{category.name}</span>
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-[#f3e8ff] dark:bg-[#9333ea]/15 flex items-center justify-center">
+                    <MuscleIcon muscle={category.id} size={36} />
+                  </div>
+                  <span className="font-semibold text-gray-900 dark:text-white flex-1">{category.name}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-medium text-[#9333ea] bg-[#f3e8ff] dark:bg-[#9333ea]/20 px-2.5 py-1 rounded-full">{category.count}</span>
                     <svg className="w-4 h-4 text-[#9333ea]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
