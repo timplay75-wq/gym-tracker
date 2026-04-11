@@ -172,20 +172,20 @@ export const ExerciseLibrary = () => {
             </button>
 
             {/* Список категорий */}
-            <div className="space-y-2">
+            <div className="space-y-1 animate-stagger">
               {categories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => handleCategoryClick(category)}
-                  className="w-full p-3 text-left flex items-center gap-3 bg-white dark:bg-[#16213e] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-[#1a2744] active:scale-[0.98] transition-all"
+                  className="w-full rounded-[1.4rem] px-2 py-2.5 text-left flex items-center gap-3 transition-colors hover:bg-black/[0.035] dark:hover:bg-white/[0.05] active:scale-[0.98]"
                 >
-                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-[#f3e8ff] dark:bg-[#9333ea]/15 flex items-center justify-center text-[#7c3aed] dark:text-[#c4b5fd]">
-                    <MuscleIcon muscle={category.id} size={32} />
+                  <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-[#18181b] dark:text-white">
+                    <MuscleIcon muscle={category.id} size={42} className="h-10 w-10" />
                   </div>
-                  <span className="font-semibold text-gray-900 dark:text-white flex-1">{category.name}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium text-[#9333ea] bg-[#f3e8ff] dark:bg-[#9333ea]/20 px-2.5 py-1 rounded-full">{category.count}</span>
-                    <svg className="w-4 h-4 text-[#9333ea]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <span className="flex-1 text-[1.125rem] font-semibold tracking-[-0.02em] text-[#18181b] dark:text-white">{category.name}</span>
+                  <div className="flex items-center gap-4 pl-3">
+                    <span className="min-w-[0.75rem] text-right text-base font-semibold text-[#a1a1aa] dark:text-[#9ca3af]">{category.count}</span>
+                    <svg className="w-4 h-4 text-[#b4b4bc] dark:text-[#8f95a3]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>

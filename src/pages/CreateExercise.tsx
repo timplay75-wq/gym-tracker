@@ -3,16 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { exercisesApi } from '@/services/api';
 import { useToast } from '@/hooks/useToast';
 import { useLanguage } from '@/i18n';
+import { MuscleIcon } from '@/components/MuscleIcon';
 
 const CATEGORIES = [
-  { id: 'chest', icon: '🏋️' },
-  { id: 'back', icon: '🔙' },
-  { id: 'legs', icon: '🦵' },
-  { id: 'shoulders', icon: '💪' },
-  { id: 'arms', icon: '💪' },
-  { id: 'abs', icon: '🎯' },
-  { id: 'cardio', icon: '❤️' },
-  { id: 'stretching', icon: '🧘' },
+  { id: 'stretching' },
+  { id: 'cardio' },
+  { id: 'chest' },
+  { id: 'back' },
+  { id: 'arms' },
+  { id: 'legs' },
+  { id: 'shoulders' },
+  { id: 'abs' },
 ] as const;
 
 const categoryToBackend: Record<string, string> = {
@@ -86,7 +87,7 @@ export const CreateExercise = () => {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             {t.exercises.selectCategory || 'Категория'}
           </label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="space-y-1 rounded-[1.75rem] bg-white/70 p-2 dark:bg-transparent">
             {CATEGORIES.map((cat) => {
               const active = selectedCategory === cat.id;
               const label = (t.exercises as Record<string, string>)[cat.id] || cat.id;
@@ -94,14 +95,27 @@ export const CreateExercise = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`py-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                  className={`w-full rounded-[1.35rem] px-2 py-2.5 text-left flex items-center gap-3 transition-all ${
                     active
-                      ? 'bg-[#9333ea] text-white shadow-md shadow-purple-300 dark:shadow-purple-900/40'
-                      : 'bg-white dark:bg-[#16213e] text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+                      ? 'bg-[#f3e8ff] text-[#18181b] dark:bg-white/[0.07] dark:text-white'
+                      : 'text-[#18181b] hover:bg-black/[0.03] dark:text-white dark:hover:bg-white/[0.04]'
                   }`}
                 >
-                  <span className="text-lg">{cat.icon}</span>
-                  {label}
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center text-[#18181b] dark:text-white">
+                    <MuscleIcon muscle={cat.id} size={42} className="h-10 w-10" />
+                  </div>
+                  <span className="flex-1 text-[1.125rem] font-semibold tracking-[-0.02em]">{label}</span>
+                  <div className={`flex h-5 w-5 items-center justify-center rounded-full border transition-colors ${
+                    active
+                      ? 'border-[#9333ea] bg-[#9333ea]'
+                      : 'border-[#d4d4d8] dark:border-white/20'
+                  }`}>
+                    {active && (
+                      <svg className="h-3 w-3 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
                 </button>
               );
             })}

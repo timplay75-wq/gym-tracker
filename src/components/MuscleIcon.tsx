@@ -20,7 +20,8 @@ function PngIcon({ src, size = 40, className = '' }: Props & { src: string }) {
       width={size}
       height={size}
       alt=""
-      className={`dark:invert ${className}`}
+      draggable={false}
+      className={`pointer-events-none select-none object-contain mix-blend-multiply dark:invert dark:mix-blend-screen ${className}`}
       style={{ objectFit: 'contain' }}
     />
   );
