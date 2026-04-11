@@ -179,8 +179,8 @@ export const ExerciseLibrary = () => {
                   onClick={() => handleCategoryClick(category)}
                   className="w-full p-3 text-left flex items-center gap-3 bg-white dark:bg-[#16213e] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:bg-gray-50 dark:hover:bg-[#1a2744] active:scale-[0.98] transition-all"
                 >
-                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-[#f3e8ff] dark:bg-[#9333ea]/15 flex items-center justify-center">
-                    <MuscleIcon muscle={category.id} size={36} />
+                  <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-[#f3e8ff] dark:bg-[#9333ea]/15 flex items-center justify-center text-[#7c3aed] dark:text-[#c4b5fd]">
+                    <MuscleIcon muscle={category.id} size={32} />
                   </div>
                   <span className="font-semibold text-gray-900 dark:text-white flex-1">{category.name}</span>
                   <div className="flex items-center gap-3">
