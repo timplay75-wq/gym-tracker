@@ -1,3 +1,5 @@
+import type { ReactElement } from 'react';
+
 /**
  * SVG muscle-body icons. Each shows a simplified human silhouette
  * with the relevant muscle group highlighted in purple.
@@ -105,7 +107,7 @@ function StretchingIcon({ size = 44, className = '' }: Props) {
 
 // ─── Public map ───────────────────────────────────────────────────────────────
 
-export const CATEGORY_ICONS: Record<string, (props: Props) => JSX.Element> = {
+export const CATEGORY_ICONS: Record<string, (props: Props) => ReactElement> = {
   chest:      ChestIcon,
   back:       BackIcon,
   legs:       LegsIcon,
