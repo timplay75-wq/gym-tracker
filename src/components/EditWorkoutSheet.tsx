@@ -3,7 +3,6 @@ import { X } from 'lucide-react';
 import type { useLanguage } from '@/i18n';
 import type { ExerciseItem } from './SwipeExerciseCard';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function EditWorkoutSheet({ workout, onSave, onClose, t }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   workout: any;

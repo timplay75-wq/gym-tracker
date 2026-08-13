@@ -16,18 +16,22 @@ export function useBackgroundTimer(
 
   const endTimeRef = useRef<number>(0);
   const rafRef = useRef<number>(0);
+  // Держим свежий onEnd, не перезапуская таймер при смене колбэка.
+  // Присваивание вынесено в эффект: во время рендера ref менять нельзя.
   const onEndRef = useRef(onEnd);
-  onEndRef.current = onEnd;
+  useEffect(() => { onEndRef.current = onEnd; }, [onEnd]);
 
+  // setInterval, а не цепочка setTimeout(tick): та ссылалась на tick изнутри
+  // самого tick. Точности это не меняет — остаток каждый раз считается
+  // от endTimeRef, а не накапливается.
   const tick = useCallback(() => {
     const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
     setSeconds(remaining);
     if (remaining <= 0) {
+      window.clearInterval(rafRef.current);
       setRunning(false);
       onEndRef.current();
-      return;
     }
-    rafRef.current = window.setTimeout(tick, 250);
   }, []);
 
   const start = useCallback((secs?: number) => {
@@ -35,12 +39,12 @@ export function useBackgroundTimer(
     endTimeRef.current = Date.now() + duration;
     setSeconds(secs ?? initialSeconds);
     setRunning(true);
-    window.clearTimeout(rafRef.current);
-    rafRef.current = window.setTimeout(tick, 250);
+    window.clearInterval(rafRef.current);
+    rafRef.current = window.setInterval(tick, 250);
   }, [initialSeconds, tick]);
 
   const stop = useCallback(() => {
-    window.clearTimeout(rafRef.current);
+    window.clearInterval(rafRef.current);
     setRunning(false);
     setSeconds(0);
   }, []);
@@ -57,6 +61,7 @@ export function useBackgroundTimer(
       const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
       setSeconds(remaining);
       if (remaining <= 0) {
+        window.clearInterval(rafRef.current);
         setRunning(false);
         onEndRef.current();
       }
@@ -65,7 +70,7 @@ export function useBackgroundTimer(
     return () => document.removeEventListener('visibilitychange', handleVisible);
   }, [running]);
 
-  useEffect(() => () => window.clearTimeout(rafRef.current), []);
+  useEffect(() => () => window.clearInterval(rafRef.current), []);
 
   return { seconds, running, start, stop, addSeconds };
 }

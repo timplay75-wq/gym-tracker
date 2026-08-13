@@ -48,16 +48,18 @@ export function ExerciseStats() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [data, setData] = useState<ExerciseData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Загрузка — производное от того, для какого упражнения данные уже пришли.
+  // Заодно ответ устаревшего запроса больше не гасит спиннер нового.
+  const [loadedName, setLoadedName] = useState<string | null>(null);
+  const loading = name ? loadedName !== name : true;
 
   useEffect(() => {
     if (!name) return;
-    setLoading(true);
     statsApi.getExerciseHistory(name)
       .then((res) => setData(res))
       .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .finally(() => setLoadedName(name));
   }, [name]);
 
   /* helpers */

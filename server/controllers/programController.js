@@ -1,4 +1,8 @@
 import Program from '../models/Program.js';
+import { pick } from '../utils/sanitize.js';
+
+// userId Рё isActive Р·Р°РґР°С‘С‚ СЃРµСЂРІРµСЂ: Р°РєС‚РёРІРЅРѕСЃС‚СЊ РїРµСЂРµРєР»СЋС‡Р°РµС‚СЃСЏ С‡РµСЂРµР· /activate.
+const PROGRAM_WRITABLE = ['name', 'description', 'days', 'durationWeeks'];
 
 // GET /api/programs
 export const getAllPrograms = async (req, res) => {
@@ -14,7 +18,7 @@ export const getAllPrograms = async (req, res) => {
 export const getProgramById = async (req, res) => {
   try {
     const program = await Program.findOne({ _id: req.params.id, userId: req.user._id });
-    if (!program) return res.status(404).json({ message: 'рограмма не найдена' });
+    if (!program) return res.status(404).json({ message: 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ' });
     res.json(program);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -24,7 +28,7 @@ export const getProgramById = async (req, res) => {
 // POST /api/programs
 export const createProgram = async (req, res) => {
   try {
-    const program = await Program.create({ ...req.body, userId: req.user._id, isActive: false });
+    const program = await Program.create({ ...pick(req.body, PROGRAM_WRITABLE), userId: req.user._id, isActive: false });
     res.status(201).json(program);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -36,10 +40,10 @@ export const updateProgram = async (req, res) => {
   try {
     const program = await Program.findOneAndUpdate(
       { _id: req.params.id, userId: req.user._id },
-      req.body,
+      pick(req.body, PROGRAM_WRITABLE),
       { new: true, runValidators: true }
     );
-    if (!program) return res.status(404).json({ message: 'рограмма не найдена' });
+    if (!program) return res.status(404).json({ message: 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ' });
     res.json(program);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -50,8 +54,8 @@ export const updateProgram = async (req, res) => {
 export const deleteProgram = async (req, res) => {
   try {
     const program = await Program.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
-    if (!program) return res.status(404).json({ message: 'рограмма не найдена' });
-    res.json({ message: 'рограмма удалена' });
+    if (!program) return res.status(404).json({ message: 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ' });
+    res.json({ message: 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -66,8 +70,8 @@ export const activateProgram = async (req, res) => {
       { isActive: true },
       { new: true }
     );
-    if (!program) return res.status(404).json({ message: 'рограмма не найдена' });
-    res.json({ message: `рограмма "${program.name}" активирована`, program });
+    if (!program) return res.status(404).json({ message: 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ' });
+    res.json({ message: `пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ "${program.name}" пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ`, program });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

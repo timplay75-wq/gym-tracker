@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { asString } from '../utils/sanitize.js';
 
 // Генерация JWT токена
 const generateToken = (id) => {
@@ -26,7 +27,9 @@ const userResponse = (user, token) => ({
 // POST /api/users/register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const name = asString(req.body?.name);
+    const email = asString(req.body?.email);
+    const password = asString(req.body?.password);
     if (!name || !email || !password)
       return res.status(400).json({ message: 'Все поля обязательны' });
     if (password.length < 6)
@@ -47,7 +50,8 @@ export const registerUser = async (req, res) => {
 // POST /api/users/login
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = asString(req.body?.email);
+    const password = asString(req.body?.password);
     if (!email || !password)
       return res.status(400).json({ message: 'Email и пароль обязательны' });
 
@@ -98,7 +102,8 @@ export const updateMe = async (req, res) => {
 // PUT /api/users/me/password
 export const changePassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const currentPassword = asString(req.body?.currentPassword);
+    const newPassword = asString(req.body?.newPassword);
     if (!currentPassword || !newPassword)
       return res.status(400).json({ message: 'Оба поля обязательны' });
     if (newPassword.length < 6)
@@ -129,8 +134,18 @@ export const deleteMe = async (req, res) => {
 // POST /api/users/forgot-password
 export const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = asString(req.body?.email);
     if (!email) return res.status(400).json({ message: 'Email обязателен' });
+
+    const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    // Проверяем конфигурацию ДО поиска пользователя: иначе ответ различался бы
+    // для существующих и несуществующих адресов и выдавал наличие аккаунта.
+    if (!smtpConfigured && !isDevelopment) {
+      console.error('[Reset Password] SMTP не настроен — письмо отправить невозможно');
+      return res.status(500).json({ message: 'Отправка почты недоступна, обратитесь в поддержку' });
+    }
 
     const user = await User.findOne({ email: email.toLowerCase() });
     // Всегда отвечаем 200, чтобы не раскрывать наличие email
@@ -146,11 +161,11 @@ export const forgotPassword = async (req, res) => {
       resetPasswordExpires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
     });
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
-    const resetUrl = `${clientUrl}/reset-password/${token}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontendUrl}/reset-password/${token}`;
 
     // Production: отправляем реальный email через SMTP
-    if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+    if (smtpConfigured) {
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: Number(process.env.SMTP_PORT) || 587,
@@ -176,7 +191,8 @@ export const forgotPassword = async (req, res) => {
       console.log(`[Reset Password] Email sent to ${user.email}`);
       res.json({ message: 'Если email зарегистрирован, вы получите письмо' });
     } else {
-      // Development: возвращаем ссылку прямо в ответе
+      // Только локальная разработка: сюда нельзя попасть при NODE_ENV !== 'development',
+      // иначе ссылка со свежим токеном отдавалась бы любому, кто знает чужой email.
       console.log(`[Reset Password] 🔗 Link: ${resetUrl}`);
       res.json({
         message: 'Если email зарегистрирован, вы получите письмо',
@@ -192,7 +208,8 @@ export const forgotPassword = async (req, res) => {
 // POST /api/users/reset-password
 export const resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
+    const token = asString(req.body?.token);
+    const password = asString(req.body?.password);
     if (!token || !password)
       return res.status(400).json({ message: 'Токен и пароль обязательны' });
     if (password.length < 6)

@@ -2,20 +2,25 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 export const protect = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
-      next();
-    } catch (error) {
-      res.status(401).json({ message: 'Не авторизован, токен недействителен' });
-    }
-  }
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
 
   if (!token) {
-    res.status(401).json({ message: 'Не авторизован, токен отсутствует' });
+    return res.status(401).json({ message: 'Не авторизован, токен отсутствует' });
   }
+
+  let user;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    user = await User.findById(decoded.id).select('-password');
+  } catch (error) {
+    return res.status(401).json({ message: 'Не авторизован, токен недействителен' });
+  }
+
+  if (!user) {
+    return res.status(401).json({ message: 'Не авторизован, токен недействителен' });
+  }
+
+  req.user = user;
+  next();
 };

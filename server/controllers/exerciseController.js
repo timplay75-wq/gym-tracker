@@ -1,4 +1,12 @@
 import Exercise from '../models/Exercise.js';
+import { asString, pick } from '../utils/sanitize.js';
+
+// isCustom и createdBy проставляет сервер: через них упражнение можно было
+// подменить на «глобальное» и раздать всем пользователям.
+const EXERCISE_WRITABLE = [
+  'name', 'category', 'type', 'equipment', 'targetMuscles',
+  'instructions', 'videoUrl', 'isBodyweight', 'isDoubleWeight',
+];
 
 // Встроенные упражнения (seed)
 const defaultExercises = [
@@ -39,7 +47,11 @@ const defaultExercises = [
 // GET /api/exercises
 export const getAllExercises = async (req, res) => {
   try {
-    const { category, type, search } = req.query;
+    // ?category[$ne]=x приходит объектом и без приведения к строке становится
+    // оператором Mongo внутри фильтра.
+    const category = asString(req.query?.category);
+    const type = asString(req.query?.type);
+    const search = asString(req.query?.search);
     const filter = {
       $or: [{ isCustom: false }, { isCustom: true, createdBy: req.user._id }],
     };
@@ -58,7 +70,12 @@ export const getAllExercises = async (req, res) => {
 // GET /api/exercises/:id
 export const getExerciseById = async (req, res) => {
   try {
-    const exercise = await Exercise.findById(req.params.id);
+    // Тот же фильтр видимости, что и в getAllExercises: без него по перебору
+    // id читались чужие пользовательские упражнения.
+    const exercise = await Exercise.findOne({
+      _id: req.params.id,
+      $or: [{ isCustom: false }, { isCustom: true, createdBy: req.user._id }],
+    });
     if (!exercise) return res.status(404).json({ message: 'Упражнение не найдено' });
     res.json(exercise);
   } catch (error) {
@@ -70,7 +87,7 @@ export const getExerciseById = async (req, res) => {
 export const createExercise = async (req, res) => {
   try {
     const exercise = await Exercise.create({
-      ...req.body,
+      ...pick(req.body, EXERCISE_WRITABLE),
       isCustom: true,
       createdBy: req.user._id,
     });
@@ -86,7 +103,7 @@ export const updateExercise = async (req, res) => {
     const exercise = await Exercise.findOne({ _id: req.params.id, createdBy: req.user._id, isCustom: true });
     if (!exercise) return res.status(404).json({ message: 'Упражнение не найдено или недоступно для изменения' });
 
-    Object.assign(exercise, req.body);
+    Object.assign(exercise, pick(req.body, EXERCISE_WRITABLE));
     await exercise.save();
     res.json(exercise);
   } catch (error) {

@@ -2,6 +2,13 @@ import type { Workout } from '@/types';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+/** Документ как он приходит с сервера: _id вместо id, даты строками. */
+interface RawDoc {
+  _id?: string;
+  id?: string;
+  [key: string]: unknown;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeWorkout(w: any): Workout {
   return {
@@ -9,15 +16,33 @@ export function normalizeWorkout(w: any): Workout {
     id: (w._id ?? w.id)?.toString() || '',
     date: new Date(w.date),
     createdAt: w.createdAt ? new Date(w.createdAt) : undefined,
-    exercises: (w.exercises || []).map((ex: any) => ({
+    exercises: (w.exercises || []).map((ex: RawDoc) => ({
       ...ex,
       id: (ex._id ?? ex.id)?.toString() || '',
-      sets: (ex.sets || []).map((s: any) => ({
+      sets: ((ex.sets as RawDoc[]) || []).map((s: RawDoc) => ({
         ...s,
         id: (s._id ?? s.id)?.toString() || '',
       })),
     })),
   };
+}
+
+/**
+ * Ошибка API с сохранённым HTTP-статусом.
+ *
+ * Раньше статус терялся в тексте сообщения, а вызывающему коду нужно отличать
+ * 409 (конфликт версий) от прочих сбоев, чтобы повторить запись.
+ */
+export class ApiError extends Error {
+  status: number;
+  body: unknown;
+
+  constructor(message: string, status: number, body?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.body = body;
+  }
 }
 
 // Получение токена из localStorage
@@ -45,7 +70,7 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
-    throw new Error(err.message || `HTTP ${res.status}`);
+    throw new ApiError(err.message || `HTTP ${res.status}`, res.status, err);
   }
 
   if (res.status === 204) return undefined as T;

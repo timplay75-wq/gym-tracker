@@ -1,4 +1,5 @@
 import BodyMeasurement from '../models/BodyMeasurement.js';
+import { asString } from '../utils/sanitize.js';
 
 // GET /api/measurements — последние 90 записей
 export const getAll = async (req, res) => {
@@ -25,7 +26,11 @@ export const getLatest = async (req, res) => {
 // POST /api/measurements — добавить или обновить запись за дату
 export const upsert = async (req, res) => {
   try {
-    const { date, weight, notes } = req.body;
+    const { weight } = req.body;
+    // date уходит в фильтр findOneAndUpdate с upsert — объект здесь стал бы
+    // оператором Mongo.
+    const date = asString(req.body?.date);
+    const notes = asString(req.body?.notes) || '';
     if (!date || weight == null) {
       return res.status(400).json({ message: 'date и weight обязательны' });
     }
@@ -36,7 +41,7 @@ export const upsert = async (req, res) => {
 
     const record = await BodyMeasurement.findOneAndUpdate(
       { userId: req.user._id, date },
-      { weight: parsed, notes: notes || '' },
+      { weight: parsed, notes },
       { upsert: true, new: true }
     );
     res.status(201).json(record);

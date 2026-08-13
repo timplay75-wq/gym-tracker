@@ -133,7 +133,8 @@ function AbsIcon({ size = 40, className = '' }: Props) {
 
 // ─── Public map ───────────────────────────────────────────────────────────────
 
-export const CATEGORY_ICONS: Record<string, (props: Props) => ReactElement> = {
+// Не экспортируется: используется только внутри этого файла
+const CATEGORY_ICONS: Record<string, (props: Props) => ReactElement> = {
   chest:      ChestIcon,
   back:       BackIcon,
   legs:       LegsIcon,

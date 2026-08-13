@@ -10,6 +10,7 @@ vi.mock('../services/api', () => ({
     login: vi.fn(),
     register: vi.fn(),
     getMe: vi.fn(),
+    oauthExchange: vi.fn(),
   },
 }));
 
@@ -17,6 +18,7 @@ const mockAuthApi = apiModule.authApi as {
   login: ReturnType<typeof vi.fn>;
   register: ReturnType<typeof vi.fn>;
   getMe: ReturnType<typeof vi.fn>;
+  oauthExchange: ReturnType<typeof vi.fn>;
 };
 
 // Test component to inspect auth state
@@ -53,6 +55,7 @@ describe('AuthContext — пользовательские сценарии', ()
   beforeEach(() => {
     vi.resetAllMocks();
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   it('начальное состояние — не авторизован без токена', async () => {
@@ -275,8 +278,10 @@ describe('AuthContext — пользовательские сценарии', ()
     const originalLocation = window.location.href;
     // Use Object.defineProperty to mock location.href setter
     const hrefSpy = vi.fn();
-    delete (window as any).location;
-    (window as any).location = { ...window.location, href: originalLocation, set href(val: string) { hrefSpy(val); } };
+    // location в jsdom не заменить обычным присваиванием — подменяем свойство целиком
+    type MutableWindow = Omit<Window, 'location'> & { location?: unknown };
+    delete (window as unknown as MutableWindow).location;
+    (window as unknown as MutableWindow).location = { ...window.location, href: originalLocation, set href(val: string) { hrefSpy(val); } };
     Object.defineProperty(window.location, 'href', { set: hrefSpy, get: () => originalLocation });
 
     function OBtn() {
@@ -293,22 +298,21 @@ describe('AuthContext — пользовательские сценарии', ()
     );
 
     // Restore
-    delete (window as any).location;
-    (window as any).location = new URL(originalLocation);
+    delete (window as unknown as MutableWindow).location;
+    (window as unknown as MutableWindow).location = new URL(originalLocation);
   });
 
-  it('handleOAuthCallback устанавливает пользователя', async () => {
+  it('handleOAuthCallback обменивает код на токен и устанавливает пользователя', async () => {
     mockAuthApi.getMe.mockResolvedValue(undefined);
+    mockAuthApi.oauthExchange.mockResolvedValue({
+      token: 'tok-o',
+      user: { _id: 'o1', name: 'OAuthUser', email: 'o@t.com', avatar: 'a.png' },
+    });
+    sessionStorage.setItem('gym_oauth_nonce', 'a'.repeat(32));
 
     function CallbackBtn() {
       const { handleOAuthCallback } = useAuth();
-      return <button onClick={() => handleOAuthCallback({
-        token: 'tok-o',
-        _id: 'o1',
-        name: 'OAuthUser',
-        email: 'o@t.com',
-        avatar: 'a.png',
-      })}>Callback</button>;
+      return <button onClick={() => handleOAuthCallback('code-123')}>Callback</button>;
     }
 
     renderWithAuth(
@@ -319,10 +323,53 @@ describe('AuthContext — пользовательские сценарии', ()
     );
     await waitFor(() => expect(screen.queryByText('Загрузка...')).not.toBeInTheDocument());
 
-    act(() => { screen.getByText('Callback').click(); });
+    await act(async () => { screen.getByText('Callback').click(); });
 
+    // Токен приходит из тела ответа, а не из query-строки редиректа
+    expect(mockAuthApi.oauthExchange).toHaveBeenCalledWith('code-123', 'a'.repeat(32));
     expect(screen.getByTestId('user-name')).toHaveTextContent('OAuthUser');
     expect(localStorage.getItem('token')).toBe('tok-o');
+  });
+
+  it('logout убирает сохранённый JWT текущего аккаунта из gym_accounts', async () => {
+    mockAuthApi.login.mockResolvedValue({ _id: 'id1', name: 'Иван', email: 'i@t.com', token: 'tok1' });
+    mockAuthApi.getMe.mockResolvedValue(undefined);
+
+    renderWithAuth(
+      <>
+        <AuthStatusDisplay />
+        <LoginButton />
+      </>
+    );
+    await waitFor(() => expect(screen.queryByText('Загрузка...')).not.toBeInTheDocument());
+
+    await act(async () => { screen.getByText('Войти').click(); });
+    expect(JSON.parse(localStorage.getItem('gym_accounts') || '[]')).toHaveLength(1);
+
+    await act(async () => { screen.getByText('Выйти').click(); });
+
+    // Регрессия: раньше logout убирал только активный token, а JWT аккаунта
+    // оставался лежать в gym_accounts до самого истечения срока.
+    expect(JSON.parse(localStorage.getItem('gym_accounts') || '[]')).toHaveLength(0);
+    expect(localStorage.getItem('token')).toBeNull();
+  });
+
+  it('протухшие аккаунты не поднимаются из localStorage', async () => {
+    mockAuthApi.getMe.mockResolvedValue(undefined);
+    // exp в прошлом → аккаунт должен быть отброшен при загрузке
+    const deadToken = `x.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) - 60 }))}.y`;
+    localStorage.setItem('gym_accounts', JSON.stringify([
+      { _id: 'old', name: 'Старый', email: 'o@t.com', token: deadToken, expiresAt: Date.now() - 60_000 },
+    ]));
+
+    function Accounts() {
+      const { savedAccounts } = useAuth();
+      return <span data-testid="accts">{savedAccounts.length}</span>;
+    }
+
+    renderWithAuth(<Accounts />);
+
+    await waitFor(() => expect(screen.getByTestId('accts').textContent).toBe('0'));
   });
 
   it('useAuth выбрасывает ошибку вне AuthProvider', () => {

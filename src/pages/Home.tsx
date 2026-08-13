@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { workoutsApi, programsApi } from '@/services/api';
+import { ApiError } from '@/services/apiClient';
 import { useLanguage } from '@/i18n';
 import { useToast } from '@/hooks/useToast';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
@@ -104,12 +105,27 @@ export const Home = () => {
   const confirmDeleteExercise = async () => {
     if (deleteTarget === null || !dayWorkout) return;
     hapticMedium();
+
+    // Запоминаем, ЧТО удаляем, а не позицию: индекс взят из состояния экрана,
+    // и если тренировку успели изменить, по нему удалилось бы чужое упражнение.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const victim = (dayWorkout.exercises as any[])[deleteTarget];
+    const victimId = victim?.id || victim?._id;
+
     try {
-      const updatedExercises = [...dayWorkout.exercises];
-      updatedExercises.splice(deleteTarget, 1);
-      await workoutsApi.update(dayWorkout.id ?? dayWorkout._id, { exercises: updatedExercises });
+      await workoutsApi.mutateExercises(dayWorkout.id ?? dayWorkout._id, (exercises) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const list = exercises as any[];
+        const index = victimId
+          ? list.findIndex(e => (e.id || e._id) === victimId)
+          : list.findIndex(e => e.name === victim?.name);
+        if (index === -1) return list; // уже удалено кем-то другим
+        return list.filter((_, i) => i !== index);
+      });
       loadDay(selectedDate);
-    } catch { /* ignore */ }
+    } catch {
+      toast.error(t.errors?.saveFailed || 'Не удалось удалить');
+    }
     setDeleteTarget(null);
   };
 
@@ -158,8 +174,7 @@ export const Home = () => {
       if (todayWorkout) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const id = (todayWorkout as any).id || (todayWorkout as any)._id;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await workoutsApi.update(id, { exercises: [...(todayWorkout as any).exercises, ...copied] });
+        await workoutsApi.mutateExercises(id, (exercises) => [...exercises, ...copied]);
       } else {
         await workoutsApi.create({ name: t.home.todayWorkout, date: new Date().toISOString(), exercises: copied });
       }
@@ -189,11 +204,9 @@ export const Home = () => {
       if (todayWorkout) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const id = (todayWorkout as any).id || (todayWorkout as any)._id;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updatedExercises = [...(todayWorkout as any).exercises, ...copied];
-        await workoutsApi.update(id, { exercises: updatedExercises });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        todayWorkout = { ...(todayWorkout as any), exercises: updatedExercises };
+        // Берём результат записи: там актуальный список, если параллельно
+        // что-то добавили, — навигация ниже опирается на него.
+        todayWorkout = await workoutsApi.mutateExercises(id, (exercises) => [...exercises, ...copied]);
       } else {
         const created = await workoutsApi.create({ name: t.home.todayWorkout, date: new Date().toISOString(), exercises: copied });
         todayWorkout = created;
@@ -238,12 +251,22 @@ export const Home = () => {
         date: new Date(data.date).toISOString(),
         notes: data.notes,
         exercises: data.exercises,
+        // Здесь пользователь редактировал форму целиком, поэтому автоматически
+        // повторять нельзя — это снова затёрло бы чужие правки. Сообщаем и
+        // перезагружаем, чтобы он увидел актуальные данные.
+        expectedUpdatedAt: dayWorkout.updatedAt,
       });
       setEditingWorkout(false);
       hapticSuccess();
       toast.success(t.home.saveChanges);
       loadDay(selectedDate);
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        toast.warning('Тренировку изменили в другом месте — открыл свежую версию');
+        setEditingWorkout(false);
+        loadDay(selectedDate);
+        return;
+      }
       toast.error(t.errors.saveFailed);
     }
   };

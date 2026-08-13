@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/i18n';
 import { exercisesApi, programsApi, workoutsApi } from '@/services/api';
+import type { ProgramDoc } from '@/services/programsApi';
 import { MuscleIcon } from '@/components/MuscleIcon';
 const categoryToBackend: Record<string, string> = {
   stretching: 'other',
@@ -27,15 +28,14 @@ export const ExerciseLibrary = () => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'exercises' | 'programs'>('exercises');
   const [customCounts, setCustomCounts] = useState<Record<string, number>>({});
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [programs, setPrograms] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<ProgramDoc[]>([]);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
-    exercisesApi.getAll().then((exercises: any[]) => {
+    exercisesApi.getAll().then((exercises) => {
       const counts: Record<string, number> = {};
-      exercises.filter((e: any) => e.isCustom).forEach((e: any) => {
+      exercises.filter((e) => e.isCustom).forEach((e) => {
         const frontendCat = Object.entries(categoryToBackend).find(([, v]) => v === e.category)?.[0];
         if (frontendCat) counts[frontendCat] = (counts[frontendCat] || 0) + 1;
       });
@@ -46,8 +46,7 @@ export const ExerciseLibrary = () => {
   useEffect(() => {
     if (activeTab === 'programs') {
       setLoadingPrograms(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (programsApi.getAll() as Promise<any[]>).then(data => {
+      programsApi.getAll().then(data => {
         setPrograms(data);
       }).catch(() => setPrograms([])).finally(() => setLoadingPrograms(false));
     }
@@ -84,7 +83,8 @@ export const ExerciseLibrary = () => {
       });
       if (match) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await workoutsApi.update((match as any).id || (match as any)._id, { exercises: [...(match as any).exercises, ...exercises] });
+        const id = (match as any).id || (match as any)._id;
+        await workoutsApi.mutateExercises(id, (current) => [...current, ...exercises]);
       } else {
         await workoutsApi.create({ name: prog.name, date: new Date(date).toISOString(), exercises });
       }
@@ -216,9 +216,9 @@ export const ExerciseLibrary = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {programs.map((prog: any) => {
+                {programs.map((prog) => {
                   const exerciseCount: number = prog.exercises?.length
-                    || (prog.days || []).reduce((s: number, d: any) => s + (d.exercises?.length || 0), 0)
+                    || (prog.days || []).reduce((s, d) => s + (d.exercises?.length || 0), 0)
                     || 0;
                   return (
                     <div key={prog._id} className="bg-white dark:bg-[#16213e] rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">

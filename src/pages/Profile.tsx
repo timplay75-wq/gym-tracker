@@ -24,7 +24,7 @@ export const Profile = () => {
         setStats({ totalWorkouts: s.totalWorkouts, thisMonthWorkouts: s.thisMonthWorkouts, totalVolume: s.totalVolume });
       } catch (err) { console.error(t.common.error, err); }
     })();
-  }, []);
+  }, [t.common.error]);
 
   const handleLogout = () => setShowLogoutModal(true);
 

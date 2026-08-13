@@ -1,6 +1,6 @@
 import React from 'react';
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '../../contexts/ThemeContext';
 import { Button } from '../../components/Button';
@@ -58,7 +58,7 @@ describe('Form Submission Flow', () => {
       );
     };
 
-    const { container } = renderWithProviders(<TestForm />);
+    renderWithProviders(<TestForm />);
 
     // Try to submit empty form
     const submitButton = screen.getByText('Submit');

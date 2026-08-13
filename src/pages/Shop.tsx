@@ -21,7 +21,7 @@ export const Shop = () => {
       })
       .catch(() => toast.error(t.common.error))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t.common.error, toast]);
 
   const handlePurchase = async (pack: ExercisePackItem) => {
     if (pack.purchased) return;

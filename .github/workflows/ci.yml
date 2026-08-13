@@ -19,6 +19,12 @@ jobs:
       - run: npx vitest run
       - run: npm run build
 
+      # Серверные тесты на встроенном раннере Node, без внешних зависимостей
+      - run: npm ci
+        working-directory: server
+      - run: npm test
+        working-directory: server
+
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'

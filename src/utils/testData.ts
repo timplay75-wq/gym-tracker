@@ -194,8 +194,15 @@ export const loadTestWorkouts = () => {
   return testWorkouts;
 };
 
+declare global {
+  interface Window {
+    loadTestWorkouts?: typeof loadTestWorkouts;
+    generateTestWorkouts?: typeof generateTestWorkouts;
+  }
+}
+
 // Экспортируем в window для вызова из консоли
 if (typeof window !== 'undefined') {
-  (window as any).loadTestWorkouts = loadTestWorkouts;
-  (window as any).generateTestWorkouts = generateTestWorkouts;
+  window.loadTestWorkouts = loadTestWorkouts;
+  window.generateTestWorkouts = generateTestWorkouts;
 }

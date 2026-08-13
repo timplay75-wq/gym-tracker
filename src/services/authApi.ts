@@ -34,4 +34,14 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ token, password }),
     }),
+
+  /** Обменивает одноразовый код из OAuth-редиректа на JWT. */
+  oauthExchange: (code: string, nonce: string) =>
+    apiFetch<{
+      token: string;
+      user: { _id: string; name: string; email: string; avatar?: string | null };
+    }>('/oauth/exchange', {
+      method: 'POST',
+      body: JSON.stringify({ code, nonce }),
+    }),
 };

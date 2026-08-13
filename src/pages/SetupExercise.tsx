@@ -49,8 +49,7 @@ export const SetupExercise = () => {
       });
 
       if (existing) {
-        const updatedExercises = [...(existing.exercises || []), newExercise];
-        await workoutsApi.update(existing.id, { exercises: updatedExercises });
+        await workoutsApi.mutateExercises(existing.id, (exercises) => [...exercises, newExercise]);
       } else {
         await workoutsApi.create({
           name: name,

@@ -3,8 +3,12 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-// Импортируем тестовые данные (для разработки)
-import './utils/testData'
+// Только для разработки. Модуль вешает на window функцию loadTestWorkouts,
+// которая одним вызовом стирает сохранённые тренировки, — в продакшен-бандле
+// ей делать нечего. Динамический импорт под флагом вырезается при сборке.
+if (import.meta.env.DEV) {
+  import('./utils/testData')
+}
 
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {

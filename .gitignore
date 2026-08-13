@@ -12,6 +12,27 @@ dist
 dist-ssr
 *.local
 
+# Build output / отчёты
+coverage
+.vite
+*.tsbuildinfo
+
+# Capacitor: платформенные проекты генерируются из dist
+android
+ios
+
+# Секреты. Шаблоны (.env.example) остаются в репозитории.
+.env
+.env.*
+!.env.example
+!.env.production
+
+# Рабочие материалы, не относящиеся к коду
+image-org
+
+# Личные настройки Claude Code (общие — в .claude/settings.json)
+.claude/settings.local.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

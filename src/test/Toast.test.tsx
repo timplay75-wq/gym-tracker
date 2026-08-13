@@ -4,16 +4,6 @@ import { ToastProvider } from '../contexts/ToastContext';
 import { ToastContainer } from '../components/Toast';
 import { useToast } from '../hooks/useToast';
 
-// Helper: render with toast infrastructure
-function ToastTestHarness({ action }: { action: () => void }) {
-  const toast = useToast();
-  return (
-    <button onClick={() => { action(); toast.success('Тест успешен'); }}>
-      trigger
-    </button>
-  );
-}
-
 function renderWithToast(ui: React.ReactNode) {
   return render(
     <ToastProvider>

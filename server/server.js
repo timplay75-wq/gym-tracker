@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
-import { rateLimit } from 'express-rate-limit';
+import { authLimiter, writeLimiter } from './middleware/rateLimiters.js';
 import workoutRoutes from './routes/workouts.js';
 import userRoutes from './routes/users.js';
 import programRoutes from './routes/programs.js';
@@ -22,13 +22,10 @@ connectDB();
 
 const app = express();
 
-// Rate limiting для auth маршрутов
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 минут
-  max: process.env.NODE_ENV === 'production' ? 20 : 200,
-  message: { message: 'Слишком много запросов, попробуйте через 15 минут' },
-  skip: () => process.env.NODE_ENV === 'development',
-});
+// Railway/Vercel проксируют запросы: без этого express-rate-limit видит один
+// IP прокси для всех клиентов и общий лимит становится глобальным.
+app.set('trust proxy', 1);
+
 
 // Middleware
 app.use(cors({
@@ -51,20 +48,24 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());
+// rawBody нужен для проверки HMAC-подписи вебхука платёжки: подпись считается
+// по байтам тела, а не по результату JSON.parse.
+app.use(express.json({
+  verify: (req, res, buf) => { req.rawBody = buf; },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/users', authLimiter, userRoutes);
-app.use('/api/workouts', workoutRoutes);
-app.use('/api/programs', programRoutes);
+app.use('/api/workouts', writeLimiter, workoutRoutes);
+app.use('/api/programs', writeLimiter, programRoutes);
 app.use('/api/stats', statsRoutes);
-app.use('/api/exercises', exerciseRoutes);
-app.use('/api/records', recordRoutes);
-app.use('/api/oauth', oauthRoutes);
-app.use('/api/measurements', measurementRoutes);
-app.use('/api/shop', shopRoutes);
-app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/exercises', writeLimiter, exerciseRoutes);
+app.use('/api/records', writeLimiter, recordRoutes);
+app.use('/api/oauth', authLimiter, oauthRoutes);
+app.use('/api/measurements', writeLimiter, measurementRoutes);
+app.use('/api/shop', writeLimiter, shopRoutes);
+app.use('/api/subscriptions', writeLimiter, subscriptionRoutes);
 
 // Базовый роут
 app.get('/', (req, res) => {
@@ -84,7 +85,10 @@ app.use((req, res) => {
 // Глобальный обработчик ошибок
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  // Если ответ уже ушёл, повторная отправка бросит ERR_HTTP_HEADERS_SENT —
+  // отдаём управление обработчику Express по умолчанию.
+  if (res.headersSent) return next(err);
+  res.status(500).json({
     message: 'Что-то пошло не так!',
     error: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
@@ -95,3 +99,15 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
 });
+
+// Одиночная ошибка в асинхронном обработчике не должна ронять процесс:
+// логируем и продолжаем обслуживать остальные запросы.
+process.on('unhandledRejection', (reason) => {
+  console.error('❌ Unhandled rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught exception:', error);
+});
+
+export default app;

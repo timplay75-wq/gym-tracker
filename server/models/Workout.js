@@ -113,28 +113,45 @@ const WorkoutSchema = new mongoose.Schema({
   completedAt: {
     type: Date,
     default: null
+  },
+  // Защита от повторного начисления монет: клиент вызывает /complete после
+  // каждого упражнения, а награда полагается один раз за тренировку.
+  coinsAwarded: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
 });
 
-// Вычисление общего тоннажа, подходов и повторений
-WorkoutSchema.pre('save', function (next) {
+/**
+ * Считает тоннаж, подходы и повторения по завершённым подходам.
+ *
+ * Вынесено из хука, чтобы те же значения можно было проставить в атомарном
+ * findOneAndUpdate — там pre('save') не срабатывает, и тоталы оставались бы
+ * от прошлой версии, отравляя всю статистику.
+ */
+export function computeTotals(exercises = []) {
   let totalVolume = 0;
   let totalSets = 0;
   let totalReps = 0;
-  this.exercises.forEach(exercise => {
-    exercise.sets.forEach(set => {
-      if (set.completed) {
-        totalVolume += set.weight * set.reps;
+
+  for (const exercise of exercises) {
+    for (const set of exercise?.sets || []) {
+      if (set?.completed) {
+        totalVolume += (set.weight || 0) * (set.reps || 0);
         totalSets += 1;
-        totalReps += set.reps;
+        totalReps += set.reps || 0;
       }
-    });
-  });
-  this.totalVolume = totalVolume;
-  this.totalSets = totalSets;
-  this.totalReps = totalReps;
+    }
+  }
+
+  return { totalVolume, totalSets, totalReps };
+}
+
+// Вычисление общего тоннажа, подходов и повторений
+WorkoutSchema.pre('save', function (next) {
+  Object.assign(this, computeTotals(this.exercises));
   next();
 });
 

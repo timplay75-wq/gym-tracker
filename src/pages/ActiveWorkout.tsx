@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { workoutsApi } from '@/services/api';
+import { saveDraft, loadDraft, clearDraft } from '@/services/activeWorkoutDraft';
+import { enqueue } from '@/services/offlineQueue';
 import { useLanguage } from '@/i18n';
 import { useToast } from '@/hooks/useToast';
 import { playBeep } from '@/utils/playBeep';
@@ -22,14 +24,20 @@ export const ActiveWorkout = () => {
   const { t } = useLanguage();
   const toast = useToast();
 
-  const [workout] = useState<Workout | null>(location.state?.workout || null);
-  const startIdx: number = location.state?.startExerciseIndex ?? 0;
+  // Тренировку берём из навигации, а после перезагрузки — из черновика.
+  const [restoredDraft] = useState(() => (location.state?.workout ? null : loadDraft()));
+
+  const [workout] = useState<Workout | null>(
+    location.state?.workout || restoredDraft?.workout || null
+  );
+  const startIdx: number = location.state?.startExerciseIndex ?? restoredDraft?.exerciseIndex ?? 0;
   const [currentExerciseIndex] = useState(startIdx);
   const currentExercise = workout?.exercises[currentExerciseIndex];
 
   const withResults: boolean = location.state?.withResults ?? false;
 
   const [sets, setSets] = useState<EditableSet[]>(() => {
+    if (restoredDraft?.sets?.length) return restoredDraft.sets;
     const ex = (location.state?.workout as Workout | undefined)?.exercises[startIdx];
     if (!ex?.sets?.length) return [{ weight: '', reps: '' }];
     if (!withResults) return [{ weight: '', reps: '' }];
@@ -40,8 +48,12 @@ export const ActiveWorkout = () => {
   });
 
   const [focusedField, setFocusedField] = useState<{ set: number; field: 'weight' | 'reps' } | null>(null);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [hasChanges, setHasChanges] = useState(!!restoredDraft);
   const [saving, setSaving] = useState(false);
+
+  // Эффект ниже перезаписывает подходы значениями из тренировки. На первом
+  // рендере после восстановления это стёрло бы то, что мы только что подняли.
+  const skipNextSetsReset = useRef(!!restoredDraft);
 
   // ── Wake Lock — экран не гаснет во время тренировки ──
   useWakeLock(true);
@@ -85,6 +97,10 @@ export const ActiveWorkout = () => {
 
   useEffect(() => {
     if (!currentExercise) return;
+    if (skipNextSetsReset.current) {
+      skipNextSetsReset.current = false;
+      return;
+    }
     const newSets = currentExercise.sets?.map(s => ({
       weight: s.weight ? String(s.weight) : '',
       reps: s.reps ? String(s.reps) : '',
@@ -92,6 +108,13 @@ export const ActiveWorkout = () => {
     setSets(newSets?.length ? newSets : [{ weight: '', reps: '' }]);
     setHasChanges(false);
   }, [currentExerciseIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Черновик пишем на каждое изменение подходов — это единственная копия
+  // данных до успешной отправки на сервер.
+  useEffect(() => {
+    if (!workout || !hasChanges) return;
+    saveDraft(workout, currentExerciseIndex, sets);
+  }, [workout, currentExerciseIndex, sets, hasChanges]);
 
   const updateSet = (index: number, field: 'weight' | 'reps', value: string) => {
     if (field === 'weight' && value !== '' && !/^\d*\.?\d*$/.test(value)) return;
@@ -145,36 +168,79 @@ export const ActiveWorkout = () => {
   const handleDone = async () => {
     if (!workout || !currentExercise) return;
     setSaving(true);
+    // Объявлено снаружи try, чтобы catch мог положить эти данные в очередь.
+    let saveTarget: { id: string; exercises: unknown[] } | null = null;
     try {
       const updatedWorkout = { ...workout, exercises: [...workout.exercises] };
       const exercise = { ...updatedWorkout.exercises[currentExerciseIndex] };
-      const filledSets = sets.filter(s => parseFloat(s.weight) > 0 || parseInt(s.reps, 10) > 0);
-      const setsToSave = filledSets.length > 0 ? filledSets : [sets[0]];
-      exercise.sets = setsToSave.map((s, i) => ({
-        ...(exercise.sets[i] || {}),
-        id: exercise.sets[i]?.id || String(i),
-        weight: parseFloat(s.weight) || 0,
-        reps: parseInt(s.reps, 10) || 0,
-        completed: !!(parseFloat(s.weight) || parseInt(s.reps, 10)),
-        timestamp: new Date(),
-        restTime: exercise.sets[i]?.restTime || 0,
-        rpe: exercise.sets[i]?.rpe || undefined,
-      }));
+      // Индекс исходного подхода тащим через фильтр: раньше метаданные
+      // (id, время отдыха, RPE) брались по позиции в отфильтрованном массиве,
+      // и пропуск пустого подхода в середине сдвигал их на чужие подходы.
+      const filledSets = sets
+        .map((set, sourceIndex) => ({ set, sourceIndex }))
+        .filter(({ set }) => parseFloat(set.weight) > 0 || parseInt(set.reps, 10) > 0);
+      const setsToSave = filledSets.length > 0
+        ? filledSets
+        : [{ set: sets[0], sourceIndex: 0 }];
+
+      exercise.sets = setsToSave.map(({ set, sourceIndex }, i) => {
+        const previous = exercise.sets[sourceIndex];
+        return {
+          ...(previous || {}),
+          id: previous?.id || String(i),
+          weight: parseFloat(set.weight) || 0,
+          reps: parseInt(set.reps, 10) || 0,
+          completed: !!(parseFloat(set.weight) || parseInt(set.reps, 10)),
+          timestamp: new Date(),
+          restTime: previous?.restTime || 0,
+          rpe: previous?.rpe || undefined,
+        };
+      });
       updatedWorkout.exercises[currentExerciseIndex] = exercise;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const id = updatedWorkout.id || (updatedWorkout as any)._id;
-      if (isMongoId(id)) {
-        await workoutsApi.complete(id, { exercises: updatedWorkout.exercises });
+
+      // Раньше при невалидном id запись молча пропускалась, но пользователь
+      // всё равно видел «Тренировка завершена».
+      if (!isMongoId(id)) {
+        console.error('Save error: некорректный id тренировки', id);
+        toast.error('Не удалось сохранить: тренировка не найдена на сервере');
+        return;
       }
+
+      saveTarget = { id, exercises: updatedWorkout.exercises };
+      await workoutsApi.complete(id, { exercises: updatedWorkout.exercises });
+
+      // Черновик снимаем только после подтверждённой записи на сервер.
+      clearDraft();
       toast.success(t.activeWorkout.workoutDone);
       hapticSuccess();
+      navigate('/');
     } catch (err) {
       console.error('Save error:', err);
+
+      // Без сети кладём подходы в очередь — она отправит их при возврате связи.
+      if (!navigator.onLine && saveTarget) {
+        const queued = enqueue(
+          'complete_workout',
+          { id: saveTarget.id, data: { exercises: saveTarget.exercises } },
+          `complete_workout:${saveTarget.id}`
+        );
+        if (queued) {
+          clearDraft();
+          toast.success('Нет сети — сохранено локально, отправим при подключении');
+          hapticSuccess();
+          navigate('/');
+          return;
+        }
+      }
+
+      // Остаёмся на экране: введённые подходы сохранены в черновике,
+      // пользователь может нажать «Сохранить» ещё раз.
       toast.error('Ошибка. Попробуйте снова');
     } finally {
       setSaving(false);
     }
-    navigate('/');
   };
 
   const handleStats = () => {

@@ -24,13 +24,17 @@ export function SwipeExerciseCard({ exercise, onStats, onDelete, onTap, t, selec
   const [offsetX, setOffsetX] = useState(0);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
+  // Ref нужен обработчикам как синхронная защита (touchmove может прийти
+  // раньше следующего рендера), состояние — рендеру: ref его не обновляет.
   const isDragging = useRef(false);
+  const [dragging, setDragging] = useState(false);
   const didSwipe = useRef(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     startXRef.current = e.touches[0].clientX;
     startYRef.current = e.touches[0].clientY;
     isDragging.current = true;
+    setDragging(true);
     didSwipe.current = false;
   };
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -41,6 +45,7 @@ export function SwipeExerciseCard({ exercise, onStats, onDelete, onTap, t, selec
   };
   const handleTouchEnd = () => {
     isDragging.current = false;
+    setDragging(false);
     if (offsetX > SWIPE_THRESHOLD) { setOffsetX(80); }
     else if (offsetX < -SWIPE_THRESHOLD) { setOffsetX(-80); }
     else {
@@ -95,7 +100,7 @@ export function SwipeExerciseCard({ exercise, onStats, onDelete, onTap, t, selec
       {/* Card — only exercise name */}
       <div
         className="relative bg-white dark:bg-[#16213e] px-4 py-3.5 border border-gray-100 dark:border-gray-800 z-10 transition-transform cursor-pointer"
-        style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.25s ease' }}
+        style={{ transform: `translateX(${offsetX}px)`, transition: dragging ? 'none' : 'transform 0.25s ease' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

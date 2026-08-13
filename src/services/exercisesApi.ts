@@ -1,9 +1,26 @@
 import { apiFetch } from './apiClient';
 
+/** Упражнение так, как его отдаёт сервер. */
+export interface ExerciseDoc {
+  _id: string;
+  id?: string;
+  name: string;
+  category: string;
+  type?: string;
+  equipment?: string | null;
+  targetMuscles?: string[];
+  instructions?: string;
+  videoUrl?: string;
+  isCustom?: boolean;
+  isBodyweight?: boolean;
+  isDoubleWeight?: boolean;
+  createdBy?: string;
+}
+
 export const exercisesApi = {
   getAll: (params?: { category?: string; type?: string; search?: string }) => {
     const q = new URLSearchParams(params as Record<string, string>).toString();
-    return apiFetch<unknown[]>(`/exercises${q ? `?${q}` : ''}`);
+    return apiFetch<ExerciseDoc[]>(`/exercises${q ? `?${q}` : ''}`);
   },
 
   getById: (id: string) => apiFetch(`/exercises/${id}`),

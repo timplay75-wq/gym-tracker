@@ -1,4 +1,7 @@
 import Subscription from '../models/Subscription.js';
+import { asString, asObjectId, lookup } from '../utils/sanitize.js';
+
+const PAYMENT_PROVIDERS = ['stripe', 'yookassa', 'manual'];
 
 // Тарифные планы (конфигурация)
 const PLANS = {
@@ -48,11 +51,14 @@ export const getStatus = async (req, res) => {
 // POST /api/subscriptions/create — создать подписку (заглушка для будущей интеграции с платёжкой)
 export const createSubscription = async (req, res) => {
   try {
-    const { plan, paymentProvider, externalId } = req.body;
-
-    if (!plan || !PLANS[plan]) {
+    const plan = asString(req.body?.plan);
+    const planConfig = lookup(PLANS, plan);
+    if (!planConfig) {
       return res.status(400).json({ message: 'Неверный план подписки' });
     }
+
+    const requestedProvider = asString(req.body?.paymentProvider);
+    const paymentProvider = PAYMENT_PROVIDERS.includes(requestedProvider) ? requestedProvider : null;
 
     // Проверяем нет ли активной подписки
     const existing = await Subscription.getActive(req.user._id);
@@ -60,16 +66,17 @@ export const createSubscription = async (req, res) => {
       return res.status(400).json({ message: 'У вас уже есть активная подписка' });
     }
 
-    const planConfig = PLANS[plan];
     const startsAt = new Date();
     const expiresAt = new Date(startsAt.getTime() + planConfig.durationDays * 24 * 60 * 60 * 1000);
 
+    // Подписка всегда создаётся неоплаченной. В 'active' её переводит только
+    // вебхук платёжки с проверенной подписью — клиент на статус влиять не может.
     const subscription = await Subscription.create({
       user: req.user._id,
       plan,
-      status: externalId ? 'active' : 'pending',
-      paymentProvider: paymentProvider || null,
-      externalId: externalId || null,
+      status: 'pending',
+      paymentProvider,
+      externalId: null,
       amount: planConfig.amount,
       currency: planConfig.currency,
       startsAt,
@@ -146,13 +153,19 @@ export const getHistory = async (req, res) => {
 // POST /api/subscriptions/webhook — webhook для платёжных провайдеров (заглушка)
 export const handleWebhook = async (req, res) => {
   try {
-    const { provider, event, externalId, status } = req.body;
+    // Все значения приводим к строке: без этого {"externalId":{"$ne":null}}
+    // превращался в оператор Mongo и матчил чужую подписку.
+    const event = asString(req.body?.event);
+    const status = asString(req.body?.status);
+    const externalId = asString(req.body?.externalId);
+    const subscriptionId = asObjectId(req.body?.subscriptionId);
 
-    if (!externalId) {
-      return res.status(400).json({ message: 'externalId обязателен' });
+    if (!externalId && !subscriptionId) {
+      return res.status(400).json({ message: 'Нужен subscriptionId или externalId' });
     }
 
-    const subscription = await Subscription.findOne({ externalId });
+    const filter = subscriptionId ? { _id: subscriptionId } : { externalId };
+    const subscription = await Subscription.findOne(filter);
     if (!subscription) {
       return res.status(404).json({ message: 'Подписка не найдена' });
     }
@@ -160,11 +173,14 @@ export const handleWebhook = async (req, res) => {
     // Обновляем статус на основании события от провайдера
     if (status === 'succeeded' || event === 'payment.succeeded') {
       subscription.status = 'active';
+      if (externalId) subscription.externalId = externalId;
     } else if (status === 'cancelled' || event === 'subscription.cancelled') {
       subscription.status = 'cancelled';
       subscription.cancelledAt = new Date();
     } else if (status === 'expired' || event === 'subscription.expired') {
       subscription.status = 'expired';
+    } else {
+      return res.status(400).json({ message: 'Неизвестное событие' });
     }
 
     await subscription.save();

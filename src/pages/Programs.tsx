@@ -7,6 +7,26 @@ import type { Program } from '@/data/programTemplates';
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
+/**
+ * Программа с сервера несёт упражнения плоским списком, у шаблонов они лежат
+ * только внутри days[]. Поддерживаются оба формата.
+ */
+type FlexibleExercise = {
+  name: string;
+  category?: string;
+  reps?: number;
+  weight?: number;
+  sets?: number | { reps?: number }[];
+};
+type ApiProgram = Program & { exercises?: FlexibleExercise[] };
+
+/** sets приходит либо числом (шаблон), либо массивом подходов (сервер). */
+function setsLabel(sets: unknown, reps: unknown): string {
+  if (typeof sets === 'number') return `${sets}×${reps}`;
+  const arr = Array.isArray(sets) ? (sets as { reps?: number }[]) : undefined;
+  return `${arr?.length ?? 1}×${arr?.[0]?.reps ?? '—'}`;
+}
+
 /* ───── иконки ───── */
 const PlusIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -104,13 +124,11 @@ export function Programs() {
     if (!applyModal) return;
     setApplying(true);
     const { prog, date } = applyModal;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const p = prog as any;
+    const p = prog as ApiProgram;
     // поддерживаем оба формата: exercises на верхнем уровне И days[].exercises
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allExercises: any[] = p.exercises?.length
+    const allExercises: FlexibleExercise[] = p.exercises?.length
       ? p.exercises
-      : prog.days.flatMap((d: any) => d.exercises || []);
+      : prog.days.flatMap((d) => d.exercises || []);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res = await workoutsApi.getAll({ limit: 50 }) as any;
@@ -119,18 +137,15 @@ export function Programs() {
         const wd = typeof w.date === 'string' ? w.date.slice(0, 10) : new Date(w.date).toISOString().slice(0, 10);
         return wd === date;
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newExercises = allExercises.map((ex: any) => ({
+      const newExercises = allExercises.map((ex) => ({
         name: ex.name,
         category: ex.category || 'other',
         sets: [{ weight: ex.weight || 0, reps: ex.reps || 10, completed: false }],
       }));
       if (match) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await workoutsApi.update((match as any).id || (match as any)._id, {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          exercises: [...(match as any).exercises, ...newExercises],
-        });
+        const id = (match as any).id || (match as any)._id;
+        await workoutsApi.mutateExercises(id, (exercises) => [...exercises, ...newExercises]);
       } else {
         await workoutsApi.create({ name: prog.name, date: new Date(date).toISOString(), exercises: newExercises });
       }
@@ -256,13 +271,13 @@ export function Programs() {
 
                         {/* Exercise list — flat */}
                         <div className="mt-3 mb-4 space-y-1.5">
-                          {(prog as any).exercises?.length
-                            ? (prog as any).exercises.map((ex: any, ei: number) => (
+                          {(prog as ApiProgram).exercises?.length
+                            ? (prog as ApiProgram).exercises!.map((ex, ei) => (
                               <div key={ei} className="flex items-center gap-2 py-1.5 px-2 bg-[#f9fafb] dark:bg-[#1a1a2e] rounded-xl">
                                 <div className="w-2 h-2 rounded-full bg-[#9333ea] flex-shrink-0" />
                                 <span className="text-sm text-[#1e1b4b] dark:text-white flex-1">{ex.name}</span>
                                 <span className="text-xs text-[#6b7280] dark:text-gray-500">
-                                  {typeof ex.sets === 'number' ? `${ex.sets}×${ex.reps}` : `${ex.sets?.length ?? 1}×${ex.sets?.[0]?.reps ?? '—'}`}
+                                  {setsLabel(ex.sets, ex.reps)}
                                 </span>
                               </div>
                             ))
@@ -271,7 +286,7 @@ export function Programs() {
                               <div className="w-2 h-2 rounded-full bg-[#9333ea] flex-shrink-0" />
                               <span className="text-sm text-[#1e1b4b] dark:text-white flex-1">{ex.name}</span>
                               <span className="text-xs text-[#6b7280] dark:text-gray-500">
-                                {typeof ex.sets === 'number' ? `${ex.sets}×${ex.reps}` : `${(ex.sets as any)?.length ?? 1}×${(ex.sets as any)?.[0]?.reps ?? '—'}`}
+                                {setsLabel(ex.sets, ex.reps)}
                               </span>
                             </div>
                           )))}

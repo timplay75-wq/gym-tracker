@@ -11,14 +11,16 @@ import {
 } from '../controllers/userController.js';
 import { protect } from '../middleware/auth.js';
 import { validateRegister, validateLogin } from '../middleware/validate.js';
+import { strictLimiter } from '../middleware/rateLimiters.js';
 
 const router = express.Router();
 
-// Публичные
+// Публичные. Логин и сброс пароля пригодны для перебора, поэтому поверх
+// общего лимита на /api/users на них висит более строгий.
 router.post('/register', validateRegister, registerUser);
-router.post('/login', validateLogin, loginUser);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/login', strictLimiter, validateLogin, loginUser);
+router.post('/forgot-password', strictLimiter, forgotPassword);
+router.post('/reset-password', strictLimiter, resetPassword);
 
 // Защищённые
 router.get('/me', protect, getMe);

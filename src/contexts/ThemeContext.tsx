@@ -27,21 +27,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return saved || 'system';
   });
 
-  // Определяем реальную тему (light или dark)
-  const getResolvedTheme = (currentTheme: Theme): ResolvedTheme => {
-    if (currentTheme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return currentTheme;
-  };
+  // Системная тема — единственное, что приходит извне и требует состояния
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  );
 
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => getResolvedTheme(theme));
-
-  // Обновляем resolved theme при изменении theme
-  useEffect(() => {
-    const resolved = getResolvedTheme(theme);
-    setResolvedTheme(resolved);
-  }, [theme]);
+  // Производное значение: считаем при рендере, а не храним в состоянии.
+  // Раньше его выставлял useEffect, что давало лишний каскадный рендер.
+  const resolvedTheme: ResolvedTheme = theme === 'system' ? systemTheme : theme;
 
   // Применяем класс к HTML элементу
   useEffect(() => {
@@ -58,10 +51,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
+    // Системную тему отслеживаем всегда; применяется она только при theme === 'system'
     const handleChange = (e: MediaQueryListEvent) => {
-      if (theme === 'system') {
-        setResolvedTheme(e.matches ? 'dark' : 'light');
-      }
+      setSystemTheme(e.matches ? 'dark' : 'light');
     };
 
     // Современный способ
@@ -73,7 +65,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       mediaQuery.addListener(handleChange);
       return () => mediaQuery.removeListener(handleChange);
     }
-  }, [theme]);
+  }, []);
 
   // Установка темы с сохранением в localStorage
   const setTheme = (newTheme: Theme) => {

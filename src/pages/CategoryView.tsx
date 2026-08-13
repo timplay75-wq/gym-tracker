@@ -42,12 +42,16 @@ const SWIPE_THRESHOLD = 60;
 function SwipeCard({ exercise, isCustom, editMode, onCreate, onStats, onRename, onDelete, t }: SwipeCardProps) {
   const [offsetX, setOffsetX] = useState(0);
   const startXRef = useRef(0);
+  // Ref нужен обработчикам как синхронная защита (touchmove может прийти
+  // раньше следующего рендера), состояние — рендеру: ref его не обновляет.
   const isDragging = useRef(false);
+  const [dragging, setDragging] = useState(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (editMode) return;
     startXRef.current = e.touches[0].clientX;
     isDragging.current = true;
+    setDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -59,6 +63,7 @@ function SwipeCard({ exercise, isCustom, editMode, onCreate, onStats, onRename, 
   const handleTouchEnd = () => {
     if (editMode) return;
     isDragging.current = false;
+    setDragging(false);
     if (offsetX > SWIPE_THRESHOLD) {
       setOffsetX(80);
     } else {
@@ -130,7 +135,7 @@ function SwipeCard({ exercise, isCustom, editMode, onCreate, onStats, onRename, 
       {/* Card content (slides) */}
       <div
         className="relative bg-white dark:bg-[#16213e] border border-gray-100 dark:border-gray-800 p-4 transition-transform z-10 cursor-pointer active:bg-gray-50 dark:active:bg-white/5"
-        style={{ transform: `translateX(${offsetX}px)`, transition: isDragging.current ? 'none' : 'transform 0.25s ease' }}
+        style={{ transform: `translateX(${offsetX}px)`, transition: dragging ? 'none' : 'transform 0.25s ease' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -189,7 +194,8 @@ export const CategoryView = () => {
       };
       if (match) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await workoutsApi.update((match as any).id || (match as any)._id, { exercises: [...(match as any).exercises, newExercise] });
+        const id = (match as any).id || (match as any)._id;
+        await workoutsApi.mutateExercises(id, (exercises) => [...exercises, newExercise]);
       } else {
         await workoutsApi.create({ name: exerciseName, date: new Date(dateStr).toISOString(), exercises: [newExercise] });
       }
@@ -213,10 +219,10 @@ export const CategoryView = () => {
     if (!catId) return;
     const backendCat = categoryToBackend[catId];
     if (!backendCat) return;
-    exercisesApi.getAll({ category: backendCat }).then((exercises: any[]) => {
+    exercisesApi.getAll({ category: backendCat }).then((exercises) => {
       const custom = exercises
-        .filter((e: any) => e.isCustom)
-        .map((e: any) => ({ id: e._id || e.id, name: e.name }));
+        .filter((e) => e.isCustom)
+        .map((e) => ({ id: e._id || e.id || '', name: e.name }));
       setCustomExercises(custom);
     }).catch(() => {});
   }, [currentCategory?.id]);
@@ -226,10 +232,10 @@ export const CategoryView = () => {
     if (!catId) return;
     const backendCat = categoryToBackend[catId];
     if (!backendCat) return;
-    exercisesApi.getAll({ category: backendCat }).then((exercises: any[]) => {
+    exercisesApi.getAll({ category: backendCat }).then((exercises) => {
       const custom = exercises
-        .filter((e: any) => e.isCustom)
-        .map((e: any) => ({ id: e._id || e.id, name: e.name }));
+        .filter((e) => e.isCustom)
+        .map((e) => ({ id: e._id || e.id || '', name: e.name }));
       setCustomExercises(custom);
     }).catch(() => {});
   };

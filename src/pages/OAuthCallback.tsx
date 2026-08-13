@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
@@ -6,26 +6,25 @@ export function OAuthCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { handleOAuthCallback } = useAuth();
+  // Код одноразовый: в StrictMode эффект выполняется дважды, и второй обмен
+  // получил бы отказ уже после успешного входа.
+  const exchanged = useRef(false);
 
   useEffect(() => {
-    const token = params.get('token');
-    const name = params.get('name');
-    const email = params.get('email');
-    const id = params.get('id');
-    const avatar = params.get('avatar');
+    if (exchanged.current) return;
+    exchanged.current = true;
 
-    if (token && id && email) {
-      handleOAuthCallback({
-        token,
-        _id: id,
-        name: name || 'User',
-        email,
-        avatar: avatar || undefined,
-      });
-      navigate('/', { replace: true });
-    } else {
-      navigate('/login', { replace: true });
+    const code = params.get('code');
+    const error = params.get('error');
+
+    if (error || !code) {
+      navigate(`/login${error ? `?error=${encodeURIComponent(error)}` : ''}`, { replace: true });
+      return;
     }
+
+    handleOAuthCallback(code)
+      .then(() => navigate('/', { replace: true }))
+      .catch(() => navigate('/login?error=oauth_failed', { replace: true }));
   }, [params, navigate, handleOAuthCallback]);
 
   return (

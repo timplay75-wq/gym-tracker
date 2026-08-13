@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log*
+*.log
+
+# Секреты не должны попадать в слои образа
+.env
+.env.*
+!.env.example
+
+# В рантайме не нужны
+test
+Dockerfile
+.dockerignore

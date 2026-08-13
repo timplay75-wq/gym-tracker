@@ -66,7 +66,11 @@ export function Statistics() {
   const [topExercises, setTopExercises] = useState<TopExercise[]>([]);
   const [muscles, setMuscles] = useState<MuscleData[]>([]);
   const [weekdays, setWeekdays] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Загрузка — производное от того, за какой период данные уже пришли.
+  // Раньше здесь стоял setLoading(true) прямо в эффекте, что давало
+  // лишний каскадный рендер на каждую смену периода.
+  const [loadedPeriod, setLoadedPeriod] = useState<Period | null>(null);
+  const loading = loadedPeriod !== period;
   const [topSort, setTopSort] = useState<'volume' | 'frequency'>('volume');
   const [showAllExercises, setShowAllExercises] = useState(false);
 
@@ -90,7 +94,6 @@ export function Statistics() {
   /* загрузка данных */
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
 
     Promise.allSettled([
       statsApi.getSummary(),
@@ -110,7 +113,7 @@ export function Statistics() {
         const failures = [sRes, wRes, exRes, mRes].filter((r) => r.status === 'rejected');
         if (failures.length) console.error('Stats load errors:', failures);
       })
-      .finally(() => !cancelled && setLoading(false));
+      .finally(() => { if (!cancelled) setLoadedPeriod(period); });
 
     return () => { cancelled = true; };
   }, [period]);

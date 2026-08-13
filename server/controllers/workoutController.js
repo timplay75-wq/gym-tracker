@@ -1,6 +1,11 @@
-﻿import Workout from '../models/Workout.js';
+﻿import Workout, { computeTotals } from '../models/Workout.js';
 import User from '../models/User.js';
 import { updateRecordsFromWorkout } from './personalRecordController.js';
+import { asString, pick } from '../utils/sanitize.js';
+
+// Поля, которые клиент вправе менять. userId, totalVolume/totalSets/totalReps
+// (считаются на сервере) и coinsAwarded сюда намеренно не входят.
+const WORKOUT_WRITABLE = ['name', 'date', 'exercises', 'duration', 'status', 'notes', 'programId'];
 
 // POST /api/workouts/fix-completed — миграция: добавляет completedAt к завершённым тренировкам без этого поля
 export const fixCompletedWorkouts = async (req, res) => {
@@ -23,7 +28,8 @@ export const fixCompletedWorkouts = async (req, res) => {
 // GET /api/workouts
 export const getAllWorkouts = async (req, res) => {
   try {
-    const { status, limit = 20, page = 1 } = req.query;
+    const { limit = 20, page = 1 } = req.query;
+    const status = asString(req.query?.status);
     const filter = { userId: req.user._id };
     if (status) filter.status = status;
 
@@ -73,13 +79,11 @@ export const getWorkoutById = async (req, res) => {
 // POST /api/workouts
 export const createWorkout = async (req, res) => {
   try {
-    console.log('📥 createWorkout body:', JSON.stringify(req.body, null, 2));
-    const workout = new Workout({ ...req.body, userId: req.user._id });
+    const workout = new Workout({ ...pick(req.body, WORKOUT_WRITABLE), userId: req.user._id });
     const saved = await workout.save();
-    console.log('✅ workout saved:', saved._id);
     res.status(201).json(saved);
   } catch (error) {
-    console.error('❌ createWorkout error:', error.message);
+    console.error('createWorkout error:', error.message);
     res.status(400).json({ message: error.message });
   }
 };
@@ -87,13 +91,44 @@ export const createWorkout = async (req, res) => {
 // PUT /api/workouts/:id
 export const updateWorkout = async (req, res) => {
   try {
+    const updates = pick(req.body, WORKOUT_WRITABLE);
+
+    // Тоталы считаем сами: findOneAndUpdate не запускает pre('save'),
+    // и без этого тоннаж после правки остался бы от прошлой версии.
+    if (Array.isArray(updates.exercises)) {
+      Object.assign(updates, computeTotals(updates.exercises));
+    }
+
+    const filter = { _id: req.params.id, userId: req.user._id };
+
+    // Оптимистическая блокировка. Клиент присылает updatedAt, который он читал;
+    // если запись с тех пор изменилась, условие не совпадёт и мы не затрём
+    // чужую правку. Проверка и запись — одна атомарная операция.
+    const expected = asString(req.body?.expectedUpdatedAt);
+    const expectedDate = expected ? new Date(expected) : null;
+    const hasExpectation = expectedDate && !Number.isNaN(expectedDate.getTime());
+    if (hasExpectation) filter.updatedAt = expectedDate;
+
     const workout = await Workout.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
-      req.body,
+      filter,
+      { $set: updates },
       { new: true, runValidators: true }
     );
-    if (!workout) return res.status(404).json({ message: 'РўСЂРµРЅРёСЂРѕРІРєР° РЅРµ РЅР°Р№РґРµРЅР°' });
-    res.json(workout);
+
+    if (workout) return res.json(workout);
+
+    // Не нашли. Отличаем «нет такой тренировки» от «её изменили параллельно».
+    if (hasExpectation) {
+      const current = await Workout.findOne({ _id: req.params.id, userId: req.user._id });
+      if (current) {
+        return res.status(409).json({
+          message: 'Тренировка была изменена в другом месте',
+          workout: current,
+        });
+      }
+    }
+
+    return res.status(404).json({ message: 'Тренировка не найдена' });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -129,20 +164,35 @@ export const startWorkout = async (req, res) => {
 export const completeWorkout = async (req, res) => {
   try {
     const { duration, exercises } = req.body;
+
+    // Владелец проверяется прямо в фильтре — чужую тренировку не найдём.
     const workout = await Workout.findOne({ _id: req.params.id, userId: req.user._id });
-    if (!workout) return res.status(404).json({ message: 'РўСЂРµРЅРёСЂРѕРІРєР° РЅРµ РЅР°Р№РґРµРЅР°' });
+    if (!workout) return res.status(404).json({ message: 'Тренировка не найдена' });
+
+    const wasCompleted = workout.status === 'completed';
 
     workout.status = 'completed';
-    workout.completedAt = new Date();
+    if (!wasCompleted) workout.completedAt = new Date();
     if (duration) workout.duration = duration;
-    if (exercises) workout.exercises = exercises;
+    if (Array.isArray(exercises)) workout.exercises = exercises;
+    // save(), а не findOneAndUpdate(): pre('save') пересчитывает totalVolume,
+    // totalSets и totalReps, на которых строится вся статистика.
     await workout.save();
 
     // Автообновляем личные рекорды
     await updateRecordsFromWorkout(req.user._id, workout);
 
-    // Начисляем 10 монет за завершённую тренировку
-    await User.findByIdAndUpdate(req.user._id, { $inc: { coins: 10 } });
+    // Монеты — один раз за тренировку. Условие coinsAwarded: false проверяется
+    // и применяется атомарно, поэтому параллельные запросы не начислят дважды.
+    if (!wasCompleted) {
+      const claim = await Workout.updateOne(
+        { _id: workout._id, userId: req.user._id, coinsAwarded: { $ne: true } },
+        { $set: { coinsAwarded: true } }
+      );
+      if (claim.modifiedCount === 1) {
+        await User.findByIdAndUpdate(req.user._id, { $inc: { coins: 10 } });
+      }
+    }
 
     res.json(workout.toObject());
   } catch (error) {
