@@ -35,6 +35,9 @@ jobs:
           # Адрес бэкенда вшивается в бандл на этапе сборки.
           # Задаётся в Settings → Secrets and variables → Actions → Variables.
           VITE_API_URL: ${{ vars.VITE_API_URL }}
+          # Pages отдаёт проект из подпапки /<репозиторий>/, в отличие от
+          # Vercel и своего домена, где приложение лежит в корне.
+          VITE_BASE: /gym-tracker/
         run: npm run build
 
       - uses: actions/configure-pages@v5

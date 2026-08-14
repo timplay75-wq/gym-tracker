@@ -3,15 +3,18 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
-// GitHub Pages отдаёт проект по адресу вида
-// https://<логин>.github.io/<репозиторий>/ — то есть из подпапки, а не с корня.
-// Без base все ссылки на скрипты и стили ведут в корень домена, и открывается
-// белый экран. В режиме разработки база остаётся корневой.
-const BASE = '/gym-tracker/'
+// Куда будет установлено приложение — в корень домена или в подпапку.
+//
+// По умолчанию корень: так работает Vercel и любой свой домен (www.tonna.ge).
+// GitHub Pages отдаёт проект из подпапки /<репозиторий>/, поэтому его workflow
+// выставляет VITE_BASE=/gym-tracker/. Зашивать подпапку в конфиг нельзя —
+// тогда сборка для корня домена ломается: браузер ищет скрипты не там,
+// и открывается белый экран.
+const BASE = process.env.VITE_BASE || '/'
 
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? BASE : '/',
+export default defineConfig(() => ({
+  base: BASE,
   plugins: [
     react(),
     VitePWA({
