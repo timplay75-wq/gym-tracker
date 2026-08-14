@@ -28,22 +28,29 @@ app.set('trust proxy', 1);
 
 
 // Middleware
+const isDev = () => process.env.NODE_ENV === 'development';
+
+// Источники, которым разрешено обращаться к API.
+//
+// Раньше здесь стояла маска *.vercel.app: под неё подходил любой сайт, который
+// кто угодно за минуту разворачивает на Vercel. Список задаётся через
+// CORS_ORIGIN — несколько адресов пишутся через запятую.
+const allowedOrigins = () =>
+  (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:4173'];
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Разрешить запросы без origin (curl, мобильные приложения)
+    // Запросы без Origin — это curl, мобильные приложения и серверные вызовы
     if (!origin) return callback(null, true);
-    
-    const allowed = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim());
-    // Разрешить все Vercel preview URLs проекта
-    if (
-      allowed.includes(origin) ||
-      origin.endsWith('.vercel.app') ||
-      origin === 'http://localhost:5173' ||
-      origin === 'https://tonna.ge' ||
-      origin === 'https://www.tonna.ge'
-    ) {
-      return callback(null, true);
-    }
+
+    if (allowedOrigins().includes(origin)) return callback(null, true);
+    if (isDev() && DEV_ORIGINS.includes(origin)) return callback(null, true);
+
     callback(new Error('CORS not allowed'));
   },
   credentials: true,

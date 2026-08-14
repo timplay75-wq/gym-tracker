@@ -1,0 +1,53 @@
+# Конфигурация бэкенда для Render (Blueprint).
+#
+# Render прочитает этот файл при создании Blueprint и настроит сервис сам —
+# заполнять поля в интерфейсе вручную не нужно.
+#
+# Значения с sync: false в репозитории не хранятся: Render спросит их один раз
+# при создании и дальше держит у себя. Так строка подключения к базе не попадёт
+# в публичный репозиторий.
+
+services:
+  - name: gym-tracker-api
+    type: web
+    runtime: docker
+    plan: free
+    region: frankfurt # рядом с кластером MongoDB Atlas
+
+    # Собираем из server/: фронтенд в образ не попадает
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+
+    # Пока роут отвечает 200, Render считает сервис живым
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Render подставляет свой порт; код читает process.env.PORT
+      - key: PORT
+        value: 10000
+
+      # Спросит при создании. Формат:
+      # mongodb+srv://пользователь:пароль@кластер.mongodb.net/gym-tracker?appName=Cluster0
+      - key: MONGODB_URI
+        sync: false
+
+      # Render сгенерирует случайное 256-битное значение сам
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: JWT_EXPIRES_IN
+        value: 7d
+
+      # Адрес фронтенда на GitHub Pages: нужен для CORS и ссылок в письмах
+      - key: FRONTEND_URL
+        value: https://timplay75-wq.github.io/gym-tracker
+      - key: CORS_ORIGIN
+        value: https://timplay75-wq.github.io
+
+      # Собственный адрес сервиса — понадобится для OAuth-редиректов.
+      # Заполнить после первого деплоя, когда Render выдаст домен.
+      - key: BACKEND_URL
+        sync: false
