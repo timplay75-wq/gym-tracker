@@ -117,7 +117,10 @@ describe('ExerciseStats Page', () => {
     expect(threeElements.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('shows empty state when history is empty', async () => {
+  // Страница показывается целиком даже без истории: графики отрисовываются
+  // с заглушкой «Нет данных» внутри. Так задумано — см. коммит 345babc,
+  // где условие history.length === 0 было убрано из пустого состояния.
+  it('shows charts with empty placeholders when history is empty', async () => {
     vi.mocked(statsApi.getExerciseHistory).mockResolvedValue({
       exerciseName: 'Empty Exercise',
       totalSessions: 0,
@@ -131,9 +134,13 @@ describe('ExerciseStats Page', () => {
 
     renderExerciseStats('Empty%20Exercise');
 
+    // Заглушек две — по одной в каждом графике (вес и тоннаж)
     await waitFor(() => {
-      expect(screen.getByText(/Нет данных/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Нет данных/i)).toHaveLength(2);
     });
+
+    // Отдельный экран пустого состояния при этом не показывается
+    expect(screen.queryByText(/Выполните это упражнение/i)).not.toBeInTheDocument();
   });
 
   it('shows error state when API fails', async () => {
