@@ -1,7 +1,26 @@
 ﻿import Workout, { computeTotals } from '../models/Workout.js';
 import User from '../models/User.js';
 import { updateRecordsFromWorkout } from './personalRecordController.js';
-import { asString, pick } from '../utils/sanitize.js';
+import { asString, asObjectId, pick } from '../utils/sanitize.js';
+
+/**
+ * Начисляет монеты за тренировку ровно один раз.
+ *
+ * Условие coinsAwarded !== true проверяется и применяется одной атомарной
+ * операцией, поэтому параллельные вызовы /complete не начислят дважды.
+ */
+async function awardCoinsOnce(userId, workoutId, wasCompleted) {
+  if (wasCompleted) return;
+
+  const claim = await Workout.updateOne(
+    { _id: workoutId, userId, coinsAwarded: { $ne: true } },
+    { $set: { coinsAwarded: true } }
+  );
+
+  if (claim.modifiedCount === 1) {
+    await User.findByIdAndUpdate(userId, { $inc: { coins: 10 } });
+  }
+}
 
 // Поля, которые клиент вправе менять. userId, totalVolume/totalSets/totalReps
 // (считаются на сервере) и coinsAwarded сюда намеренно не входят.
@@ -163,13 +182,47 @@ export const startWorkout = async (req, res) => {
 // POST /api/workouts/:id/complete
 export const completeWorkout = async (req, res) => {
   try {
-    const { duration, exercises } = req.body;
+    const { duration, exercises, exercise } = req.body;
+    const exerciseId = asObjectId(req.body?.exerciseId);
 
     // Владелец проверяется прямо в фильтре — чужую тренировку не найдём.
     const workout = await Workout.findOne({ _id: req.params.id, userId: req.user._id });
     if (!workout) return res.status(404).json({ message: 'Тренировка не найдена' });
 
     const wasCompleted = workout.status === 'completed';
+
+    // Точечное обновление одного упражнения.
+    //
+    // Экран тренировки правит только своё упражнение, но раньше отправлял весь
+    // массив целиком — и упражнение, добавленное параллельно с другого
+    // устройства, пропадало. Позиционный $set меняет ровно один элемент и
+    // соседей не трогает; это одна атомарная операция.
+    if (exerciseId && exercise) {
+      const fields = { status: 'completed' };
+      if (!wasCompleted) fields.completedAt = new Date();
+      if (duration) fields.duration = duration;
+      if (Array.isArray(exercise.sets)) fields['exercises.$.sets'] = exercise.sets;
+
+      const updated = await Workout.findOneAndUpdate(
+        { _id: req.params.id, userId: req.user._id, 'exercises._id': exerciseId },
+        { $set: fields },
+        { new: true, runValidators: true }
+      );
+
+      if (!updated) {
+        return res.status(404).json({ message: 'Упражнение не найдено в тренировке' });
+      }
+
+      // Тоталы считаем по факту записи: findOneAndUpdate не запускает pre('save').
+      const totals = computeTotals(updated.exercises);
+      Object.assign(updated, totals);
+      await Workout.updateOne({ _id: updated._id }, { $set: totals });
+
+      await updateRecordsFromWorkout(req.user._id, updated);
+      await awardCoinsOnce(req.user._id, updated._id, wasCompleted);
+
+      return res.json(updated.toObject());
+    }
 
     workout.status = 'completed';
     if (!wasCompleted) workout.completedAt = new Date();
@@ -182,17 +235,7 @@ export const completeWorkout = async (req, res) => {
     // Автообновляем личные рекорды
     await updateRecordsFromWorkout(req.user._id, workout);
 
-    // Монеты — один раз за тренировку. Условие coinsAwarded: false проверяется
-    // и применяется атомарно, поэтому параллельные запросы не начислят дважды.
-    if (!wasCompleted) {
-      const claim = await Workout.updateOne(
-        { _id: workout._id, userId: req.user._id, coinsAwarded: { $ne: true } },
-        { $set: { coinsAwarded: true } }
-      );
-      if (claim.modifiedCount === 1) {
-        await User.findByIdAndUpdate(req.user._id, { $inc: { coins: 10 } });
-      }
-    }
+    await awardCoinsOnce(req.user._id, workout._id, wasCompleted);
 
     res.json(workout.toObject());
   } catch (error) {

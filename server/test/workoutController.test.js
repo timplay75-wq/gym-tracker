@@ -138,6 +138,116 @@ test('чужая тренировка: 404 и никаких монет', async 
   }
 });
 
+test('complete с exerciseId правит только одно упражнение, не трогая соседей', async () => {
+  const workout = fakeWorkout();
+  let received;
+
+  const restore = stubModels({
+    findOne: async () => workout,
+    findOneAndUpdate: async (filter, update) => {
+      received = { filter, update };
+      return fakeWorkout({ exercises: [] });
+    },
+    updateOne: async () => ({ modifiedCount: 0 }),
+  });
+
+  try {
+    const req = createReq({
+      params: { id: '507f191e810c19729de860ea' },
+      body: {
+        exerciseId: '507f191e810c19729de860eb',
+        exercise: { sets: [{ weight: 100, reps: 5, completed: true }] },
+      },
+      user: USER,
+    });
+    await completeWorkout(req, createRes());
+
+    // Регрессия: раньше уходил весь массив exercises, и упражнение,
+    // добавленное параллельно с другого устройства, затиралось.
+    assert.equal(received.update.$set['exercises.$.sets'].length, 1);
+    assert.equal(received.update.$set.exercises, undefined, 'весь массив не перезаписывается');
+    // Позиционный оператор требует упражнение в фильтре
+    assert.equal(received.filter['exercises._id'], '507f191e810c19729de860eb');
+    assert.equal(received.filter.userId, USER._id);
+  } finally {
+    restore();
+  }
+});
+
+test('complete с чужим exerciseId возвращает 404', async () => {
+  const restore = stubModels({
+    findOne: async () => fakeWorkout(),
+    findOneAndUpdate: async () => null,
+  });
+
+  try {
+    const res = createRes();
+    await completeWorkout(createReq({
+      params: { id: '507f191e810c19729de860ea' },
+      body: { exerciseId: '507f191e810c19729de860eb', exercise: { sets: [] } },
+      user: USER,
+    }), res);
+
+    assert.equal(res.statusCode, 404);
+  } finally {
+    restore();
+  }
+});
+
+test('complete без exerciseId работает по-старому: заменяет массив целиком', async () => {
+  const workout = fakeWorkout();
+  const restore = stubModels({
+    findOne: async () => workout,
+    updateOne: async () => ({ modifiedCount: 1 }),
+  });
+
+  try {
+    await completeWorkout(createReq({
+      params: { id: workout._id },
+      body: { exercises: [{ name: 'Присед', sets: [] }] },
+      user: USER,
+    }), createRes());
+
+    assert.equal(workout.exercises.length, 1);
+    assert.equal(workout.status, 'completed');
+  } finally {
+    restore();
+  }
+});
+
+test('монеты за точечное завершение тоже начисляются один раз', async () => {
+  const workout = fakeWorkout();
+  let coinGrants = 0;
+  let claimed = false;
+
+  const restore = stubModels({
+    findOne: async () => workout,
+    findOneAndUpdate: async () => fakeWorkout({ exercises: [] }),
+    updateOne: async (filter) => {
+      // Заявку на монеты отличаем от записи тоталов по условию в фильтре
+      if (!filter.coinsAwarded) return { modifiedCount: 1 };
+      if (claimed) return { modifiedCount: 0 };
+      claimed = true;
+      return { modifiedCount: 1 };
+    },
+    incCoins: async () => { coinGrants += 1; },
+  });
+
+  try {
+    const body = {
+      exerciseId: '507f191e810c19729de860eb',
+      exercise: { sets: [{ weight: 50, reps: 10, completed: true }] },
+    };
+    await completeWorkout(createReq({ params: { id: workout._id }, body, user: USER }), createRes());
+    workout.status = 'completed'; // как после первого завершения
+    await completeWorkout(createReq({ params: { id: workout._id }, body, user: USER }), createRes());
+
+    assert.equal(coinGrants, 1);
+  } finally {
+    restore();
+  }
+});
+
 test('updateWorkout не даёт переписать userId и служебные поля', async () => {
   let received;
   const restore = stubModels({

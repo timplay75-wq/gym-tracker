@@ -169,7 +169,7 @@ export const ActiveWorkout = () => {
     if (!workout || !currentExercise) return;
     setSaving(true);
     // Объявлено снаружи try, чтобы catch мог положить эти данные в очередь.
-    let saveTarget: { id: string; exercises: unknown[] } | null = null;
+    let saveTarget: { id: string; payload: Record<string, unknown> } | null = null;
     try {
       const updatedWorkout = { ...workout, exercises: [...workout.exercises] };
       const exercise = { ...updatedWorkout.exercises[currentExerciseIndex] };
@@ -208,8 +208,16 @@ export const ActiveWorkout = () => {
         return;
       }
 
-      saveTarget = { id, exercises: updatedWorkout.exercises };
-      await workoutsApi.complete(id, { exercises: updatedWorkout.exercises });
+      // Отправляем только своё упражнение, если у него есть серверный id.
+      // Раньше уходил весь массив, и упражнение, добавленное параллельно
+      // с другого устройства, затиралось.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const exerciseId = exercise.id || (exercise as any)._id;
+      saveTarget = isMongoId(exerciseId)
+        ? { id, payload: { exerciseId, exercise: { sets: exercise.sets } } }
+        : { id, payload: { exercises: updatedWorkout.exercises } };
+
+      await workoutsApi.complete(id, saveTarget.payload);
 
       // Черновик снимаем только после подтверждённой записи на сервер.
       clearDraft();
@@ -223,7 +231,7 @@ export const ActiveWorkout = () => {
       if (!navigator.onLine && saveTarget) {
         const queued = enqueue(
           'complete_workout',
-          { id: saveTarget.id, data: { exercises: saveTarget.exercises } },
+          { id: saveTarget.id, data: saveTarget.payload },
           `complete_workout:${saveTarget.id}`
         );
         if (queued) {

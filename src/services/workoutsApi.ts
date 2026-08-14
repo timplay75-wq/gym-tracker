@@ -56,7 +56,12 @@ export const workoutsApi = {
     return res;
   },
 
-  complete: async (id: string, data: { duration?: number; exercises?: unknown[] }) => {
+  complete: async (
+    id: string,
+    // Либо точечно одно упражнение (exerciseId + exercise), либо весь массив —
+    // второй вариант остаётся для упражнений без серверного id.
+    data: { duration?: number; exercises?: unknown[]; exerciseId?: string; exercise?: unknown },
+  ) => {
     requestCache.invalidate(WORKOUTS_CACHE);
     const w = await apiFetch<unknown>(`/workouts/${id}/complete`, { method: 'POST', body: JSON.stringify(data) });
     // Повторный сброс уже после ответа: пока запрос был в полёте, параллельное
