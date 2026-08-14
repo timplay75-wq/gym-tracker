@@ -123,7 +123,9 @@ function App() {
     <LanguageProvider>
       <ThemeProvider>
         <ToastProvider>
-          <BrowserRouter>
+          {/* BASE_URL подставляет Vite: '/' в разработке и '/gym-tracker/'
+              в сборке. Без basename роутер не узнаёт свои пути в подпапке. */}
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
             <AuthProvider>
               <OfflineBanner />
               <SyncManager />
