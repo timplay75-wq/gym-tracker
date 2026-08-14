@@ -116,7 +116,11 @@ export function ExerciseStats() {
   }
 
   /* ───── empty state ───── */
-  if (!data) {
+  // Сервер всегда возвращает объект, даже когда упражнение ни разу не делали:
+  // в statsController история приходит пустым массивом, а не null. Из-за этого
+  // условие !data не срабатывало никогда, и вместо подготовленного экрана
+  // пользователь видел страницу с нулями и двумя заглушками «Нет данных».
+  if (!data || !data.history?.length) {
     return (
       <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#1a1a2e] pb-28 flex flex-col items-center justify-center px-4">
         <div className="w-20 h-20 rounded-full bg-[#f3e8ff] flex items-center justify-center mb-4">
