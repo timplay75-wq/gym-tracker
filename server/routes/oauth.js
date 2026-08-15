@@ -2,6 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import OAuthCode from '../models/OAuthCode.js';
 import { asString } from '../utils/sanitize.js';
 import { strictLimiter } from '../middleware/rateLimiters.js';
 
@@ -42,26 +43,29 @@ function parseCookies(header) {
 }
 
 /**
- * Одноразовые коды авторизации: code -> { userId, nonce, expiresAt }.
+ * Одноразовые коды хранятся в MongoDB, а не в памяти процесса.
  *
- * Храним в памяти процесса — на одном инстансе Railway этого достаточно.
- * При переезде на несколько инстансов сюда нужен общий стор (Redis/Mongo),
- * иначе обмен кода будет случайно попадать не на тот процесс.
+ * На serverless выдача кода и его обмен попадают в разные экземпляры функции,
+ * и код из локальной Map просто не нашёлся бы. Побочная выгода: findOneAndDelete
+ * атомарен, поэтому одноразовость гарантирована даже при гонке запросов.
  */
-const authCodes = new Map();
-
-function issueAuthCode(userId, nonce) {
+async function issueAuthCode(userId, nonce) {
   const code = crypto.randomBytes(32).toString('hex');
-  authCodes.set(code, { userId: String(userId), nonce, expiresAt: Date.now() + CODE_TTL_MS });
+  await OAuthCode.create({
+    code,
+    userId,
+    nonce,
+    expiresAt: new Date(Date.now() + CODE_TTL_MS),
+  });
   return code;
 }
 
-function consumeAuthCode(code) {
-  const entry = authCodes.get(code);
+async function consumeAuthCode(code) {
+  // Забираем и удаляем одной операцией — повторный обмен невозможен
+  const entry = await OAuthCode.findOneAndDelete({ code });
   if (!entry) return null;
-  authCodes.delete(code); // одноразовый: повторный обмен невозможен
-  if (entry.expiresAt < Date.now()) return null;
-  return entry;
+  if (entry.expiresAt.getTime() < Date.now()) return null;
+  return { userId: String(entry.userId), nonce: entry.nonce };
 }
 
 /** nonce генерирует фронтенд; принимаем только hex, чтобы не ломать разделитель в cookie. */
@@ -69,14 +73,6 @@ function normalizeNonce(value) {
   const str = asString(value);
   return str && /^[a-f\d]{16,64}$/i.test(str) ? str.toLowerCase() : null;
 }
-
-function sweepExpiredCodes() {
-  const now = Date.now();
-  for (const [code, entry] of authCodes) {
-    if (entry.expiresAt < now) authCodes.delete(code);
-  }
-}
-setInterval(sweepExpiredCodes, CODE_TTL_MS).unref();
 
 /**
  * Начинает OAuth-поток.
@@ -123,8 +119,8 @@ function checkState(req, res) {
   return { ok, nonce };
 }
 
-function sendAuthCode(res, user, nonce) {
-  const code = issueAuthCode(user._id, nonce);
+async function sendAuthCode(res, user, nonce) {
+  const code = await issueAuthCode(user._id, nonce);
   // В query уходит только одноразовый код. JWT здесь быть не должно:
   // строка URL оседает в истории браузера, в Referer и в логах прокси.
   res.redirect(`${frontendUrl()}/oauth-callback?code=${encodeURIComponent(code)}`);
@@ -191,7 +187,7 @@ async function completeOAuth(req, res, profileLoader) {
   const { user, error } = await findOrCreateOAuthUser(result);
   if (error) return sendErrorPage(res, error);
 
-  sendAuthCode(res, user, nonce);
+  await sendAuthCode(res, user, nonce);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -203,7 +199,7 @@ router.post('/exchange', async (req, res) => {
     const code = asString(req.body?.code);
     if (!code) return res.status(400).json({ message: 'Код обязателен' });
 
-    const entry = consumeAuthCode(code);
+    const entry = await consumeAuthCode(code);
     if (!entry) return res.status(400).json({ message: 'Код недействителен или истёк' });
 
     // Код действителен только в том браузере, который начинал вход: иначе

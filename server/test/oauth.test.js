@@ -2,12 +2,36 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { __internals } from '../routes/oauth.js';
+import OAuthCode from '../models/OAuthCode.js';
 import { createReq, createRes } from './helpers.js';
 
 const { parseCookies, normalizeNonce, beginOAuth, checkState, issueAuthCode, consumeAuthCode } =
   __internals;
 
 const NONCE = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
+
+/**
+ * Коды теперь живут в MongoDB. Подменяем статики модели хранилищем в памяти —
+ * база для проверки логики не нужна.
+ */
+function stubCodeStore() {
+  const original = { create: OAuthCode.create, findOneAndDelete: OAuthCode.findOneAndDelete };
+  const store = new Map();
+
+  OAuthCode.create = async (doc) => {
+    store.set(doc.code, { ...doc, userId: String(doc.userId) });
+    return doc;
+  };
+  // findOneAndDelete атомарен — именно он обеспечивает одноразовость
+  OAuthCode.findOneAndDelete = async ({ code }) => {
+    const found = store.get(code);
+    if (!found) return null;
+    store.delete(code);
+    return found;
+  };
+
+  return () => Object.assign(OAuthCode, original);
+}
 
 /**
  * Прогоняет старт потока и возвращает значение выставленной cookie.
@@ -80,32 +104,64 @@ test('cookie сбрасывается независимо от результа
   assert.equal(res.clearedCookies[0].name, 'oauth_state');
 });
 
-test('одноразовый код нельзя обменять дважды', () => {
-  const code = issueAuthCode('507f1f77bcf86cd799439011', NONCE);
+test('одноразовый код нельзя обменять дважды', async () => {
+  const restore = stubCodeStore();
+  try {
+    const code = await issueAuthCode('507f1f77bcf86cd799439011', NONCE);
 
-  const first = consumeAuthCode(code);
-  assert.equal(first.userId, '507f1f77bcf86cd799439011');
-  assert.equal(first.nonce, NONCE);
+    const first = await consumeAuthCode(code);
+    assert.equal(first.userId, '507f1f77bcf86cd799439011');
+    assert.equal(first.nonce, NONCE);
 
-  assert.equal(consumeAuthCode(code), null);
+    assert.equal(await consumeAuthCode(code), null);
+  } finally {
+    restore();
+  }
 });
 
-test('несуществующий код не обменивается', () => {
-  assert.equal(consumeAuthCode('нет такого кода'), null);
+test('несуществующий код не обменивается', async () => {
+  const restore = stubCodeStore();
+  try {
+    assert.equal(await consumeAuthCode('нет такого кода'), null);
+  } finally {
+    restore();
+  }
 });
 
-test('код привязан к nonce того браузера, который начал вход', () => {
-  const attackerNonce = 'f'.repeat(32);
-  const code = issueAuthCode('507f1f77bcf86cd799439011', attackerNonce);
+test('код привязан к nonce того браузера, который начал вход', async () => {
+  const restore = stubCodeStore();
+  try {
+    const attackerNonce = 'f'.repeat(32);
+    const code = await issueAuthCode('507f1f77bcf86cd799439011', attackerNonce);
 
-  const entry = consumeAuthCode(code);
-  // Обработчик /exchange сравнивает entry.nonce с присланным. У жертвы в
-  // sessionStorage лежит свой nonce, поэтому подсунутый код не сработает.
-  assert.notEqual(entry.nonce, NONCE);
-  assert.equal(entry.nonce, attackerNonce);
+    const entry = await consumeAuthCode(code);
+    // Обработчик /exchange сравнивает entry.nonce с присланным. У жертвы в
+    // sessionStorage лежит свой nonce, поэтому подсунутый код не сработает.
+    assert.notEqual(entry.nonce, NONCE);
+    assert.equal(entry.nonce, attackerNonce);
+  } finally {
+    restore();
+  }
 });
 
-test('поток без nonce выдаёт код, который нельзя обменять', () => {
+test('просроченный код не обменивается', async () => {
+  const restore = stubCodeStore();
+  try {
+    const code = await issueAuthCode('507f1f77bcf86cd799439011', NONCE);
+    // Подменяем срок на прошедший: TTL-индекс Mongo удаляет с задержкой,
+    // поэтому проверка времени в коде обязательна
+    OAuthCode.findOneAndDelete = async () => ({
+      code, userId: '507f1f77bcf86cd799439011', nonce: NONCE,
+      expiresAt: new Date(Date.now() - 1000),
+    });
+
+    assert.equal(await consumeAuthCode(code), null);
+  } finally {
+    restore();
+  }
+});
+
+test('поток без nonce выдаёт код, который нельзя обменять', async () => {
   // Злоумышленник дёргает /api/oauth/google напрямую, без nonce. Код,
   // привязанный к пустой строке, совпал бы с пустым sessionStorage жертвы,
   // поэтому /exchange отвергает пустой nonce с обеих сторон.
@@ -113,9 +169,14 @@ test('поток без nonce выдаёт код, который нельзя �
   const nonce = cookieValue.split('.')[1];
   assert.equal(nonce, '');
 
-  const code = issueAuthCode('507f1f77bcf86cd799439011', nonce);
-  const entry = consumeAuthCode(code);
-  assert.equal(entry.nonce, '');
+  const restore = stubCodeStore();
+  try {
+    const code = await issueAuthCode('507f1f77bcf86cd799439011', nonce);
+    const entry = await consumeAuthCode(code);
+    assert.equal(entry.nonce, '');
+  } finally {
+    restore();
+  }
 });
 
 test('невалидный nonce в query не попадает в cookie', () => {
