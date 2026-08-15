@@ -1,8 +1,8 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
 import { asString } from '../utils/sanitize.js';
+import { sendMail, isMailConfigured } from '../utils/mailer.js';
 
 // Генерация JWT токена
 const generateToken = (id) => {
@@ -137,13 +137,13 @@ export const forgotPassword = async (req, res) => {
     const email = asString(req.body?.email);
     if (!email) return res.status(400).json({ message: 'Email обязателен' });
 
-    const smtpConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
+    const mailConfigured = isMailConfigured();
     const isDevelopment = process.env.NODE_ENV === 'development';
 
     // Проверяем конфигурацию ДО поиска пользователя: иначе ответ различался бы
     // для существующих и несуществующих адресов и выдавал наличие аккаунта.
-    if (!smtpConfigured && !isDevelopment) {
-      console.error('[Reset Password] SMTP не настроен — письмо отправить невозможно');
+    if (!mailConfigured && !isDevelopment) {
+      console.error('[Reset Password] Почта не настроена — письмо отправить невозможно');
       return res.status(500).json({ message: 'Отправка почты недоступна, обратитесь в поддержку' });
     }
 
@@ -164,19 +164,9 @@ export const forgotPassword = async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/reset-password/${token}`;
 
-    // Production: отправляем реальный email через SMTP
-    if (smtpConfigured) {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === 'true',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM || '"Gym Tracker" <noreply@gymtracker.app>',
+    // Продакшен: отправляем реальное письмо выбранным способом
+    if (mailConfigured) {
+      await sendMail({
         to: user.email,
         subject: 'Gym Tracker — Сброс пароля',
         html: `
